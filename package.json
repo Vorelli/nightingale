@@ -1,0 +1,24 @@
+{
+  "name": "nightingale",
+  "version": "0.1.0",
+  "description": "A personal radio server. Stream from anywhere",
+  "main": "src/server/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Vorelli/nightingale.git"
+  },
+  "keywords": [
+    "music",
+    "streaming",
+    "server"
+  ],
+  "author": "Natale Toscano",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Vorelli/nightingale/issues"
+  },
+  "homepage": "https://github.com/Vorelli/nightingale#readme"
+}
