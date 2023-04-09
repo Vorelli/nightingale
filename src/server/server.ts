@@ -1,48 +1,45 @@
 import express, { Request, Response, NextFunction } from "express";
-import expressWs from "express-ws";
-import cors, { CorsRequest } from "cors";
+import path from "path";
+import { db, pool } from "./db/schema";
+import { sessionsMiddleware } from "./middleware/sessions";
+import { setCorsAndHeaders } from "./middleware/corsAndHeaders";
+import { logger } from "./middleware/logger";
+import { attachPool } from "./middleware/attachPool";
+import https from "https";
+import fs from "fs";
+const express_ws = require("express-ws");
 
-var expressApp = express();
-var { app, getWss, applyTo } = expressWs(expressApp);
-
-const allowlist = ["http://localhost:4444", undefined];
-var corsOptions = function (req: Request, callback: Function) {
-  var corsOps = {
-    origin: allowlist.includes(req.headers["origin"]),
-  };
-  console.log(req.header("Origin"));
-  console.log(req.headers["origin"]);
-  // db.loadOrigins is an example call to load
-  // a list of origins from a backing database
-  callback(null, corsOps);
+var options = {
+  key: fs.readFileSync(process.env.KEY_PATH as string),
+  cert: fs.readFileSync(process.env.CERT_PATH as string),
 };
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", req.header("origin"));
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
-app.use(function (req, res, next) {
-  req.headers.origin = req.headers.origin || req.headers.host;
-  next();
-});
-app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log("incoming", req.method, "at", req.path);
-  next();
-});
-app.use(cors(corsOptions));
+var app: any = express();
+var httpsServer = https.createServer(options, app);
 
-app.get("/", (req: Request, res: Response, next: NextFunction): void => {
-  res.json({ message: "Connected!" });
+var expressWs = express_ws(app);
+var expressWss = express_ws(app, httpsServer);
+
+app.use(attachPool(pool));
+app.use(setCorsAndHeaders);
+app.use(sessionsMiddleware);
+app.use(logger);
+app.use(express.static(path.join(__dirname, "../public")));
+// app.use("");
+
+app.ws("/", function (ws: any, req: Request) {
+  ws.on("connection", function () {
+    ws.send("hello!");
+  });
 });
 
-app.ws("/echo", function (ws, req) {
-  ws.on("message", function (msg) {
+app.ws("/echo", function (ws: any, req: Request) {
+  ws.once("open", (ev: Event) => {
+    console.log("open. event:", ev);
+  });
+
+  ws.on("message", function (msg: string) {
     ws.send(msg);
   });
 });
 
-export default app;
+export { app, httpsServer };
