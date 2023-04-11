@@ -1,6 +1,8 @@
-const path = require("path");
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-module.exports = {
+export default {
   entry: "./src/client/index.tsx",
   module: {
     rules: [
@@ -22,6 +24,6 @@ module.exports = {
   },
   output: {
     filename: "bundle.js",
-    path: path.resolve(__dirname, "public"),
+    path: path.resolve(__dirname, "./public"),
   },
 };

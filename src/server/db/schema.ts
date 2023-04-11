@@ -1,4 +1,3 @@
-import { Pool } from "pg";
 import {
   bigint,
   foreignKey,
@@ -11,25 +10,74 @@ import {
   uniqueIndex,
   uuid,
   varchar,
-} from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { sql } from "drizzle-orm";
+} from "drizzle-orm/pg-core/index.js";
+import { drizzle } from "drizzle-orm/node-postgres/index.js";
+import { sql } from "drizzle-orm/index.js";
+import pg from "pg";
+const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export const tags = pgTable(
-  "tags",
+export const artists = pgTable(
+  "artists",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: text("name").notNull(),
+  },
+  (artists) => ({
+    uniqueIdxArtistName: uniqueIndex("unique_idx_artistName").on(artists.name),
+    indexedArtistName: index("idx_artistName").on(artists.name),
+  })
+);
+
+export const genres = pgTable(
+  "genres",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: text("name").notNull(),
+  },
+  (genres) => ({
+    uniqueIdxArtistName: uniqueIndex("unique_idx_genreName").on(genres.name),
+    indexedArtistName: index("idx_genreName").on(genres.name),
+  })
+);
+
+export const albums = pgTable(
+  "albums",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name"),
     year: integer("year"),
-    album: text("album"),
-    artist: text("artist"),
-    genre: text("genre"),
+    albumArtist: uuid("albumArtist"),
   },
   (tags) => ({
     uniqueIdxId: uniqueIndex("unique_idx_id").on(tags.id),
+  })
+);
+
+export const albumArtists = pgTable(
+  "albumArtists",
+  {
+    albumId: uuid("albumId").notNull(),
+    artistId: uuid("artistId").notNull(),
+  },
+  (albumArtists) => ({
+    albumIdFk: foreignKey({ columns: [albumArtists.albumId], foreignColumns: [albums.id] }),
+    artistIdFk: foreignKey({ columns: [albumArtists.artistId], foreignColumns: [artists.id] }),
+  })
+);
+
+export const albumGenres = pgTable(
+  "albumGenres",
+  {
+    albumId: uuid("albumId").notNull(),
+    genreId: uuid("genreId").notNull(),
+  },
+  (albumGenres) => ({
+    album2IdFk: foreignKey({ columns: [albumGenres.albumId], foreignColumns: [albums.id] }),
+    genreIdFk: foreignKey({ columns: [albumGenres.genreId], foreignColumns: [genres.id] }),
   })
 );
 
@@ -39,11 +87,12 @@ export const songs = pgTable(
     md5: varchar("md5", { length: 32 }),
     path: text("path"),
     duration: bigint("duration", { mode: "bigint" }),
-    tag_id: uuid("tag_id").notNull(),
+    albumId: uuid("albumId").notNull(),
   },
   (songs) => ({
-    tagFk: foreignKey({ columns: [songs.tag_id], foreignColumns: [tags.id] }),
+    albumIdFk: foreignKey({ columns: [songs.albumId], foreignColumns: [albums.id] }),
     uniqueIdxMd5: uniqueIndex("unique_idx_md5").on(songs.md5),
+    uniqueIdxPath: uniqueIndex("unique_idx_path").on(songs.path),
   })
 );
 
@@ -51,14 +100,30 @@ export const playlists = pgTable(
   "playlists",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    songMd5: varchar("songMd5", { length: 32 }),
+    name: text("name").notNull(),
   },
   (playlists) => ({
+    uniqueIdxPlaylistId: uniqueIndex("unique_idx_playlist_id").on(playlists.id),
+    uniqueIdxPlaylistName: uniqueIndex("unique_idx_playlist_name").on(playlists.name),
+    idxPlaylistName: index("idx_playlist_name").on(playlists.name),
+  })
+);
+
+export const playlistSongs = pgTable(
+  "playlistSongs",
+  {
+    playlistId: uuid("playlistId").notNull(),
+    songMd5: varchar("songMd5", { length: 32 }),
+  },
+  (playlistSongs) => ({
     songMd5Fk: foreignKey({
-      columns: [playlists.songMd5],
+      columns: [playlistSongs.songMd5],
       foreignColumns: [songs.md5],
     }),
-    uniqueIdxPlaylistId: uniqueIndex("unique_idx_playlist_id").on(playlists.id),
+    playlistIdFk: foreignKey({
+      columns: [playlistSongs.playlistId],
+      foreignColumns: [playlists.id],
+    }),
   })
 );
 

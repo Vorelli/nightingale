@@ -6,3 +6,5 @@ keyAndCert
 keyAndCert/
 .env
 migrations-folder/
+music/
+streaming/

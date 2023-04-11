@@ -4,7 +4,7 @@ A music streaming server like no other.
 
 ## USAGE
 
-.env
+Setup your .env file like below:
 
 ```
 KEY_PATH=relative or absolute location of ssl key

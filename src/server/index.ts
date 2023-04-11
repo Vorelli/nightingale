@@ -1,5 +1,5 @@
-require("dotenv").config();
-import { app, httpsServer } from "./server";
+import {} from "dotenv/config";
+import { app, httpsServer } from "./server.js";
 
 const PORT = parseInt(process.env.PORT as string) || 443;
 const HTTP_PORT = parseInt(process.env.HTTP_PORT as string) || 80;
