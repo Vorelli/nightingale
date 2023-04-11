@@ -27,7 +27,6 @@
   },
   "homepage": "https://github.com/Vorelli/nightingale#readme",
   "dependencies": {
-    "audio-type-detect": "^1.0.3",
     "connect-pg-simple": "^8.0.0",
     "cors": "^2.8.5",
     "cute-ffmpeg": "^1.0.4",
