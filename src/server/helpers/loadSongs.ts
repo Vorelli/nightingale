@@ -1,34 +1,66 @@
 import fs, { PathLike } from "fs";
 import express from "express";
 import md5File from "md5-file";
-import { songs } from "../db/schema.js";
+import {
+  AlbumArtists,
+  albumArtists,
+  albumGenres,
+  Albums,
+  albums,
+  Artists,
+  artists,
+  AlbumGenres,
+  genres,
+  songs,
+  Songs,
+  Genres,
+} from "../db/schema.js";
 import { eq } from "drizzle-orm/expressions.js";
 import path from "path";
 import { getAudioDurationInSeconds } from "get-audio-duration";
 import { isAudio } from "./isAudio.js";
 import { importMusicMetadata } from "./audioMetadata.js";
 import sharp from "sharp";
-import { CuteFFMPEG, FFMPEGRequest } from "cute-ffmpeg";
-import { fileURLToPath } from "url";
+import ffmpeg from "fluent-ffmpeg/index.js";
 import { ICommonTagsResult } from "music-metadata";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ffmpeg = new CuteFFMPEG({ overwrite: true });
+interface innerJoinReturn {
+  songs: Songs;
+  albums: Albums;
+  artists: Artists;
+  albumArtists: AlbumArtists;
+  genres: Genres;
+  albumGenres: AlbumGenres;
+}
+
+interface Song {
+  md5: string | null;
+  path: string | null;
+  duration: number | null;
+  track: number | null;
+  lyrics: string[] | null;
+  diskCharacter: number | null;
+}
+
+interface Album {
+  name: string;
+  yearReleased: number;
+  albumArtist: string;
+  artists: string[];
+  genres: string[];
+  songs: Song[];
+}
 
 async function useParseFile(filePath: string) {
   return (await importMusicMetadata())(filePath);
 }
 
-export const loadSongs = (app: express.Application) => {
-  const pathToMd5 = new Map();
-  let filePromises: Promise<{ md5: string; path: string }>[] = [];
+export const loadSongs = (app: express.Application): Promise<Album[]> => {
+  let filePromises: Promise<{ md5: string; filePath: string }>[] = [];
 
   return processPaths([
     path.resolve(app.locals.__dirname, process.env.MUSIC_DIRECTORY as string),
-  ]).then(() => {
-    console.log("finished processing all paths!");
-    return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));
-  });
+  ]).then(() => Promise.all(filePromises).then((md5s) => processMd5s(app, md5s)));
 
   function processPaths(
     pathsInMusic: fs.Dirent[] | string[],
@@ -44,7 +76,9 @@ export const loadSongs = (app: express.Application) => {
         tempPaths.push(handleDir(filePath, parentDir));
       } else if (filePath.isFile() || filePath.isSymbolicLink()) {
         const actualFilePath = path.join(parentDir, filePath.name);
-        filePromises.push(getMd5(actualFilePath).then((md5) => ({ md5, path: actualFilePath })));
+        filePromises.push(
+          getMd5(actualFilePath).then((md5) => ({ md5, filePath: actualFilePath }))
+        );
       }
     }
 
@@ -69,22 +103,81 @@ export const loadSongs = (app: express.Application) => {
   }
 };
 
-function processMd5s(app: express.Application, md5s: { md5: string; path: string }[]) {
-  app.locals.songs = [];
+function getAlbumFromRows(app: express.Application, rows: innerJoinReturn[]): Album {
+  return {
+    name: rows[0].albums.name ?? "Unknown Album Name",
+    yearReleased: rows[0].albums.year || 1970,
+    albumArtist:
+      (rows[0].albums.albumArtist && findArtistName(rows, rows[0].albums.albumArtist)) ||
+      "Unknown Artist Name",
+    artists: rows.map((row: innerJoinReturn) => row.artists.name),
+    genres: rows.map((row: innerJoinReturn) => row.genres.name),
+    songs: [rows[0].songs],
+  };
+}
 
-  md5s.forEach(async ({ md5, path }) => {
-    const songList = await app.locals.db.select().from(songs).where(eq(songs.md5, md5));
-
-    if (songList.length === 0) {
-      app.locals.songs.push(getSongInfo(app, path, md5));
-    } else {
-      app.locals.songs.push(songList[0]);
+function findArtistName(artistList: innerJoinReturn[], artistId: string): string {
+  for (let i = 0; i < artistList.length; i++) {
+    if (artistList[i].artists.id === artistId) {
+      return artistList[i].artists.name;
     }
+  }
+  return "Artist not found";
+}
+
+function processMd5s(
+  app: express.Application,
+  md5s: { md5: string; filePath: string }[]
+): Promise<Album[]> {
+  const allSongs: Promise<Album | boolean>[] = [];
+  const allUnprocessedSongs: Promise<Album | boolean>[] = [];
+
+  md5s.forEach(async ({ md5, filePath }) => {
+    app.locals.db
+      .select()
+      .from(songs)
+      .innerJoin(albums, eq(songs.albumId, albums.id))
+      .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+      .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
+      .innerJoin(genres, eq(albumGenres.genreId, genres.id))
+      .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+      .then((rows: innerJoinReturn[]) => {
+        if (rows.length === 0) {
+          allUnprocessedSongs.push(getSongInfo(app, filePath, md5));
+
+          // TODO: use a .then on the getSongInfo to insert it into the database
+          // And once it's in the database, then we don't have to worry about it
+          // And we can just return that 'Albums object'
+        } else {
+          allSongs.push(Promise.resolve(getAlbumFromRows(app, rows)));
+        }
+      });
   });
 
-  Promise.all(app.locals.songs)
-    .then((res) => res.filter((val) => !!val))
-    .then((res) => (app.locals.songs = res));
+  return Promise.all(allSongs)
+    .then((res) => res.filter((val) => typeof val !== "boolean"))
+    .then((res) => (app.locals.songs = res))
+    .then((songs) => songs as unknown as Album[])
+    .then((songs: Album[]) => {
+      return new Promise((resolve, reject) => {
+        Promise.all(allUnprocessedSongs)
+          .then(() => {
+            // process the unprocessed songs in here.
+            // Add them to the db
+            // And then add them to the songs array
+            // And eventually resolve the array of songs.
+            // Processing includes combining album objects together.
+            // Eventually, we'd want one album object per album with the same number
+            // of songs within the album as song objects on the album.
+            // So the constraint which two albums are equal are if: album name is equal and so is the albumArtist
+          })
+          .then(() => {
+            //should have the songs in here at this point.
+            // So just add them to the original songs array and just resolve that.
+          })
+          .catch((err) => reject(err));
+      });
+    });
 }
 
 function handleDir(
@@ -109,8 +202,11 @@ function getMd5(filePath: string) {
   return md5File(filePath);
 }
 
-function getSongInfo(app: express.Application, filePath: string, md5: string) {
-  console.log("getting song info for", filePath);
+function getSongInfo(
+  app: express.Application,
+  filePath: string,
+  md5: string
+): Promise<Album | boolean> {
   return new Promise(async (resolve, reject) => {
     const fileOpened: number = await new Promise((resolve, reject) =>
       fs.open(filePath, (err, fd) => {
@@ -133,15 +229,41 @@ function getSongInfo(app: express.Application, filePath: string, md5: string) {
         );
         let tags = useParseFile(filePath).then((tags) => tags.common);
 
-        resolve(
-          Promise.all([duration, tags]).then(async ([duration, tags]) => {
-            await processTags(app, tags, md5);
-            console.log("music info for:", filePath, "below:");
-            console.log("duration:", duration, "tags:", tags);
-            console.log(Object.keys(tags));
-            return [duration, tags];
-          })
-        );
+        Promise.all([duration, tags]).then(async ([duration, tags]) => {
+          const imageProcessedAndSaved = processImageFromTags(app, tags, md5);
+          const audioFileOptimized = optimizeAudioFile(app, filePath, md5);
+          const albumArtist =
+            tags.albumartist ||
+            tags.artist ||
+            (tags.artists?.length && tags.artists[0]) ||
+            "No artist name given";
+          console.log("fullpath", filePath);
+          const albumObj: Album = {
+            name: tags.album || "No Album Name Given",
+            yearReleased: tags.originalyear || tags.year || 1970,
+            albumArtist: albumArtist,
+            artists: (!!tags.artists?.length?.valueOf() && tags.artists) || [albumArtist],
+            genres: tags.genre || ["Genre Missing"],
+            songs: [
+              {
+                md5,
+                path: path.relative(
+                  path.resolve(app.locals.__dirname, process.env.MUSIC_DIRECTORY as string),
+                  path.resolve(filePath)
+                ),
+                duration: duration || 10000,
+                track: tags.track.no || 0,
+                lyrics: tags.lyrics || [
+                  "No lyrics available for this song. Consider adding them with an ID3 tag editor!",
+                ],
+                diskCharacter: tags.disk.no || 0,
+              },
+            ],
+          };
+          return Promise.all([imageProcessedAndSaved, audioFileOptimized]).then(() =>
+            resolve(albumObj)
+          );
+        });
       } catch (err) {
         reject(err);
       }
@@ -149,14 +271,14 @@ function getSongInfo(app: express.Application, filePath: string, md5: string) {
   });
 }
 
-async function processTags(app: express.Application, tags: ICommonTagsResult, md5: string) {
+async function processImageFromTags(
+  app: express.Application,
+  tags: ICommonTagsResult,
+  md5: string
+) {
   if (tags.picture?.length && tags.picture.length > 0) {
     const newImage = await sharp(tags.picture[0].data).resize(256).jpeg().toBuffer();
-    const streamingPath = path.resolve(
-      __dirname,
-      process.env.STREAMING_DIR as string,
-      md5 + ".jpg"
-    );
+    const streamingPath = getPath(app, md5, "jpg");
     fs.writeFile(streamingPath, newImage, (err) => {
       if (err) {
         console.log("Error occurred when trying to write new image to disk:", err);
@@ -165,4 +287,28 @@ async function processTags(app: express.Application, tags: ICommonTagsResult, md
       }
     });
   }
+}
+
+function getPath(app: express.Application, md5: string, ext: string) {
+  return path.resolve(app.locals.__dirname, process.env.STREAMING_DIR as string, md5 + "." + ext);
+}
+
+function optimizeAudioFile(app: express.Application, filePath: PathLike, md5: string) {
+  const streamingPath = getPath(app, md5, "mp4");
+  return new Promise<void>((resolve, reject) => {
+    ffmpeg(filePath as string)
+      .withNoVideo()
+      .withAudioCodec("aac")
+      .withAudioBitrate(192)
+      .output(streamingPath)
+      .on("end", () => {
+        console.log("finished converting", filePath, "to", streamingPath);
+        resolve();
+      })
+      .on("error", (err) => {
+        console.log("An error occurred when trying to convert the audio file:", err);
+        reject(err);
+      })
+      .run();
+  });
 }

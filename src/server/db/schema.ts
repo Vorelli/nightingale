@@ -12,8 +12,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core/index.js";
 import { drizzle } from "drizzle-orm/node-postgres/index.js";
-import { sql } from "drizzle-orm/index.js";
+import { InferModel, sql } from "drizzle-orm/index.js";
 import pg from "pg";
+import { eq, or } from "drizzle-orm/expressions";
 const { Pool } = pg;
 
 const pool = new Pool({
@@ -86,7 +87,10 @@ export const songs = pgTable(
   {
     md5: varchar("md5", { length: 32 }),
     path: text("path"),
-    duration: bigint("duration", { mode: "bigint" }),
+    duration: integer("duration"),
+    track: integer("track"),
+    diskCharacter: integer("diskCharacter"),
+    lyrics: text("lyrics").array(),
     albumId: uuid("albumId").notNull(),
   },
   (songs) => ({
@@ -140,5 +144,14 @@ export const session = pgTable(
 );
 
 const db = drizzle(pool);
+
+export type Artists = InferModel<typeof artists>;
+export type Albums = InferModel<typeof albums>;
+export type AlbumGenres = InferModel<typeof albumGenres>;
+export type AlbumArtists = InferModel<typeof albumArtists>;
+export type Songs = InferModel<typeof songs>;
+export type Genres = InferModel<typeof genres>;
+export type Playlists = InferModel<typeof playlists>;
+export type PlaylistSongs = InferModel<typeof playlistSongs>;
 
 export { pool, db };
