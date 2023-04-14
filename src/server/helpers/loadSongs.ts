@@ -14,6 +14,15 @@ import {
   songs,
   Songs,
   Genres,
+  NewAlbumArtists,
+  NewAlbums,
+  NewGenres,
+  NewAlbumGenres,
+  NewSongs,
+  NewArtists,
+  ReturningSongs,
+  ReturningArtists,
+  ReturningGenres,
 } from "../db/schema.js";
 import { eq } from "drizzle-orm/expressions.js";
 import path from "path";
@@ -22,7 +31,20 @@ import { isAudio } from "./isAudio.js";
 import { importMusicMetadata } from "./audioMetadata.js";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg/index.js";
-import { ICommonTagsResult } from "music-metadata";
+import { IAudioMetadata, ICommonTagsResult } from "music-metadata";
+import { PgInsert, PgTable, boolean } from "drizzle-orm/pg-core/index.js";
+import { NodePgDatabase } from "drizzle-orm/node-postgres/driver.js";
+import { QueryResult } from "pg";
+import { Album, Song } from "../types/types.js";
+import {
+  getAlbumToInsert,
+  getArtistsToInsert,
+  getGenresToInsert,
+  getSongsToInsert,
+  getAlbumArtistsToInsert,
+  getAlbumGenresToInsert,
+} from "./dbHelpers.js";
+import { sql } from "drizzle-orm";
 
 interface innerJoinReturn {
   songs: Songs;
@@ -33,29 +55,11 @@ interface innerJoinReturn {
   albumGenres: AlbumGenres;
 }
 
-interface Song {
-  md5: string | null;
-  path: string | null;
-  duration: number | null;
-  track: number | null;
-  lyrics: string[] | null;
-  diskCharacter: number | null;
-}
-
-interface Album {
-  name: string;
-  yearReleased: number;
-  albumArtist: string;
-  artists: string[];
-  genres: string[];
-  songs: Song[];
-}
-
 async function useParseFile(filePath: string) {
   return (await importMusicMetadata())(filePath);
 }
 
-export const loadSongs = (app: express.Application): Promise<Album[]> => {
+export const loadSongs = (app: express.Application): Promise<string[]> => {
   let filePromises: Promise<{ md5: string; filePath: string }>[] = [];
 
   return processPaths([
@@ -77,7 +81,7 @@ export const loadSongs = (app: express.Application): Promise<Album[]> => {
       } else if (filePath.isFile() || filePath.isSymbolicLink()) {
         const actualFilePath = path.join(parentDir, filePath.name);
         filePromises.push(
-          getMd5(actualFilePath).then((md5) => ({ md5, filePath: actualFilePath }))
+          md5File(actualFilePath).then((md5) => ({ md5, filePath: actualFilePath }))
         );
       }
     }
@@ -113,6 +117,7 @@ function getAlbumFromRows(app: express.Application, rows: innerJoinReturn[]): Al
     artists: rows.map((row: innerJoinReturn) => row.artists.name),
     genres: rows.map((row: innerJoinReturn) => row.genres.name),
     songs: [rows[0].songs],
+    inDb: true,
   };
 }
 
@@ -128,56 +133,190 @@ function findArtistName(artistList: innerJoinReturn[], artistId: string): string
 function processMd5s(
   app: express.Application,
   md5s: { md5: string; filePath: string }[]
-): Promise<Album[]> {
-  const allSongs: Promise<Album | boolean>[] = [];
-  const allUnprocessedSongs: Promise<Album | boolean>[] = [];
+): Promise<string[]> {
+  return Promise.all(
+    md5s.map(async ({ md5, filePath }) => {
+      return new Promise<boolean | Album>((resolve, reject) => {
+        app.locals.db
+          .select()
+          .from(songs)
+          .innerJoin(albums, eq(songs.albumId, albums.id))
+          .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+          .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
+          .innerJoin(genres, eq(albumGenres.genreId, genres.id))
+          .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+          .where(eq(songs.md5, md5))
+          .then((rows: innerJoinReturn[]) => {
+            if (rows.length === 0) {
+              resolve(getSongInfo(app, filePath, md5));
 
-  md5s.forEach(async ({ md5, filePath }) => {
-    app.locals.db
-      .select()
-      .from(songs)
-      .innerJoin(albums, eq(songs.albumId, albums.id))
-      .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
-      .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
-      .innerJoin(genres, eq(albumGenres.genreId, genres.id))
-      .innerJoin(artists, eq(albumArtists.artistId, artists.id))
-      .then((rows: innerJoinReturn[]) => {
-        if (rows.length === 0) {
-          allUnprocessedSongs.push(getSongInfo(app, filePath, md5));
-
-          // TODO: use a .then on the getSongInfo to insert it into the database
-          // And once it's in the database, then we don't have to worry about it
-          // And we can just return that 'Albums object'
-        } else {
-          allSongs.push(Promise.resolve(getAlbumFromRows(app, rows)));
-        }
+              // TODO: use a .then on the getSongInfo to insert it into the database
+              // And once it's in the database, then we don't have to worry about it
+              // And we can just return that 'Albums object'
+            } else {
+              resolve(getAlbumFromRows(app, rows));
+            }
+          })
+          .catch((error: any) => {
+            console.log("encountered error when trying to lookup songs", error);
+            return reject(error);
+          });
       });
-  });
+    })
+  )
+    .then((songList) => songList.filter((song) => typeof song !== "boolean") as Album[])
+    .then((songList: Album[]) => {
+      // songList is an array of Albums or booleans
+      // could be in the database or could need to be added.
+      // Does it matter if I just spam insert a bunch of data that already exists?
+      const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
+      const mergedAlbums: Map<string, Album> = new Map();
+      for (let i = 0; i < songsNotInDb.length; i++) {
+        const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
+        let song = mergedAlbums.get(normalizedName);
+        if (!song?.name) {
+          mergedAlbums.set(normalizedName, JSON.parse(JSON.stringify(songsNotInDb[i])));
+        } else {
+          song?.songs.push(songsNotInDb[i].songs[0]);
+        }
+      }
+      console.log("merged albums:", mergedAlbums);
 
-  return Promise.all(allSongs)
-    .then((res) => res.filter((val) => typeof val !== "boolean"))
-    .then((res) => (app.locals.songs = res))
-    .then((songs) => songs as unknown as Album[])
-    .then((songs: Album[]) => {
+      // now that albums are merged into a similar sort of grouping, we can insert into the database.
+      var inserts: Promise<void>[] = [];
       return new Promise((resolve, reject) => {
-        Promise.all(allUnprocessedSongs)
-          .then(() => {
-            // process the unprocessed songs in here.
-            // Add them to the db
-            // And then add them to the songs array
-            // And eventually resolve the array of songs.
-            // Processing includes combining album objects together.
-            // Eventually, we'd want one album object per album with the same number
-            // of songs within the album as song objects on the album.
-            // So the constraint which two albums are equal are if: album name is equal and so is the albumArtist
-          })
-          .then(() => {
-            //should have the songs in here at this point.
-            // So just add them to the original songs array and just resolve that.
-          })
-          .catch((err) => reject(err));
+        var mergedAlbumsKeys = Array.from(mergedAlbums.keys());
+        console.log("keys", mergedAlbumsKeys);
+        for (var i = 0; i < mergedAlbumsKeys.length; i++) {
+          inserts.push(insertIntoDb(app, mergedAlbums.get(mergedAlbumsKeys[i]) as Album));
+        }
+        console.log("here are the inserts", inserts, inserts.length);
+        Promise.all(inserts).then(() => {
+          console.log("done doing all inserts into db! now returning all md5s!");
+          console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
+          resolve(songList.map((album) => album.songs.map((s) => s.md5)).flat());
+        });
+        //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
       });
     });
+}
+
+/* function insertOrSelect(
+  db: NodePgDatabase,
+  table: PgTable<any>,
+  values: { [key: string]: string }[],
+  sqlValues: string,
+  returnObj: object,
+  idName: string = "id"
+) {
+  return values.map((val) => {
+    db.execute(sql`WITH new_row AS (
+        INSERT INTO ${table} (${sqlValues})
+        SELECT ${val}
+        WHERE NOT EXISTS(SELECT * FROM ${table} WHERE ${idName}=${val[idName]})
+        RETURNING *
+        )
+        SELECT * FROM new_row
+        UNION
+        SELECT * FROM ${table} WHERE ${idName}=${val[idName]}`);
+  });
+} */
+
+function insertIntoDb(app: express.Application, album: Album): Promise<void> {
+  const db: NodePgDatabase = app.locals.db;
+
+  // let's make sure artists and genres don't exist.
+  // We'll do a lookup for both artist by name and genre by name
+  console.log("looking up artists", album.artists);
+  console.log("looking up genres", album.genres);
+
+  const artistLookUps = album.artists.map((artist) =>
+    db.select().from(artists).where(eq(artists.name, artist)).execute()
+  );
+  const genreLookUps = album.genres.map((genre) =>
+    db.select().from(genres).where(eq(genres.name, genre)).execute()
+  );
+
+  return Promise.all(artistLookUps)
+    .then((artistsReturned: ReturningArtists[][]) => {
+      return Promise.all(genreLookUps).then((genresReturned: ReturningGenres[][]) => {
+        console.log(artistsReturned.length);
+        console.log(artistsReturned[0]);
+        artistsReturned.forEach((a) => a.forEach((b) => console.log(b)));
+        return Promise.all([Promise.all(artistLookUps), Promise.all(genreLookUps)]);
+      });
+    })
+    .then(async (returnFromDb: [ReturningArtists[][], ReturningGenres[][]]) => {
+      const returnedArtistNames = (returnFromDb[0] as ReturningArtists[][]).map((a) => a[0].name);
+      const artistsToInsert = album.artists
+        .filter((artist: string) => !returnedArtistNames.includes(artist))
+        .map((name: string) => ({ name } as NewArtists));
+
+      const returnedGenreNames = (returnFromDb[1] as ReturningGenres[][]).map((g) => g[0].name);
+      const genresToInsert = album.genres
+        .filter((genre: string) => !returnedGenreNames.includes(genre))
+        .map((name: string) => ({ name } as NewGenres));
+
+      console.log("artistsToInsert", artistsToInsert, "genresToInsert", genresToInsert);
+
+      const artistInsert =
+        artistsToInsert.length > 0
+          ? await db.insert(artists).values(artistsToInsert).returning({ artistId: artists.id })
+          : new Array();
+      const genreInsert =
+        genresToInsert.length > 0
+          ? await db.insert(genres).values(genresToInsert).returning({ genreId: genres.id })
+          : new Array();
+
+      const returnedArtistIds = (returnFromDb[0] as ReturningArtists[][]).map((a) => ({
+        artistId: a[0].id,
+      }));
+      const returnedGenreIds = (returnFromDb[1] as ReturningGenres[][]).map((a) => {
+        console.log(a);
+        return { genreId: a[0].id };
+      });
+
+      console.log(genreInsert, returnedGenreIds);
+      return Promise.all([
+        artistInsert.concat(...returnedArtistIds),
+        genreInsert.concat(...returnedGenreIds),
+      ]);
+    })
+    .then((returnedInserts: [{ artistId: string }[], { genreId: string }[]]) => {
+      console.log("return after first two inserts", returnedInserts);
+      var albumToInsert = getAlbumToInsert(album, returnedInserts[0][0].artistId);
+      var inserts = db.insert(albums).values(albumToInsert).returning({ albumId: albums.id });
+      return Promise.all([inserts]).then((albumReturns: [{ albumId: string }[]]) => {
+        return Promise.all([returnedInserts[0], returnedInserts[1], albumReturns[0]]);
+      });
+    })
+    .then(
+      (returnedInserts: [{ artistId: string }[], { genreId: string }[], { albumId: string }[]]) => {
+        var songsToInsert = getSongsToInsert(album, returnedInserts[2][0].albumId);
+        var albumArtistsToInsert = getAlbumArtistsToInsert(
+          returnedInserts[2][0].albumId,
+          returnedInserts[0].map((obj) => obj.artistId)
+        );
+        var albumGenresToInsert = getAlbumGenresToInsert(
+          returnedInserts[2][0].albumId,
+          returnedInserts[1].map((o) => o.genreId)
+        );
+        console.log("albumGenres To insert", albumGenres);
+        console.log("songs to insert", songsToInsert);
+        return Promise.all([
+          db.insert(songs).values(songsToInsert),
+          db.insert(albumArtists).values(albumArtistsToInsert),
+          db.insert(albumGenres).values(albumGenresToInsert),
+        ]);
+      }
+    )
+    .then((results) => {
+      console.log("results from the inserts", results);
+      return undefined;
+    })
+    .catch((err) => {
+      console.log("error encountered when trying to insert songs into the db", err);
+    }); //(returnedArtists: Artists[]), (returnedGenres: Genres[])]);
 }
 
 function handleDir(
@@ -198,24 +337,27 @@ function handleDir(
   });
 }
 
-function getMd5(filePath: string) {
-  return md5File(filePath);
-}
-
-function getSongInfo(
+var numRunners = 0;
+const runnerLimit = 24;
+async function getSongInfo(
   app: express.Application,
   filePath: string,
   md5: string
 ): Promise<Album | boolean> {
-  return new Promise(async (resolve, reject) => {
-    const fileOpened: number = await new Promise((resolve, reject) =>
+  while (numRunners >= runnerLimit) {
+    await new Promise<void>((r) => setTimeout(() => r(), 100));
+  }
+
+  return new Promise<Album | boolean>(async (resolve, reject) => {
+    numRunners++;
+    const fileD: number = await new Promise((resolve, reject) =>
       fs.open(filePath, (err, fd) => {
         if (err) reject(err);
         else resolve(fd);
       })
     );
 
-    fs.read(fileOpened, Buffer.alloc(16), 0, 16, 0, async (err, bytesRead, data) => {
+    fs.read(fileD, Buffer.alloc(16), 0, 16, 0, async (err, _bytesRead, data) => {
       if (err) {
         reject(err);
       }
@@ -232,43 +374,74 @@ function getSongInfo(
         Promise.all([duration, tags]).then(async ([duration, tags]) => {
           const imageProcessedAndSaved = processImageFromTags(app, tags, md5);
           const audioFileOptimized = optimizeAudioFile(app, filePath, md5);
-          const albumArtist =
-            tags.albumartist ||
-            tags.artist ||
-            (tags.artists?.length && tags.artists[0]) ||
-            "No artist name given";
-          console.log("fullpath", filePath);
-          const albumObj: Album = {
-            name: tags.album || "No Album Name Given",
-            yearReleased: tags.originalyear || tags.year || 1970,
-            albumArtist: albumArtist,
-            artists: (!!tags.artists?.length?.valueOf() && tags.artists) || [albumArtist],
-            genres: tags.genre || ["Genre Missing"],
-            songs: [
-              {
-                md5,
-                path: path.relative(
-                  path.resolve(app.locals.__dirname, process.env.MUSIC_DIRECTORY as string),
-                  path.resolve(filePath)
-                ),
-                duration: duration || 10000,
-                track: tags.track.no || 0,
-                lyrics: tags.lyrics || [
-                  "No lyrics available for this song. Consider adding them with an ID3 tag editor!",
-                ],
-                diskCharacter: tags.disk.no || 0,
-              },
-            ],
-          };
-          return Promise.all([imageProcessedAndSaved, audioFileOptimized]).then(() =>
-            resolve(albumObj)
-          );
+          const albumObj: Album = craftAlbumObj(tags, md5, app, filePath, duration);
+          return Promise.all([imageProcessedAndSaved, audioFileOptimized]).then(() => {
+            resolve(albumObj);
+          });
         });
       } catch (err) {
         reject(err);
       }
     });
+  }).then((res) => {
+    numRunners--;
+    return res;
   });
+}
+
+function craftAlbumObj(
+  tags: ICommonTagsResult,
+  md5: string,
+  app: express.Application,
+  filePath: string,
+  duration: number
+): Album {
+  const albumArtist =
+    tags.albumartist ||
+    tags.artist ||
+    (tags.artists?.length && tags.artists[0]) ||
+    "No artist name found. Add one using an ID3 editor!";
+
+  return {
+    name: tags.album || "No Album Name Given. Add one using an ID3 editor!",
+    yearReleased: tags.originalyear || tags.year || 1970,
+    albumArtist: albumArtist,
+    artists: (!!tags.artists?.length?.valueOf() && tags.artists) || [albumArtist],
+    genres: tags.genre || ["Genre Missing"],
+    songs: [
+      {
+        md5,
+        path: path.relative(
+          path.resolve(app.locals.__dirname, process.env.MUSIC_DIRECTORY as string),
+          path.resolve(filePath)
+        ),
+        duration: duration || 10000,
+        track: tags.track.no || 0,
+        lyrics:
+          (tags.lyrics && formatLyrics(tags.lyrics))?.join("\n") ||
+          "No lyrics available for this song. Consider adding them with an ID3 tag editor!",
+        diskCharacter: tags.disk.no || 0,
+        name: tags.title || "No title available for this song.MD5:" + md5,
+      },
+    ],
+    inDb: false,
+  };
+}
+
+function formatLyrics(lyrics: string[]): string[] {
+  console.log("LENGTH", lyrics.length);
+
+  if (lyrics.length === 1) {
+    let splitWithN = lyrics[0].split("\r\n");
+    console.log("should be first line", splitWithN[0]);
+    return splitWithN;
+  } else {
+    return lyrics;
+  }
+}
+
+function getPath(app: express.Application, md5: string, ext: string) {
+  return path.resolve(app.locals.__dirname, process.env.STREAMING_DIR as string, md5 + "." + ext);
 }
 
 async function processImageFromTags(
@@ -287,10 +460,6 @@ async function processImageFromTags(
       }
     });
   }
-}
-
-function getPath(app: express.Application, md5: string, ext: string) {
-  return path.resolve(app.locals.__dirname, process.env.STREAMING_DIR as string, md5 + "." + ext);
 }
 
 function optimizeAudioFile(app: express.Application, filePath: PathLike, md5: string) {

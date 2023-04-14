@@ -1,5 +1,6 @@
 import {
   bigint,
+  doublePrecision,
   foreignKey,
   index,
   integer,
@@ -85,18 +86,20 @@ export const albumGenres = pgTable(
 export const songs = pgTable(
   "songs",
   {
-    md5: varchar("md5", { length: 32 }),
+    md5: varchar("md5", { length: 32 }).notNull().primaryKey(),
+    name: text("name"),
     path: text("path"),
-    duration: integer("duration"),
+    duration: doublePrecision("duration"),
     track: integer("track"),
     diskCharacter: integer("diskCharacter"),
-    lyrics: text("lyrics").array(),
+    lyrics: text("lyrics"),
     albumId: uuid("albumId").notNull(),
   },
   (songs) => ({
     albumIdFk: foreignKey({ columns: [songs.albumId], foreignColumns: [albums.id] }),
     uniqueIdxMd5: uniqueIndex("unique_idx_md5").on(songs.md5),
     uniqueIdxPath: uniqueIndex("unique_idx_path").on(songs.path),
+    idxMd5: index("idx_md5").on(songs.md5),
   })
 );
 
@@ -153,5 +156,21 @@ export type Songs = InferModel<typeof songs>;
 export type Genres = InferModel<typeof genres>;
 export type Playlists = InferModel<typeof playlists>;
 export type PlaylistSongs = InferModel<typeof playlistSongs>;
+export type NewArtists = InferModel<typeof artists, "insert">;
+export type NewAlbums = InferModel<typeof albums, "insert">;
+export type NewAlbumGenres = InferModel<typeof albumGenres, "insert">;
+export type NewAlbumArtists = InferModel<typeof albumArtists, "insert">;
+export type NewSongs = InferModel<typeof songs, "insert">;
+export type NewGenres = InferModel<typeof genres, "insert">;
+export type NewPlaylists = InferModel<typeof playlists, "insert">;
+export type NewPlaylistSongs = InferModel<typeof playlistSongs, "insert">;
+export type ReturningArtists = InferModel<typeof artists, "select">;
+export type ReturningAlbums = InferModel<typeof albums, "select">;
+export type ReturningAlbumGenres = InferModel<typeof albumGenres, "select">;
+export type ReturningAlbumArtists = InferModel<typeof albumArtists, "select">;
+export type ReturningSongs = InferModel<typeof songs, "select">;
+export type ReturningGenres = InferModel<typeof genres, "select">;
+export type ReturningPlaylists = InferModel<typeof playlists, "select">;
+export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, "select">;
 
 export { pool, db };
