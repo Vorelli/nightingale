@@ -171,6 +171,7 @@ function processMd5s(
       // Does it matter if I just spam insert a bunch of data that already exists?
       const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
       const mergedAlbums: Map<string, Album> = new Map();
+      console.log("songs not in DB", songsNotInDb);
       for (let i = 0; i < songsNotInDb.length; i++) {
         const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
         let song = mergedAlbums.get(normalizedName);
@@ -247,12 +248,19 @@ function insertIntoDb(app: express.Application, album: Album): Promise<void> {
       });
     })
     .then(async (returnFromDb: [ReturningArtists[][], ReturningGenres[][]]) => {
-      const returnedArtistNames = (returnFromDb[0] as ReturningArtists[][]).map((a) => a[0].name);
+      console.log(album.artists, returnFromDb[0]);
+      const returnedArtistNames = (returnFromDb[0] as ReturningArtists[][]).map(
+        (a) => a.length !== 0 && a[0].name
+      );
+      console.log(album.artists.filter((artist: string) => !returnedArtistNames.includes(artist)));
       const artistsToInsert = album.artists
         .filter((artist: string) => !returnedArtistNames.includes(artist))
         .map((name: string) => ({ name } as NewArtists));
 
-      const returnedGenreNames = (returnFromDb[1] as ReturningGenres[][]).map((g) => g[0].name);
+      console.log(returnFromDb[1], album.genres);
+      const returnedGenreNames = (returnFromDb[1] as ReturningGenres[][]).map(
+        (g) => g.length !== 0 && g[0].name
+      );
       const genresToInsert = album.genres
         .filter((genre: string) => !returnedGenreNames.includes(genre))
         .map((name: string) => ({ name } as NewGenres));
@@ -269,11 +277,11 @@ function insertIntoDb(app: express.Application, album: Album): Promise<void> {
           : new Array();
 
       const returnedArtistIds = (returnFromDb[0] as ReturningArtists[][]).map((a) => ({
-        artistId: a[0].id,
+        artistId: a.length !== 0 && a[0].id,
       }));
       const returnedGenreIds = (returnFromDb[1] as ReturningGenres[][]).map((a) => {
         console.log(a);
-        return { genreId: a[0].id };
+        return { genreId: a.length !== 0 && a[0].id };
       });
 
       console.log(genreInsert, returnedGenreIds);
@@ -375,7 +383,8 @@ async function getSongInfo(
           const imageProcessedAndSaved = processImageFromTags(app, tags, md5);
           const audioFileOptimized = optimizeAudioFile(app, filePath, md5);
           const albumObj: Album = craftAlbumObj(tags, md5, app, filePath, duration);
-          return Promise.all([imageProcessedAndSaved, audioFileOptimized]).then(() => {
+          return Promise.all([]).then(() => {
+            //imageProcessedAndSaved, audioFileOptimized]).then(() => {
             resolve(albumObj);
           });
         });
