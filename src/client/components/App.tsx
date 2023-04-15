@@ -1,20 +1,26 @@
-import { createSignal, createEffect } from "solid-js";
+import React, { useState, useEffect } from "react";
+import Desktop from "./Desktop";
+import { useDispatch } from "react-redux";
+import { songsRequest, songsRequestSuccess } from "../redux/reducers/songsReducer";
 
 const App = () => {
-  const [count, setCount] = createSignal(0);
+  const [count, setCount] = useState(0);
+  const dispatch = useDispatch();
+  const URL = "https://toscanonatale.dev";
 
-  createEffect(() => {
-    console.log("Count:", count());
+  useEffect(() => {
+    dispatch(songsRequest());
+    fetch(URL + "/api/songs")
+      .then((data) => data.json())
+      .then((data) => dispatch(songsRequestSuccess(data)));
+  });
+
+  useEffect(() => {
+    console.log("Count:", count);
   });
   console.log("hello");
 
-  return (
-    <div>
-      <h1>Hello World!</h1>
-      <p>Count: {count()}</p>
-      <button onClick={() => setCount(count() + 1)}>Increment</button>
-    </div>
-  );
+  return <Desktop />;
 };
 
 export default App;
