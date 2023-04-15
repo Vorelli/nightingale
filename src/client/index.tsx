@@ -1,5 +1,9 @@
-import { render } from "solid-js/web";
+import React from "react";
+import { createRoot } from "react-dom/client";
 import App from "./components/App";
+import "./index.css";
+import store from "./redux/store";
+import { Provider } from "react-redux";
 
 document.addEventListener("DOMContentLoaded", () => {
   while (document.getElementById("app")?.firstChild) {
@@ -7,9 +11,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!app) {
       return;
     } else {
-      app.removeChild(app.firstChild);
+      if (app.firstChild) app.removeChild(app.firstChild);
     }
   }
 
-  render(App, document.getElementById("app"));
+  const rootElement: HTMLElement = document.getElementById("app") as HTMLElement;
+  const root = createRoot(rootElement);
+  root.render(
+    <Provider store={store}>
+      <App />
+    </Provider>
+  );
 });

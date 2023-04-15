@@ -32,7 +32,13 @@ import { importMusicMetadata } from "./audioMetadata.js";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg/index.js";
 import { IAudioMetadata, ICommonTagsResult } from "music-metadata";
-import { PgInsert, PgTable, boolean } from "drizzle-orm/pg-core/index.js";
+import {
+  AnyPgTable,
+  PgInsert,
+  PgTable,
+  SelectedFieldsFlat,
+  boolean,
+} from "drizzle-orm/pg-core/index.js";
 import { NodePgDatabase } from "drizzle-orm/node-postgres/driver.js";
 import { QueryResult } from "pg";
 import { Album, Song } from "../types/types.js";
@@ -60,16 +66,17 @@ async function useParseFile(filePath: string) {
 }
 
 export const loadSongs = (app: express.Application): Promise<string[]> => {
-  let filePromises: Promise<{ md5: string; filePath: string }>[] = [];
-
-  return processPaths([
-    path.resolve(app.locals.__dirname, process.env.MUSIC_DIRECTORY as string),
-  ]).then(() => Promise.all(filePromises).then((md5s) => processMd5s(app, md5s)));
+  const musicDir = process.env.MUSIC_DIRECTORY as string;
+  return processPaths([path.resolve(app.locals.__dirname, musicDir)]).then((filePromises) => {
+    console.log("inside the .then", filePromises);
+    return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));
+  });
 
   function processPaths(
     pathsInMusic: fs.Dirent[] | string[],
     parentDir = ""
-  ): Promise<void | string> {
+  ): Promise<{ md5: string; filePath: string }[]> {
+    let filePromises: Promise<{ md5: string; filePath: string }>[] = [];
     console.log("parentDir:", parentDir);
 
     const tempPaths: Promise<{ p: string; files: fs.Dirent[] }>[] = [];
@@ -80,30 +87,43 @@ export const loadSongs = (app: express.Application): Promise<string[]> => {
         tempPaths.push(handleDir(filePath, parentDir));
       } else if (filePath.isFile() || filePath.isSymbolicLink()) {
         const actualFilePath = path.join(parentDir, filePath.name);
+        console.log("actualFilePath", actualFilePath);
         filePromises.push(
-          md5File(actualFilePath).then((md5) => ({ md5, filePath: actualFilePath }))
+          md5File(actualFilePath).then((md5) => {
+            console.log("this is the md5", md5, actualFilePath);
+            return { md5, filePath: actualFilePath };
+          })
         );
       }
     }
 
-    return tempPaths.length === 0
-      ? Promise.resolve()
-      : Promise.all(tempPaths).then((directories) => processDirectories(parentDir, directories));
+    return new Promise((resolve, reject) => {
+      Promise.all(tempPaths)
+        .then((dirs) => processDirectories(parentDir, dirs))
+        .then((files) => Promise.all([...filePromises, ...files]))
+        .then((files: { md5: string; filePath: string }[]) => {
+          return resolve(files);
+        });
+    });
   }
 
-  function processDirectories(parentDir: string, directories: { p: string; files: fs.Dirent[] }[]) {
-    const pathsProcessing = [];
+  function processDirectories(
+    parentDir: string,
+    directories: { p: string; files: fs.Dirent[] }[]
+  ): Promise<
+    {
+      md5: string;
+      filePath: string;
+    }[]
+  > {
+    const pathsProcessing: Promise<{ md5: string; filePath: string }[]>[] = [];
 
     for (let i = 0; i < directories.length; i++) {
       const newPath = path.join(parentDir, directories[i].p);
       pathsProcessing.push(processPaths(directories[i].files, newPath));
     }
 
-    return Promise.all(pathsProcessing)
-      .then(() => Promise.resolve())
-      .catch((err) => {
-        console.log("error encountered when processing paths:", err);
-      });
+    return Promise.all(pathsProcessing).then((paths) => paths.flat());
   }
 };
 
@@ -134,6 +154,7 @@ function processMd5s(
   app: express.Application,
   md5s: { md5: string; filePath: string }[]
 ): Promise<string[]> {
+  console.log("these are the md5s received", md5s);
   return Promise.all(
     md5s.map(async ({ md5, filePath }) => {
       return new Promise<boolean | Album>((resolve, reject) => {
@@ -186,16 +207,16 @@ function processMd5s(
       // now that albums are merged into a similar sort of grouping, we can insert into the database.
       var inserts: Promise<void>[] = [];
       return new Promise((resolve, reject) => {
-        var mergedAlbumsKeys = Array.from(mergedAlbums.keys());
-        console.log("keys", mergedAlbumsKeys);
+        /* var mergedAlbumsKeys = Array.from(mergedAlbums.keys());
+
         for (var i = 0; i < mergedAlbumsKeys.length; i++) {
           inserts.push(insertIntoDb(app, mergedAlbums.get(mergedAlbumsKeys[i]) as Album));
-        }
+        } */
         console.log("here are the inserts", inserts, inserts.length);
-        Promise.all(inserts).then(() => {
+        insertAllIntoDb(app, mergedAlbums).then(() => {
           console.log("done doing all inserts into db! now returning all md5s!");
           console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
-          resolve(songList.map((album) => album.songs.map((s) => s.md5)).flat());
+          resolve(songList.flatMap((album) => album.songs.map((s) => s.md5)));
         });
         //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
       });
@@ -223,6 +244,98 @@ function processMd5s(
   });
 } */
 
+function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
+  const uniqueFromObj: string[] = [];
+  Array.from(objs.values()).forEach((obj) =>
+    obj[key].forEach((curr: string) => {
+      if (!uniqueFromObj.includes(curr) && !seen.includes(curr)) {
+        uniqueFromObj.push(curr);
+      }
+    })
+  );
+  return uniqueFromObj;
+}
+
+function insertAllIntoDb(app: express.Application, albums: Map<string, Album>): Promise<void> {
+  const uniqueArtistNames = new Set(Array.from(albums.values()).flatMap((a) => a.artists));
+  const uniqueGenres = new Set(Array.from(albums.values()).flatMap((a) => a.genres));
+
+  const db: NodePgDatabase = app.locals.db;
+  const artistLookUps = Array.from(albums.values()).flatMap((album) =>
+    album.artists.map((artist) =>
+      db.select().from(artists).where(eq(artists.name, artist)).execute()
+    )
+  );
+  const genreLookUps = Array.from(albums.values()).flatMap((album) =>
+    album.genres.map((genre) => db.select().from(genres).where(eq(genres.name, genre)).execute())
+  );
+
+  return Promise.all([Promise.all(artistLookUps), Promise.all(genreLookUps)]).then(
+    async (returnFromDb: [ReturningArtists[][], ReturningGenres[][]]) => {
+      const uniqueElements = (arr: string[]) => [...new Set(arr)];
+
+      const uniqueCol = (
+        table: AnyPgTable,
+        col: string,
+        existingArr: any[],
+        tag: string = "name"
+      ) => {
+        return uniqueFromObject(albums, col, existingArr).map((val: any) => ({ [tag]: val }));
+      };
+
+      const insertIntoTable = (
+        table: AnyPgTable,
+        values: any[],
+        returningObj: SelectedFieldsFlat
+      ): Promise<any> => {
+        return values.length === 0
+          ? Promise.resolve([])
+          : db.insert(table).values(values).returning(returningObj).execute();
+      };
+
+      const returnedArtistNames = uniqueElements(
+        returnFromDb[0]
+          .map((a) => a.length !== 0 && (a[0].name as string))
+          .filter((a) => typeof a === "string") as string[]
+      );
+
+      const returnedGenreNames = uniqueElements(
+        returnFromDb[1]
+          .map((a) => a.length !== 0 && (a[0].name as string))
+          .filter((a) => typeof a === "string") as string[]
+      );
+
+      const uniqueArtists = uniqueCol(artists, "artists", returnedArtistNames);
+      const uniqueGenres = uniqueCol(genres, "genres", returnedGenreNames);
+      let artistInsert = insertIntoTable(artists, uniqueArtists, { artistId: artists.id });
+      let genreInsert = insertIntoTable(genres, uniqueGenres, { genreId: genres.id });
+
+      const inserts: [{ artistId: string }[], { genreId: string }[]] = await Promise.all([
+        artistInsert,
+        genreInsert,
+      ]);
+
+      const nameToId = (
+        arr: any[],
+        arrTag: string,
+        nameArr: any[],
+        nameArrTag: string
+      ): { [key: string]: string } => {
+        return arr.reduce((acc, cur, i) => {
+          acc[nameArr[i][nameArrTag]] = cur[0][arrTag];
+        }, {} as { [key: string]: string });
+      };
+
+      const artistNameToId = nameToId(inserts[0], "artistId", uniqueArtists, "name");
+      returnFromDb[0].forEach((a) => a.forEach((b) => (artistNameToId[b.name] = b.id)));
+      const genreNameToId = nameToId(inserts[1], "genreId", uniqueGenres, "name");
+      returnFromDb[1].forEach((a) => a.forEach((b) => (genreNameToId[b.name] = b.id)));
+      console.log("artistNameToId", artistNameToId);
+      console.log("genreNameToId", genreNameToId);
+    }
+  );
+}
+
 function insertIntoDb(app: express.Application, album: Album): Promise<void> {
   const db: NodePgDatabase = app.locals.db;
 
@@ -241,29 +354,33 @@ function insertIntoDb(app: express.Application, album: Album): Promise<void> {
   return Promise.all(artistLookUps)
     .then((artistsReturned: ReturningArtists[][]) => {
       return Promise.all(genreLookUps).then((genresReturned: ReturningGenres[][]) => {
-        console.log(artistsReturned.length);
-        console.log(artistsReturned[0]);
         artistsReturned.forEach((a) => a.forEach((b) => console.log(b)));
         return Promise.all([Promise.all(artistLookUps), Promise.all(genreLookUps)]);
       });
     })
     .then(async (returnFromDb: [ReturningArtists[][], ReturningGenres[][]]) => {
-      console.log(album.artists, returnFromDb[0]);
+      console.log("returned from database:", returnFromDb);
       const returnedArtistNames = (returnFromDb[0] as ReturningArtists[][]).map(
         (a) => a.length !== 0 && a[0].name
       );
-      console.log(album.artists.filter((artist: string) => !returnedArtistNames.includes(artist)));
-      const artistsToInsert = album.artists
-        .filter((artist: string) => !returnedArtistNames.includes(artist))
-        .map((name: string) => ({ name } as NewArtists));
 
+      const setOfArtists = new Set<string>();
+      album.artists
+        .filter((artist: string) => !returnedArtistNames.includes(artist))
+        .forEach((name: string) => setOfArtists.add(name));
+      const artistsToInsert = Array.from(setOfArtists).map(
+        (name: string) => ({ name } as NewArtists)
+      );
+
+      const setOfGenres = new Set<string>();
       console.log(returnFromDb[1], album.genres);
       const returnedGenreNames = (returnFromDb[1] as ReturningGenres[][]).map(
         (g) => g.length !== 0 && g[0].name
       );
-      const genresToInsert = album.genres
+      album.genres
         .filter((genre: string) => !returnedGenreNames.includes(genre))
-        .map((name: string) => ({ name } as NewGenres));
+        .forEach((name: string) => setOfGenres.add(name));
+      const genresToInsert = Array.from(setOfGenres).map((name: string) => ({ name } as NewGenres));
 
       console.log("artistsToInsert", artistsToInsert, "genresToInsert", genresToInsert);
 
@@ -310,7 +427,7 @@ function insertIntoDb(app: express.Application, album: Album): Promise<void> {
           returnedInserts[1].map((o) => o.genreId)
         );
         console.log("albumGenres To insert", albumGenres);
-        console.log("songs to insert", songsToInsert);
+        //console.log("songs to insert", songsToInsert);
         return Promise.all([
           db.insert(songs).values(songsToInsert),
           db.insert(albumArtists).values(albumArtistsToInsert),
@@ -438,19 +555,21 @@ function craftAlbumObj(
 }
 
 function formatLyrics(lyrics: string[]): string[] {
-  console.log("LENGTH", lyrics.length);
-
+  return lyrics.length === 1 ? lyrics[0].split("/\r?\n/g") : lyrics;
   if (lyrics.length === 1) {
     let splitWithN = lyrics[0].split("\r\n");
-    console.log("should be first line", splitWithN[0]);
     return splitWithN;
   } else {
     return lyrics;
   }
 }
 
-function getPath(app: express.Application, md5: string, ext: string) {
-  return path.resolve(app.locals.__dirname, process.env.STREAMING_DIR as string, md5 + "." + ext);
+function getPath(app: express.Application, fileName: string, ext: string) {
+  return path.resolve(
+    app.locals.__dirname,
+    process.env.STREAMING_DIR as string,
+    fileName + "." + ext
+  );
 }
 
 async function processImageFromTags(

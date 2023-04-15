@@ -15,29 +15,30 @@ import { logger } from "./middleware/logger.js";
 import { attachPgPool } from "./middleware/attachPool.js";
 import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
+import apiHandler from "./handlers/apiHandler.js";
 
 var options = {
   key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),
-  cert: fs.readFileSync(
-    path.resolve(__dirname, process.env.CERT_PATH as string)
-  ),
+  cert: fs.readFileSync(path.resolve(__dirname, process.env.CERT_PATH as string)),
 };
 var appStart: express.Application = express();
 var httpsServer = https.createServer(options, appStart);
 
-var { app }: { app: express.Application & WithWebsocketMethod } =
-  express_ws(appStart);
+var { app }: { app: express.Application & WithWebsocketMethod } = express_ws(appStart);
 express_ws(app, httpsServer);
 app.locals.db = db;
 app.locals.__dirname = __dirname;
-loadSongs(app).then((_) => "finished processing all files!");
+loadSongs(app)
+  .then((_) => "finished processing all files!")
+  .catch((err) => console.log("error occurred when trying to process paths."));
 
-app.use(attachPgPool(pool));
+app.use(attachPgPool(pool, db));
 app.use(setCorsAndHeaders);
 app.use(sessionsMiddleware);
 app.use(logger);
 
 app.use(express.static(path.join(__dirname, "../public")));
 attachWebsocketRoutes(app);
+app.use("/api", apiHandler);
 
 export { app, httpsServer };

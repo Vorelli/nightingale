@@ -11,17 +11,17 @@ export const isAudio = (buffer: Buffer): boolean => {
     ["M4A"]: "667479704D344120",
     ["MP4"]: "FFF1",
     ["MP2"]: "FFF9",
-    ["MP1/MP3 1"]: "FFE",
-    ["MP1/MP3 2"]: "FFF",
+    ["MP3 1"]: "FFFB",
+    ["MP3 2"]: "FFF3",
+    ["MP3 3"]: "FFF2",
+    ["MP3 4"]: "494433",
   };
 
   for (var format in bufferStarts) {
     const formatString = bufferStarts[format].toLowerCase();
+    console.log(formatString, hexOfBuffer);
     if (format === "AVI" || format === "WAV") {
-      if (
-        formatString.slice(16) ===
-        hexOfBuffer.slice(16, 16 + formatString.length)
-      ) {
+      if (formatString.slice(16) === hexOfBuffer.slice(16, 16 + formatString.length)) {
         return true;
       }
     } else if (formatString === hexOfBuffer.slice(0, formatString.length)) {

@@ -97,6 +97,7 @@ export const songs = pgTable(
   },
   (songs) => ({
     albumIdFk: foreignKey({ columns: [songs.albumId], foreignColumns: [albums.id] }),
+    idxAlbumId: index("idx_album_id").on(songs.albumId),
     uniqueIdxMd5: uniqueIndex("unique_idx_md5").on(songs.md5),
     uniqueIdxPath: uniqueIndex("unique_idx_path").on(songs.path),
     idxMd5: index("idx_md5").on(songs.md5),

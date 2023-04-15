@@ -1,20 +1,27 @@
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
 
 export default {
-  entry: "./src/client/index.tsx",
+  entry: ["./src/client/index.tsx", "./src/client/index.css"],
   module: {
     rules: [
       {
+        test: /\.css$/i,
+        include: path.resolve(__dirname, "src/client"),
+        use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
+      },
+      {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        use: {
+        use: "ts-loader" /* {
           loader: "babel-loader",
           options: {
-            presets: ["solid"],
+            presets: ["@babel/preset-react"],
           },
-        },
+        }, */,
       },
     ],
   },
@@ -24,6 +31,10 @@ export default {
   },
   output: {
     filename: "bundle.js",
-    path: path.resolve(__dirname, "./public"),
+    path: path.resolve(__dirname, "public"),
   },
+  plugins: [
+    new HtmlWebpackPlugin({ template: path.resolve(__dirname, "src/client/index.html") }),
+    new MiniCssExtractPlugin(),
+  ],
 };
