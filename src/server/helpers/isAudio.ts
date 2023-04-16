@@ -19,7 +19,6 @@ export const isAudio = (buffer: Buffer): boolean => {
 
   for (var format in bufferStarts) {
     const formatString = bufferStarts[format].toLowerCase();
-    console.log(formatString, hexOfBuffer);
     if (format === "AVI" || format === "WAV") {
       if (formatString.slice(16) === hexOfBuffer.slice(16, 16 + formatString.length)) {
         return true;

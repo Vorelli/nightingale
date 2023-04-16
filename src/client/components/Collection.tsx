@@ -86,132 +86,122 @@ function Collection({}: Props) {
     );
   }
 
-  const StyledTreeItemDashed = styled((props: TreeItemProps) => (
-    <TreeItem {...props} TransitionComponent={TransitionComponent} />
-  ))(({ theme }) => ({
-    [`& .${treeItemClasses.iconContainer}`]: {
+  const commonStyles = () => ({
+    "& .MuiTreeItem-iconContainer": {
       "& .close": {
         opacity: 0.3,
       },
     },
-    [`& .${treeItemClasses.group}`]: {
-      borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
+    "& .MuiTreeItem-group": {
+      borderLeft: "0",
     },
-    [`& .${treeItemClasses.label}`]: {
+    "& .MuiTreeItem-label": {
       fontSize: "10pt !important",
       height: "20px",
+      textWrap: "none",
+      overflowX: "hidden",
     },
-    [`& .${treeItemClasses.content}`]: {
+    "& .MuiTreeItem-content": {
       paddingLeft: "0",
+    },
+  });
+
+  const StyledTreeItemDashed = styled((props: TreeItemProps) => (
+    <TreeItem {...props} TransitionComponent={TransitionComponent} />
+  ))(({ theme }) => ({
+    ...commonStyles(),
+    "& .MuiTreeItem-group": {
+      borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
     },
   }));
 
   const StyledTreeItem = styled((props: TreeItemProps) => (
     <TreeItem {...props} TransitionComponent={TransitionComponent} />
-  ))(({ theme }) => ({
-    [`& .${treeItemClasses.iconContainer}`]: {
-      "& .close": {
-        opacity: 0.3,
-      },
-    },
-    [`& .${treeItemClasses.group}`]: {
-      borderLeft: `0`, //`1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-    },
-    [`& .${treeItemClasses.label}`]: {
-      fontSize: "10pt !important",
-      height: "20px",
-    },
-    [`& .${treeItemClasses.content}`]: {
-      paddingLeft: "0",
-    },
-  }));
+  ))(({ theme }) => commonStyles());
 
   const StyledTreeItemSong = styled((props: TreeItemProps) => (
     <TreeItem {...props} TransitionComponent={TransitionComponent} />
   ))(({ theme }) => ({
-    [`& .${treeItemClasses.iconContainer}`]: {
-      "& .close": {
-        opacity: 0.3,
-      },
-    },
-    [`& .${treeItemClasses.group}`]: {
-      borderLeft: `0`,
-      //borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-    },
-    [`& .${treeItemClasses.label}`]: {
-      fontSize: "10pt !important",
-      textWrap: "none",
-      overflowX: "auto",
-    },
-    [`& .${treeItemClasses.content}`]: {
-      paddingLeft: "0",
-    },
-    [`& .${treeItemClasses.iconContainer}`]: {
+    ...commonStyles(),
+    "& .MuiTreeItem-iconContainer": {
       display: "none",
     },
   }));
 
-  return (
-    <div className="flex-1 overflow-y-hidden">
-      <h1>Collection</h1>
-      <TreeView
-        defaultExpanded={["root"]} /*
-        defaultCollapseIcon={<ArrowDownwardOutlined />}
-        defaultExpandIcon={<ChevronRightOutlined />} */
-        className="justify-self-start"
-        multiSelect={false}
+  function renderSubGroup(
+    groupedSongs: SuperGroupedSongs,
+    group: string,
+    subGroup: string,
+    icons: JSX.Element[][]
+  ) {
+    return (
+      <StyledTreeItem
+        expandIcon={icons[1][0]}
+        collapseIcon={icons[1][1]}
+        key={subGroup}
+        nodeId={subGroup}
+        label={subGroup}
       >
-        {Object.keys(groupedSongs).map((group) => {
-          return (
-            <StyledTreeItemDashed
-              expandIcon={icons[0][0]}
-              collapseIcon={icons[0][1]}
-              className="justify-self-start"
-              key={group}
-              nodeId={group}
-              label={group}
-            >
-              {(!(groupedSongs[group] instanceof Array) &&
-                Object.keys(groupedSongs[group]).map((subGroup) => {
-                  return (
-                    <StyledTreeItem
-                      expandIcon={icons[1][0]}
-                      collapseIcon={icons[1][1]}
-                      key={subGroup}
-                      nodeId={subGroup}
-                      label={subGroup}
-                    >
-                      {(groupedSongs as SuperGroupedSongs)[group][subGroup].map(
-                        (song: ClientSong) => {
-                          return (
-                            <StyledTreeItemSong
-                              className="!text-sm"
-                              key={song.md5}
-                              nodeId={song.md5}
-                              label={labelFromSong(song)}
-                            />
-                          );
-                        }
-                      )}
-                    </StyledTreeItem>
-                  );
-                })) ||
-                (groupedSongs[group] as ClientSong[]).map((song: ClientSong) => {
-                  return (
-                    <StyledTreeItemSong
-                      className="text-sm"
-                      key={song.md5}
-                      nodeId={song.md5}
-                      label={song.name}
-                    />
-                  );
-                })}
-            </StyledTreeItemDashed>
-          );
-        })}
-      </TreeView>
-    </div>
-  );
+        {(groupedSongs[group][subGroup] as ClientSong[]).map((song: ClientSong) => (
+          <StyledTreeItemSong
+            className="!text-sm"
+            key={song.md5}
+            nodeId={song.md5}
+            label={labelFromSong(song)}
+          />
+        ))}
+      </StyledTreeItem>
+    );
+  }
+
+  function renderGroup(
+    groupedSongs: GroupedSongs | SuperGroupedSongs,
+    group: string,
+    icons: JSX.Element[][]
+  ) {
+    return (
+      <StyledTreeItemDashed
+        expandIcon={icons[0][0]}
+        collapseIcon={icons[0][1]}
+        className="justify-self-start"
+        key={group}
+        nodeId={group}
+        label={group}
+      >
+        {(!(groupedSongs[group] instanceof Array) &&
+          Object.keys(groupedSongs[group]).map((subGroup) =>
+            renderSubGroup(groupedSongs as SuperGroupedSongs, group, subGroup, icons)
+          )) ||
+          (groupedSongs[group] as ClientSong[]).map((song: ClientSong) => (
+            <StyledTreeItemSong
+              className="text-sm"
+              key={song.md5}
+              nodeId={song.md5}
+              label={song.name}
+            />
+          ))}
+      </StyledTreeItemDashed>
+    );
+  }
+
+  function MyComponent({
+    groupedSongs,
+    icons,
+  }: {
+    groupedSongs: GroupedSongs | SuperGroupedSongs;
+    icons: JSX.Element[][];
+  }) {
+    return (
+      <div className="flex-1 overflow-hidden max-w-[200px]">
+        <h1>Collection</h1>
+        <TreeView defaultExpanded={["root"]} className="justify-self-start" multiSelect={false}>
+          {Object.keys(groupedSongs).map((group) => renderGroup(groupedSongs, group, icons))}
+        </TreeView>
+      </div>
+    );
+  }
+
+  return <MyComponent groupedSongs={groupedSongs} icons={icons} />;
 }
 
 function labelFromSong(song: ClientSong): string {

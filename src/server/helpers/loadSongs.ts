@@ -23,6 +23,7 @@ import {
   ReturningSongs,
   ReturningArtists,
   ReturningGenres,
+  ReturningAlbums,
 } from "../db/schema.js";
 import { eq } from "drizzle-orm/expressions.js";
 import path from "path";
@@ -256,17 +257,15 @@ function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
   return uniqueFromObj;
 }
 
-function insertAllIntoDb(app: express.Application, albums: Map<string, Album>): Promise<void> {
-  const uniqueArtistNames = new Set(Array.from(albums.values()).flatMap((a) => a.artists));
-  const uniqueGenres = new Set(Array.from(albums.values()).flatMap((a) => a.genres));
-
+function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>): Promise<void> {
+  console.log("beginning of insert");
   const db: NodePgDatabase = app.locals.db;
-  const artistLookUps = Array.from(albums.values()).flatMap((album) =>
+  const artistLookUps = Array.from(albumList.values()).flatMap((album) =>
     album.artists.map((artist) =>
       db.select().from(artists).where(eq(artists.name, artist)).execute()
     )
   );
-  const genreLookUps = Array.from(albums.values()).flatMap((album) =>
+  const genreLookUps = Array.from(albumList.values()).flatMap((album) =>
     album.genres.map((genre) => db.select().from(genres).where(eq(genres.name, genre)).execute())
   );
 
@@ -280,17 +279,13 @@ function insertAllIntoDb(app: express.Application, albums: Map<string, Album>): 
         existingArr: any[],
         tag: string = "name"
       ) => {
-        return uniqueFromObject(albums, col, existingArr).map((val: any) => ({ [tag]: val }));
+        return uniqueFromObject(albumList, col, existingArr).map((val: any) => ({ [tag]: val }));
       };
 
-      const insertIntoTable = (
-        table: AnyPgTable,
-        values: any[],
-        returningObj: SelectedFieldsFlat
-      ): Promise<any> => {
+      const insertIntoTable = (table: AnyPgTable, values: any[]): Promise<any> => {
         return values.length === 0
           ? Promise.resolve([])
-          : db.insert(table).values(values).returning(returningObj).execute();
+          : db.insert(table).values(values).returning();
       };
 
       const returnedArtistNames = uniqueElements(
@@ -307,8 +302,8 @@ function insertAllIntoDb(app: express.Application, albums: Map<string, Album>): 
 
       const uniqueArtists = uniqueCol(artists, "artists", returnedArtistNames);
       const uniqueGenres = uniqueCol(genres, "genres", returnedGenreNames);
-      let artistInsert = insertIntoTable(artists, uniqueArtists, { artistId: artists.id });
-      let genreInsert = insertIntoTable(genres, uniqueGenres, { genreId: genres.id });
+      let artistInsert = insertIntoTable(artists, uniqueArtists);
+      let genreInsert = insertIntoTable(genres, uniqueGenres);
 
       const inserts: [{ artistId: string }[], { genreId: string }[]] = await Promise.all([
         artistInsert,
@@ -322,16 +317,54 @@ function insertAllIntoDb(app: express.Application, albums: Map<string, Album>): 
         nameArrTag: string
       ): { [key: string]: string } => {
         return arr.reduce((acc, cur, i) => {
-          acc[nameArr[i][nameArrTag]] = cur[0][arrTag];
+          acc[nameArr[i][nameArrTag]] = cur[0] && cur[0][arrTag];
+          return acc;
         }, {} as { [key: string]: string });
       };
 
-      const artistNameToId = nameToId(inserts[0], "artistId", uniqueArtists, "name");
+      const artistNameToId = nameToId(inserts[0], "id", uniqueArtists, "name");
       returnFromDb[0].forEach((a) => a.forEach((b) => (artistNameToId[b.name] = b.id)));
-      const genreNameToId = nameToId(inserts[1], "genreId", uniqueGenres, "name");
+      const genreNameToId = nameToId(inserts[1], "id", uniqueGenres, "name");
       returnFromDb[1].forEach((a) => a.forEach((b) => (genreNameToId[b.name] = b.id)));
-      console.log("artistNameToId", artistNameToId);
-      console.log("genreNameToId", genreNameToId);
+
+      var albumsToInsert = Array.from(albumList.values()).map((album: Album) =>
+        getAlbumToInsert(album, artistNameToId[album.albumArtist])
+      );
+
+      const insertedAlbums: ReturningAlbums[] = await insertIntoTable(albums, albumsToInsert);
+      console.log("insertedAlbums", insertedAlbums);
+
+      const albumToId = insertedAlbums.reduce((acc, cur) => {
+        if (cur.name && cur.id) {
+          acc[cur.name as string] = cur.id;
+        }
+        return acc;
+      }, {} as { [key: string]: string });
+
+      const songsToInsert = Array.from(albumList.values()).flatMap((album) =>
+        getSongsToInsert(album, albumToId[album.name])
+      );
+      console.log("songsto Insert", songsToInsert);
+
+      const albumArtistsToInsert = Array.from(albumList.values()).flatMap((album) =>
+        album.artists.map((artist) => ({
+          albumId: albumToId[album.name],
+          artistId: artistNameToId[artist],
+        }))
+      );
+
+      const albumGenresToInsert = Array.from(albumList.values()).flatMap((album) =>
+        album.genres.map((genre) => ({
+          albumId: albumToId[album.name],
+          genreId: genreNameToId[genre],
+        }))
+      );
+
+      return Promise.all([
+        insertIntoTable(songs, songsToInsert),
+        insertIntoTable(albumArtists, albumArtistsToInsert),
+        insertIntoTable(albumGenres, albumGenresToInsert),
+      ]).then();
     }
   );
 }

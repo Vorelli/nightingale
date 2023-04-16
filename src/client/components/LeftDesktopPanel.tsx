@@ -1,5 +1,4 @@
 import React from "react";
-import SongFilterList from "./SongFilterList";
 import AlbumArt from "./AlbumArt";
 import FilterBar from "./FilterBar";
 import Collection from "./Collection";

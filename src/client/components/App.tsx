@@ -12,8 +12,11 @@ const App = () => {
     dispatch(songsRequest());
     fetch(URL + "/api/songs")
       .then((data) => data.json())
-      .then((data) => dispatch(songsRequestSuccess(data)));
-  });
+      .then((data) => {
+        console.log("data from server", data);
+        dispatch(songsRequestSuccess(data));
+      });
+  }, []);
 
   useEffect(() => {
     console.log("Count:", count);
