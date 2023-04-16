@@ -495,19 +495,12 @@ function handleDir(
   });
 }
 
-var numRunners = 0;
-const runnerLimit = 24;
 async function getSongInfo(
   app: express.Application,
   filePath: string,
   md5: string
 ): Promise<Album | boolean> {
-  while (numRunners >= runnerLimit) {
-    await new Promise<void>((r) => setTimeout(() => r(), 100));
-  }
-
   return new Promise<Album | boolean>(async (resolve, reject) => {
-    numRunners++;
     const fileD: number = await new Promise((resolve, reject) =>
       fs.open(filePath, (err, fd) => {
         if (err) reject(err);
@@ -527,24 +520,62 @@ async function getSongInfo(
         let duration = getAudioDurationInSeconds(filePath).then(
           (durationInSeconds) => durationInSeconds * 1000
         );
-        let tags = useParseFile(filePath).then((tags) => tags.common);
+        let tags = await useParseFile(filePath).then((tags) => tags.common);
 
-        Promise.all([duration, tags]).then(async ([duration, tags]) => {
-          const imageProcessedAndSaved = processImageFromTags(app, tags, md5);
-          const audioFileOptimized = optimizeAudioFile(app, filePath, md5);
-          const albumObj: Album = craftAlbumObj(tags, md5, app, filePath, duration);
-          return Promise.all([]).then(() => {
-            //imageProcessedAndSaved, audioFileOptimized]).then(() => {
-            resolve(albumObj);
+        let imageChecking = checkIfFileExists(getPath(app, md5, "jpg")).catch(async () => {
+          if (tags.picture && tags.picture.length > 0) {
+            const newImage = await sharp(tags.picture[0].data).resize(256).jpeg().toBuffer();
+            const streamingPath = getPath(app, md5, "jpg");
+            fs.writeFile(streamingPath, newImage, (err) => {
+              if (err) {
+                console.log("Error occurred when trying to write new image to disk:", err);
+              } else {
+                console.log("Wrote new image to", streamingPath);
+              }
+            });
+          }
+        });
+
+        let audioFileChecking = checkIfFileExists(getPath(app, md5, "mp4")).catch(async () => {
+          const streamingPath = getPath(app, md5, "mp4");
+          return new Promise<void>((resolve, reject) => {
+            ffmpeg(filePath as string)
+              .withNoVideo()
+              .withAudioCodec("aac")
+              .withAudioBitrate(192)
+              .output(streamingPath)
+              .on("end", () => {
+                console.log("finished converting", filePath, "to", streamingPath);
+                resolve();
+              })
+              .on("error", (err) => {
+                console.log("An error occurred when trying to convert the audio file:", err);
+                reject(err);
+              })
+              .run();
           });
         });
+
+        Promise.all([duration, tags, imageChecking, audioFileChecking])
+          .then(async ([duration, tags, imageProcessedAndSaved, audioFileOptimized]) => {
+            const albumObj: Album = craftAlbumObj(tags, md5, app, filePath, duration);
+            resolve(albumObj);
+          })
+          .catch(reject);
       } catch (err) {
         reject(err);
       }
     });
-  }).then((res) => {
-    numRunners--;
-    return res;
+  });
+}
+
+function checkIfFileExists(filePath: string) {
+  return new Promise<void>((resolve, reject) => {
+    fs.access(filePath, (err) => {
+      if (err) {
+        return reject(err);
+      } else resolve();
+    });
   });
 }
 
@@ -589,12 +620,6 @@ function craftAlbumObj(
 
 function formatLyrics(lyrics: string[]): string[] {
   return lyrics.length === 1 ? lyrics[0].split("/\r?\n/g") : lyrics;
-  if (lyrics.length === 1) {
-    let splitWithN = lyrics[0].split("\r\n");
-    return splitWithN;
-  } else {
-    return lyrics;
-  }
 }
 
 function getPath(app: express.Application, fileName: string, ext: string) {
@@ -603,42 +628,4 @@ function getPath(app: express.Application, fileName: string, ext: string) {
     process.env.STREAMING_DIR as string,
     fileName + "." + ext
   );
-}
-
-async function processImageFromTags(
-  app: express.Application,
-  tags: ICommonTagsResult,
-  md5: string
-) {
-  if (tags.picture?.length && tags.picture.length > 0) {
-    const newImage = await sharp(tags.picture[0].data).resize(256).jpeg().toBuffer();
-    const streamingPath = getPath(app, md5, "jpg");
-    fs.writeFile(streamingPath, newImage, (err) => {
-      if (err) {
-        console.log("Error occurred when trying to write new image to disk:", err);
-      } else {
-        console.log("Wrote new image to", streamingPath);
-      }
-    });
-  }
-}
-
-function optimizeAudioFile(app: express.Application, filePath: PathLike, md5: string) {
-  const streamingPath = getPath(app, md5, "mp4");
-  return new Promise<void>((resolve, reject) => {
-    ffmpeg(filePath as string)
-      .withNoVideo()
-      .withAudioCodec("aac")
-      .withAudioBitrate(192)
-      .output(streamingPath)
-      .on("end", () => {
-        console.log("finished converting", filePath, "to", streamingPath);
-        resolve();
-      })
-      .on("error", (err) => {
-        console.log("An error occurred when trying to convert the audio file:", err);
-        reject(err);
-      })
-      .run();
-  });
 }

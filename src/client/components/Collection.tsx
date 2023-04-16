@@ -71,11 +71,13 @@ function Collection({}: Props) {
     const style = useSpring({
       from: {
         opacity: 0,
-        transform: "translate3d(20px,0,0)",
+        transform: "translate(20px,15px)", //"translate3d(20px,0,0)",
+        rotate: "-15deg",
       },
       to: {
         opacity: props.in ? 1 : 0,
-        transform: `translate3d(${props.in ? 0 : 20}px,0,0)`,
+        transform: `translate(${props.in ? 0 : 20}px,${props.in ? 0 : 15}px)`,
+        rotate: `${props.in ? 0 : -15}deg`,
       },
     });
 
@@ -194,7 +196,12 @@ function Collection({}: Props) {
     return (
       <div className="flex-1 overflow-hidden max-w-[200px]">
         <h1>Collection</h1>
-        <TreeView defaultExpanded={["root"]} className="justify-self-start" multiSelect={false}>
+        <TreeView
+          disableSelection={true}
+          defaultExpanded={["root"]}
+          className="justify-self-start"
+          multiSelect={false}
+        >
           {Object.keys(groupedSongs).map((group) => renderGroup(groupedSongs, group, icons))}
         </TreeView>
       </div>
