@@ -50,10 +50,13 @@ const DesktopWindow = (props: {
       <section
         style={{ width, height }}
         id={props.id}
-        className="transition-[height] flex flex-col border-[1px] border-solid border-accent box-border drop-shadow-md shadow drop-shadow-accent shadow-accent p-2 pt-0"
+        className={
+          (hidden ? "small" : "big") +
+          " transition-[height] border-[1px] border-solid border-accent box-border drop-shadow-md shadow drop-shadow-accent shadow-accent p-2 pt-0 grid"
+        }
         ref={container}
       >
-        <header className="w-full h-10 flex justify-between box-border items-center select-none">
+        <header className="w-full h-10 flex justify-between box-border items-center select-none col-span-2">
           <div className="flex-1 flex justify-start space-x-2 items-center pt-2 header hover:cursor-move">
             <div className="w-10 h-10 bg-base-200 mask mask-circle">
               <img draggable={false} className="w-8 h-8 relative left-1 top-1" src={props.icon} />

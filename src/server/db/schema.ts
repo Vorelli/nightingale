@@ -91,7 +91,7 @@ export const songs = pgTable(
     path: text("path"),
     duration: doublePrecision("duration"),
     track: integer("track"),
-    diskCharacter: integer("diskCharacter"),
+    diskCharacter: varchar("diskCharacter", { length: 8 }),
     lyrics: text("lyrics"),
     albumId: uuid("albumId").notNull(),
   },

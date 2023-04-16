@@ -128,18 +128,27 @@ export const loadSongs = (app: express.Application): Promise<string[]> => {
   }
 };
 
-function getAlbumFromRows(app: express.Application, rows: innerJoinReturn[]): Album {
-  return {
-    name: rows[0].albums.name ?? "Unknown Album Name",
-    yearReleased: rows[0].albums.year || 1970,
-    albumArtist:
-      (rows[0].albums.albumArtist && findArtistName(rows, rows[0].albums.albumArtist)) ||
-      "Unknown Artist Name",
-    artists: rows.map((row: innerJoinReturn) => row.artists.name),
-    genres: rows.map((row: innerJoinReturn) => row.genres.name),
-    songs: [rows[0].songs],
-    inDb: true,
-  };
+function getAlbumFromRows(app: express.Application, rows: innerJoinReturn[]): Album | undefined {
+  var albumObj: Album | undefined = rows.reduce((acc: Album | undefined, val: innerJoinReturn) => {
+    if (acc === undefined) {
+      return {
+        name: val.albums.name ?? "Unknown Album Name",
+        yearReleased: val.albums.year || 1970,
+        albumArtist:
+          (val.albums.albumArtist && findArtistName(rows, val.albums.albumArtist)) ||
+          "Unknown Artist",
+        artists: [val.artists.name || "Unknown Artist"],
+        genres: [val.genres.name || "Unknown Genre"],
+        songs: [val.songs],
+        inDb: true,
+      };
+    } else {
+      acc.artists.push(val.artists.name || "Unknown Artist");
+      acc.genres.push(val.genres.name || "Unknown Artist");
+    }
+    return acc;
+  }, undefined);
+  return albumObj;
 }
 
 function findArtistName(artistList: innerJoinReturn[], artistId: string): string {
@@ -176,7 +185,19 @@ function processMd5s(
               // And once it's in the database, then we don't have to worry about it
               // And we can just return that 'Albums object'
             } else {
-              resolve(getAlbumFromRows(app, rows));
+              const ret = getAlbumFromRows(app, rows);
+              resolve(ret === undefined ? false : ret);
+              /*
+               name: rows[0].albums.name ?? "Unknown Album Name",
+                yearReleased: rows[0].albums.year || 1970,
+                albumArtist:
+                  (rows[0].albums.albumArtist && findArtistName(rows, rows[0].albums.albumArtist)) ||
+                  "Unknown Artist Name",
+                artists: rows.map((row: innerJoinReturn) => row.artists.name),
+                genres: rows.map((row: innerJoinReturn) => row.genres.name),
+                songs: [rows[0].songs],
+                inDb: true,
+              */
             }
           })
           .catch((error: any) => {
@@ -193,7 +214,6 @@ function processMd5s(
       // Does it matter if I just spam insert a bunch of data that already exists?
       const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
       const mergedAlbums: Map<string, Album> = new Map();
-      console.log("songs not in DB", songsNotInDb);
       for (let i = 0; i < songsNotInDb.length; i++) {
         const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
         let song = mergedAlbums.get(normalizedName);
@@ -223,27 +243,6 @@ function processMd5s(
       });
     });
 }
-
-/* function insertOrSelect(
-  db: NodePgDatabase,
-  table: PgTable<any>,
-  values: { [key: string]: string }[],
-  sqlValues: string,
-  returnObj: object,
-  idName: string = "id"
-) {
-  return values.map((val) => {
-    db.execute(sql`WITH new_row AS (
-        INSERT INTO ${table} (${sqlValues})
-        SELECT ${val}
-        WHERE NOT EXISTS(SELECT * FROM ${table} WHERE ${idName}=${val[idName]})
-        RETURNING *
-        )
-        SELECT * FROM new_row
-        UNION
-        SELECT * FROM ${table} WHERE ${idName}=${val[idName]}`);
-  });
-} */
 
 function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
   const uniqueFromObj: string[] = [];
@@ -305,30 +304,39 @@ function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>
       let artistInsert = insertIntoTable(artists, uniqueArtists);
       let genreInsert = insertIntoTable(genres, uniqueGenres);
 
-      const inserts: [{ artistId: string }[], { genreId: string }[]] = await Promise.all([
+      const inserts: [ReturningArtists[], ReturningGenres[]] = await Promise.all([
         artistInsert,
         genreInsert,
       ]);
+      console.log("insersts", inserts);
+      console.log("returnfromDb", returnFromDb);
 
-      const nameToId = (
-        arr: any[],
-        arrTag: string,
-        nameArr: any[],
-        nameArrTag: string
-      ): { [key: string]: string } => {
-        return arr.reduce((acc, cur, i) => {
-          acc[nameArr[i][nameArrTag]] = cur[0] && cur[0][arrTag];
-          return acc;
-        }, {} as { [key: string]: string });
+      const nameToId = <T>(arr: T[], tagKey: keyof T, tagValue: keyof T): Map<any, any> => {
+        const map = new Map<any, any>();
+        arr.forEach((a: T) => {
+          console.log("eachA", a);
+          if (a[tagValue] !== undefined) {
+            map.set(a[tagValue], a[tagKey]);
+          }
+        });
+        return map;
       };
 
-      const artistNameToId = nameToId(inserts[0], "id", uniqueArtists, "name");
-      returnFromDb[0].forEach((a) => a.forEach((b) => (artistNameToId[b.name] = b.id)));
-      const genreNameToId = nameToId(inserts[1], "id", uniqueGenres, "name");
-      returnFromDb[1].forEach((a) => a.forEach((b) => (genreNameToId[b.name] = b.id)));
+      const artistNameToId = nameToId<ReturningArtists>(
+        [...inserts[0], ...returnFromDb[0]].flat() as ReturningArtists[],
+        "id",
+        "name"
+      );
+      const genreNameToId = nameToId(
+        [...inserts[1], ...returnFromDb[1]].flat() as ReturningGenres[],
+        "id",
+        "name"
+      );
+      console.log("artistNameToId:", artistNameToId);
+      console.log("genreNameToId:", genreNameToId);
 
       var albumsToInsert = Array.from(albumList.values()).map((album: Album) =>
-        getAlbumToInsert(album, artistNameToId[album.albumArtist])
+        getAlbumToInsert(album, artistNameToId.get(album.albumArtist))
       );
 
       const insertedAlbums: ReturningAlbums[] = await insertIntoTable(albums, albumsToInsert);
@@ -344,19 +352,18 @@ function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>
       const songsToInsert = Array.from(albumList.values()).flatMap((album) =>
         getSongsToInsert(album, albumToId[album.name])
       );
-      console.log("songsto Insert", songsToInsert);
 
       const albumArtistsToInsert = Array.from(albumList.values()).flatMap((album) =>
         album.artists.map((artist) => ({
           albumId: albumToId[album.name],
-          artistId: artistNameToId[artist],
+          artistId: artistNameToId.get(artist),
         }))
       );
 
       const albumGenresToInsert = Array.from(albumList.values()).flatMap((album) =>
         album.genres.map((genre) => ({
           albumId: albumToId[album.name],
-          genreId: genreNameToId[genre],
+          genreId: genreNameToId.get(genre),
         }))
       );
 
@@ -367,114 +374,6 @@ function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>
       ]).then();
     }
   );
-}
-
-function insertIntoDb(app: express.Application, album: Album): Promise<void> {
-  const db: NodePgDatabase = app.locals.db;
-
-  // let's make sure artists and genres don't exist.
-  // We'll do a lookup for both artist by name and genre by name
-  console.log("looking up artists", album.artists);
-  console.log("looking up genres", album.genres);
-
-  const artistLookUps = album.artists.map((artist) =>
-    db.select().from(artists).where(eq(artists.name, artist)).execute()
-  );
-  const genreLookUps = album.genres.map((genre) =>
-    db.select().from(genres).where(eq(genres.name, genre)).execute()
-  );
-
-  return Promise.all(artistLookUps)
-    .then((artistsReturned: ReturningArtists[][]) => {
-      return Promise.all(genreLookUps).then((genresReturned: ReturningGenres[][]) => {
-        artistsReturned.forEach((a) => a.forEach((b) => console.log(b)));
-        return Promise.all([Promise.all(artistLookUps), Promise.all(genreLookUps)]);
-      });
-    })
-    .then(async (returnFromDb: [ReturningArtists[][], ReturningGenres[][]]) => {
-      console.log("returned from database:", returnFromDb);
-      const returnedArtistNames = (returnFromDb[0] as ReturningArtists[][]).map(
-        (a) => a.length !== 0 && a[0].name
-      );
-
-      const setOfArtists = new Set<string>();
-      album.artists
-        .filter((artist: string) => !returnedArtistNames.includes(artist))
-        .forEach((name: string) => setOfArtists.add(name));
-      const artistsToInsert = Array.from(setOfArtists).map(
-        (name: string) => ({ name } as NewArtists)
-      );
-
-      const setOfGenres = new Set<string>();
-      console.log(returnFromDb[1], album.genres);
-      const returnedGenreNames = (returnFromDb[1] as ReturningGenres[][]).map(
-        (g) => g.length !== 0 && g[0].name
-      );
-      album.genres
-        .filter((genre: string) => !returnedGenreNames.includes(genre))
-        .forEach((name: string) => setOfGenres.add(name));
-      const genresToInsert = Array.from(setOfGenres).map((name: string) => ({ name } as NewGenres));
-
-      console.log("artistsToInsert", artistsToInsert, "genresToInsert", genresToInsert);
-
-      const artistInsert =
-        artistsToInsert.length > 0
-          ? await db.insert(artists).values(artistsToInsert).returning({ artistId: artists.id })
-          : new Array();
-      const genreInsert =
-        genresToInsert.length > 0
-          ? await db.insert(genres).values(genresToInsert).returning({ genreId: genres.id })
-          : new Array();
-
-      const returnedArtistIds = (returnFromDb[0] as ReturningArtists[][]).map((a) => ({
-        artistId: a.length !== 0 && a[0].id,
-      }));
-      const returnedGenreIds = (returnFromDb[1] as ReturningGenres[][]).map((a) => {
-        console.log(a);
-        return { genreId: a.length !== 0 && a[0].id };
-      });
-
-      console.log(genreInsert, returnedGenreIds);
-      return Promise.all([
-        artistInsert.concat(...returnedArtistIds),
-        genreInsert.concat(...returnedGenreIds),
-      ]);
-    })
-    .then((returnedInserts: [{ artistId: string }[], { genreId: string }[]]) => {
-      console.log("return after first two inserts", returnedInserts);
-      var albumToInsert = getAlbumToInsert(album, returnedInserts[0][0].artistId);
-      var inserts = db.insert(albums).values(albumToInsert).returning({ albumId: albums.id });
-      return Promise.all([inserts]).then((albumReturns: [{ albumId: string }[]]) => {
-        return Promise.all([returnedInserts[0], returnedInserts[1], albumReturns[0]]);
-      });
-    })
-    .then(
-      (returnedInserts: [{ artistId: string }[], { genreId: string }[], { albumId: string }[]]) => {
-        var songsToInsert = getSongsToInsert(album, returnedInserts[2][0].albumId);
-        var albumArtistsToInsert = getAlbumArtistsToInsert(
-          returnedInserts[2][0].albumId,
-          returnedInserts[0].map((obj) => obj.artistId)
-        );
-        var albumGenresToInsert = getAlbumGenresToInsert(
-          returnedInserts[2][0].albumId,
-          returnedInserts[1].map((o) => o.genreId)
-        );
-        console.log("albumGenres To insert", albumGenres);
-        //console.log("songs to insert", songsToInsert);
-        return Promise.all([
-          db.insert(songs).values(songsToInsert),
-          db.insert(albumArtists).values(albumArtistsToInsert),
-          db.insert(albumGenres).values(albumGenresToInsert),
-        ]);
-      }
-    )
-    .then((results) => {
-      console.log("results from the inserts", results);
-      return undefined;
-    })
-    .catch((err) => {
-      console.log("error encountered when trying to insert songs into the db", err);
-    }); //(returnedArtists: Artists[]), (returnedGenres: Genres[])]);
 }
 
 function handleDir(
@@ -521,6 +420,7 @@ async function getSongInfo(
           (durationInSeconds) => durationInSeconds * 1000
         );
         let tags = await useParseFile(filePath).then((tags) => tags.common);
+        console.log("the filepath", filePath);
 
         let imageChecking = checkIfFileExists(getPath(app, md5, "jpg")).catch(async () => {
           if (tags.picture && tags.picture.length > 0) {
@@ -610,7 +510,7 @@ function craftAlbumObj(
         lyrics:
           (tags.lyrics && formatLyrics(tags.lyrics))?.join("\n") ||
           "No lyrics available for this song. Consider adding them with an ID3 tag editor!",
-        diskCharacter: tags.disk.no || 0,
+        diskCharacter: tags.disk.no + "" || 0 + "",
         name: tags.title || "No title available for this song.MD5:" + md5,
       },
     ],

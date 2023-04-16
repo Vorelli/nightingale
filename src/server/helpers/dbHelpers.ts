@@ -38,7 +38,6 @@ export function getGenresToInsert(album: Album): NewGenres[] {
 }
 
 export function getAlbumToInsert(album: Album, artistId: string): NewAlbums {
-  console.log(album, artistId);
   return {
     name: album.name,
     year: album.yearReleased,

@@ -18,9 +18,9 @@ function AlbumArt({}: Props) {
   if (isClientSong(song)) {
     return (
       <img
-        className="w-[50px] h-[50px]"
+        className="albumArt w-full h-full row-start-3 row-span-2 col-start-1 object-contain bg-base-200 shadow-md shadow-base-300 drop-shadow-md"
         src={`/streaming/${song.md5}.jpg`}
-        alt={"album art for" + song.albumArtist}
+        alt={"album art for " + song.albumArtist + " - " + song.albumName}
       />
     );
   } else {

@@ -209,7 +209,7 @@ function Collection({}: Props) {
     }
   };
 
-  function MyComponent({
+  function CollectionList({
     groupedSongs,
     icons,
   }: {
@@ -220,13 +220,14 @@ function Collection({}: Props) {
       <div
         ref={collectionList}
         className="collectionList flex-1 overflow-x-hidden overflow-y-auto w-full scroll-smooth scroll-m-44"
+        style={{ maxWidth: "100%", maxHeight: "calc(100% - 60px)" }}
       >
         <TreeView
           disableSelection={true}
           defaultExpanded={["root"]}
           className="justify-self-start"
           multiSelect={false}
-          sx={{ height: "90%", width: "100%", maxHeight: "100%" }}
+          sx={{ height: "80%", width: "100%", maxHeight: "80%" }}
         >
           {Object.keys(groupedSongs).map((group) => renderGroup(groupedSongs, group, icons))}
         </TreeView>
@@ -234,7 +235,7 @@ function Collection({}: Props) {
     );
   }
 
-  return <MyComponent groupedSongs={groupedSongs} icons={icons} />;
+  return <CollectionList groupedSongs={groupedSongs} icons={icons} />;
 }
 
 function labelFromSong(song: ClientSong): string {

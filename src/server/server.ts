@@ -16,6 +16,22 @@ import { attachPgPool } from "./middleware/attachPool.js";
 import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
+import initializeQueue from "./helpers/initializeQueue.js";
+import { NodePgClient } from "drizzle-orm/node-postgres/session.js";
+
+export interface appWithExtras extends express.Application, WithWebsocketMethod {
+  locals: {
+    md5s: string[];
+    db: NodePgClient;
+    __dirname: string;
+    queues: string[][];
+    queueIndex: number;
+    currentTime: number;
+    originalTimestamp: NodeJS.HRTime;
+    lastTimestamp: NodeJS.HRTime;
+    shuffleBy: string;
+  };
+}
 
 var options = {
   key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),
@@ -28,8 +44,12 @@ var { app }: { app: express.Application & WithWebsocketMethod } = express_ws(app
 express_ws(app, httpsServer);
 app.locals.db = db;
 app.locals.__dirname = __dirname;
+app.locals.shuffleBy = "random";
 loadSongs(app)
-  .then((_) => "finished processing all files!")
+  .then((md5s) => {
+    app.locals.md5s = md5s;
+    initializeQueue(app as appWithExtras);
+  })
   .catch((err) => console.log("error occurred when trying to process paths."));
 
 app.use(attachPgPool(pool, db));

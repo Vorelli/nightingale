@@ -6,6 +6,12 @@ import LeftDesktopPanel from "./LeftDesktopPanel";
 import RightDesktopPanel from "./RightDesktopPanel";
 import { toggleHidden, toggleOnTop } from "../redux/reducers/windowReducer";
 import BottomDesktopPanel from "./BottomDesktopPanel";
+import PlaylistContainer from "./PlaylistContainer";
+import CurrentQueueList from "./CurrentQueueList";
+import Collection from "./Collection";
+import FilterBar from "./FilterBar";
+import AlbumArt from "./AlbumArt";
+import ControlPanel from "./ControlPanel";
 
 type Props = {};
 
@@ -20,19 +26,25 @@ function MainPlayer({}: Props) {
       storeName={windowName}
       toggleHidden={toggleHidden}
       toggleOnTop={toggleOnTop}
+      id="main-player"
     >
       {[
         !hidden ? (
-          <div className="w-full h-[90%] flex flex-col">
-            <section className="w-full flex-1 flex h-full" key={1}>
-              <LeftDesktopPanel></LeftDesktopPanel>
-              <RightDesktopPanel></RightDesktopPanel>
-            </section>
-            <BottomDesktopPanel></BottomDesktopPanel>
-          </div>
+          <>
+            <div className="collection-container flex flex-col row-start-2 col-start-1">
+              <FilterBar />
+              <Collection />
+            </div>
+            <div className="">
+              <PlaylistContainer />
+              <CurrentQueueList />
+            </div>
+            <AlbumArt />
+            <ControlPanel />
+          </>
         ) : (
           <footer key={2} className="w-full h-10">
-            Here is the footer
+            Here is the footer (going to be mini player)
           </footer>
         ),
       ]}
