@@ -15,8 +15,8 @@ const DesktopWindow = (props: {
   toggleHidden: ActionCreatorWithPayload<any, "windows/toggleHidden">;
   toggleOnTop: ActionCreatorWithPayload<any, "windows/toggleOnTop">;
 }) => {
-  const [width, setWidth] = useState(700);
-  const [height, setHeight] = useState(400);
+  const [width, setWidth] = useState(800);
+  const [height, setHeight] = useState(600);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const container = useRef(null);

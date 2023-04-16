@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Ref, RefObject, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { ClientSong } from "../redux/reducers/songsReducer";
@@ -13,7 +13,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import { alpha, styled } from "@mui/material/styles";
 import { TransitionProps } from "@mui/material/transitions";
 import { useSpring, animated } from "@react-spring/web";
-import { Collapse } from "@mui/material";
+import { Box, Collapse } from "@mui/material";
 
 type Props = {};
 
@@ -30,6 +30,9 @@ function Collection({}: Props) {
   const { songs } = useSelector((s: RootState) => s.songs);
   const [groupedSongs, setGroupedSongs] = useState({} as GroupedSongs | SuperGroupedSongs);
   const [icons, setIcons] = useState([] as JSX.Element[][]);
+  const collectionList = useRef(null);
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
 
   // all groupBy is going to be doing is:
   //  - take the passed in key
@@ -98,7 +101,7 @@ function Collection({}: Props) {
       borderLeft: "0",
     },
     "& .MuiTreeItem-label": {
-      fontSize: "10pt !important",
+      fontSize: "9pt !important",
       height: "20px",
       textWrap: "none",
       overflowX: "hidden",
@@ -186,6 +189,26 @@ function Collection({}: Props) {
     );
   }
 
+  window.onmousemove = (ev) => {
+    let collectionDiv: HTMLDivElement | null =
+      collectionList.current && (collectionList as RefObject<HTMLDivElement>).current;
+    if (collectionDiv === null) {
+      return;
+    }
+    collectionDiv = collectionDiv as HTMLDivElement;
+    let temp: DOMRect = collectionDiv.getBoundingClientRect();
+    if (collectionList.current !== null) {
+      (collectionList.current as HTMLDivElement).style.setProperty(
+        "--x",
+        `${ev.clientX - temp.x}px`
+      );
+      (collectionList.current as HTMLDivElement).style.setProperty(
+        "--y",
+        `${ev.clientY - temp.y}px`
+      );
+    }
+  };
+
   function MyComponent({
     groupedSongs,
     icons,
@@ -194,13 +217,16 @@ function Collection({}: Props) {
     icons: JSX.Element[][];
   }) {
     return (
-      <div className="flex-1 overflow-hidden max-w-[200px]">
-        <h1>Collection</h1>
+      <div
+        ref={collectionList}
+        className="collectionList flex-1 overflow-x-hidden overflow-y-auto w-full scroll-smooth scroll-m-44"
+      >
         <TreeView
           disableSelection={true}
           defaultExpanded={["root"]}
           className="justify-self-start"
           multiSelect={false}
+          sx={{ height: "90%", width: "100%", maxHeight: "100%" }}
         >
           {Object.keys(groupedSongs).map((group) => renderGroup(groupedSongs, group, icons))}
         </TreeView>

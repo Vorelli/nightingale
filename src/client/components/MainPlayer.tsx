@@ -5,6 +5,7 @@ import { RootState } from "../redux/store";
 import LeftDesktopPanel from "./LeftDesktopPanel";
 import RightDesktopPanel from "./RightDesktopPanel";
 import { toggleHidden, toggleOnTop } from "../redux/reducers/windowReducer";
+import BottomDesktopPanel from "./BottomDesktopPanel";
 
 type Props = {};
 
@@ -22,10 +23,13 @@ function MainPlayer({}: Props) {
     >
       {[
         !hidden ? (
-          <section className="w-full flex-1 flex" key={1}>
-            <LeftDesktopPanel></LeftDesktopPanel>
-            <RightDesktopPanel></RightDesktopPanel>
-          </section>
+          <div className="w-full h-[90%] flex flex-col">
+            <section className="w-full flex-1 flex h-full" key={1}>
+              <LeftDesktopPanel></LeftDesktopPanel>
+              <RightDesktopPanel></RightDesktopPanel>
+            </section>
+            <BottomDesktopPanel></BottomDesktopPanel>
+          </div>
         ) : (
           <footer key={2} className="w-full h-10">
             Here is the footer

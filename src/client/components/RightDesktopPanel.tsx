@@ -6,7 +6,7 @@ type Props = {};
 
 function RightDesktopPanel({}: Props) {
   return (
-    <div className="w-3/4 pt-1 h-full flex flex-col justify-start">
+    <div className="basis-2/5 flex-1 pt-1 h-full flex flex-col justify-start">
       <PlaylistContainer />
       <CurrentQueueList />
     </div>
