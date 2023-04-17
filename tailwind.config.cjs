@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 import daisyui from "daisyui";
 export default {
-  purge: ["./src/**/*.html", "./src/**/*.tsx"], // Adjust this to match your actual file extensions and paths
-  content: ["./public/*.html"],
+  //purge: ["./src/**/*.html", "./src/**/*.tsx"], // Adjust this to match your actual file extensions and paths
+  content: ["./src/client/**/*.{js,jsx,tsx}"],
   theme: {
     screens: {
       sm: "480px",

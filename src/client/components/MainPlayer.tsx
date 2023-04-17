@@ -27,20 +27,18 @@ function MainPlayer({}: Props) {
       toggleHidden={toggleHidden}
       toggleOnTop={toggleOnTop}
       id="main-player"
+      key={20}
     >
       {[
         !hidden ? (
           <>
-            <div className="collection-container flex flex-col row-start-2 col-start-1">
+            <div key={0} className="collection-container flex flex-col row-start-2 col-start-1">
               <FilterBar />
               <Collection />
             </div>
-            <div className="">
-              <PlaylistContainer />
-              <CurrentQueueList />
-            </div>
-            <AlbumArt />
-            <ControlPanel />
+            <PlaylistContainer key={1} />
+            <AlbumArt key={4} />
+            <ControlPanel key={3} />
           </>
         ) : (
           <footer key={2} className="w-full h-10">

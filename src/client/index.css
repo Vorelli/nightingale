@@ -10,7 +10,42 @@ body,
   font-family: 'Quicksand, Times New Roman';
 }
 
-.collectionList {
+.playlistBar {
+  scrollbar-gutter: stable
+}
+
+.playlistBar::-webkit-scrollbar {
+  height: 1px;
+  background-color: grey;
+  color: grey;
+}
+
+.playlistBar::-webkit-scrollbar-track {
+  width: 1px;
+  background: rgb(36, 0, 33);
+  background: linear-gradient(90deg, rgba(36, 0, 33, 1) 0%, rgba(121, 9, 117, 1) 50%, rgba(128, 0, 255, 1) 100%);
+}
+
+.playlistBar::-webkit-scrollbar-thumb {
+  position: relative;
+  width: 1px;
+  background-color: white;
+  color: white;
+  background: linear-gradient(270deg, transparent, white, transparent)
+}
+
+.playlistBar::-webkit-scrollbar-thumb::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--y, 0) * 1px - 50px);
+  left: calc(var(--x, 0) * 1px - 50px);
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(white, #3984ff00 80%);
+  opacity: 0.3;
+}
+
+.collectionList  {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
@@ -28,8 +63,7 @@ body,
   width: 1px;
   background-color: white;
   color: white;
-  box-shadow: 1px 0px grey;
-  opacity: 0.3;
+  background: linear-gradient(180deg, transparent, white, transparent)
 }
 
 .collectionList::-webkit-scrollbar-thumb::after {
@@ -59,4 +93,29 @@ body,
   width: 100%;
   height: 100%;
   grid-template: 1fr 1fr/100%
+}
+
+@keyframes moveBackground {
+  0% {
+    background-position: 0% center;
+  } 50% {
+    background-position: -100% center;
+  } 100% {
+    background-position: 0% center;
+  }
+}
+
+.playlistLabel {
+  background: linear-gradient(90deg, rgba(36, 0, 33, 1) 0%, rgba(121, 9, 117, 1) 50%, rgba(36, 0, 33, 1) 100%);
+  background-repeat: repeat;
+  background-position: 0%;
+  background-size: 200%;
+  animation: moveBackground normal 5s infinite;
+}
+
+.iconButton {
+  background-repeat: repeat;
+  background-position: 0%;
+  background-size: 200%;
+  animation: moveBackground normal 5s infinite;
 }

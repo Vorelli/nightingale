@@ -45,6 +45,7 @@ const DesktopWindow = (props: {
         if (ev.target instanceof Element) {
         }
       }}
+      key="main"
       handle=".header"
     >
       <section

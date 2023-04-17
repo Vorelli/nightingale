@@ -19,9 +19,10 @@ interface ClientSong {
 interface InitialState {
   loading: boolean;
   songs: { [key: string]: ClientSong };
+  currentSong: ClientSong | undefined;
 }
 
-const initialState: InitialState = { loading: false, songs: {} };
+const initialState: InitialState = { loading: false, songs: {}, currentSong: undefined };
 
 export const songsReducer = createSlice({
   name: "songs",
@@ -33,6 +34,9 @@ export const songsReducer = createSlice({
     songsRequestSuccess: (state, action) => {
       state.loading = false;
       state.songs = action.payload;
+    },
+    setCurrentSong: (state, action) => {
+      state.currentSong = action.payload;
     },
   },
 });

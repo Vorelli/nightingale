@@ -1,5 +1,14 @@
 import express from "express";
-import { albumArtists, albumGenres, albums, artists, genres, songs } from "../db/schema.js";
+import {
+  ReturningPlaylists,
+  albumArtists,
+  albumGenres,
+  albums,
+  artists,
+  genres,
+  playlists,
+  songs,
+} from "../db/schema.js";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm/expressions.js";
 import { Pool } from "pg";
@@ -75,6 +84,17 @@ FROM
     });
     res.json(data);
   });
+});
+
+router.get("/playlists", (req, res) => {
+  return res.locals.db
+    .select()
+    .from(playlists)
+    .then((result: ReturningPlaylists[]) => {
+      console.log(result);
+      const data = result;
+      res.json(data);
+    });
 });
 
 export default router;
