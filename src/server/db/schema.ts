@@ -89,7 +89,7 @@ export const songs = pgTable(
     md5: varchar("md5", { length: 32 }).notNull().primaryKey(),
     name: text("name"),
     path: text("path"),
-    duration: doublePrecision("duration"),
+    duration: doublePrecision("duration").notNull(),
     track: integer("track"),
     diskCharacter: varchar("diskCharacter", { length: 8 }),
     lyrics: text("lyrics"),

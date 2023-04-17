@@ -1,11 +1,10 @@
 import { appWithExtras } from "../server";
 
-export default function initializeQueue(app: appWithExtras) {
+function initializeQueue(app: appWithExtras) {
   app.locals.queues = [shuffle(app.locals.md5s)];
   app.locals.queueIndex = 0;
   generateNextQueue(app);
   generatePreviousQueue(app);
-  console.log(app.locals.queues);
 }
 
 function randomIndexFromQueue(queue: any[]): number {
@@ -46,3 +45,25 @@ function generatePreviousQueue(app: appWithExtras) {
 function shuffle(arr: any[]) {
   return arr.sort(() => 0.5 - Math.random());
 }
+
+function advanceTime(app: appWithExtras) {
+  if (!app.locals.lastTimestamp) {
+    app.locals.lastTimestamp = process.hrtime.bigint();
+    app.locals.currentTime = 0n;
+    return;
+  }
+  console.log(app.locals.currentTime);
+  const current = process.hrtime.bigint();
+  const diff = current - app.locals.lastTimestamp;
+  app.locals.currentTime += diff;
+  app.locals.lastTimestamp = current;
+
+  const currentSong = app.locals.md5ToSong[app.locals.queues[app.locals.queueIndex][0]];
+  if (app.locals.currentTime > currentSong.duration * 1000 * 1000) {
+    //let me eknow
+    // this works! now to keep the party going!
+    console.log("we reached the end", app.locals.currentTime, currentSong.duration);
+  }
+}
+
+export { initializeQueue, advanceTime };

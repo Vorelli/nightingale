@@ -66,7 +66,7 @@ async function useParseFile(filePath: string) {
   return (await importMusicMetadata())(filePath);
 }
 
-export const loadSongs = (app: express.Application): Promise<string[]> => {
+export const loadSongs = (app: express.Application): Promise<Album[]> => {
   const musicDir = process.env.MUSIC_DIRECTORY as string;
   return processPaths([path.resolve(app.locals.__dirname, musicDir)]).then((filePromises) => {
     console.log("inside the .then", filePromises);
@@ -163,7 +163,7 @@ function findArtistName(artistList: innerJoinReturn[], artistId: string): string
 function processMd5s(
   app: express.Application,
   md5s: { md5: string; filePath: string }[]
-): Promise<string[]> {
+): Promise<Album[]> {
   console.log("these are the md5s received", md5s);
   return Promise.all(
     md5s.map(async ({ md5, filePath }) => {
@@ -237,7 +237,7 @@ function processMd5s(
         insertAllIntoDb(app, mergedAlbums).then(() => {
           console.log("done doing all inserts into db! now returning all md5s!");
           console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
-          resolve(songList.flatMap((album) => album.songs.map((s) => s.md5)));
+          resolve(songList.flat());
         });
         //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
       });

@@ -2,7 +2,7 @@ export interface Song {
   md5: string;
   name: string | null;
   path: string | null;
-  duration: number | null;
+  duration: number;
   track: number | null;
   diskCharacter: string | null;
   lyrics: string | null;

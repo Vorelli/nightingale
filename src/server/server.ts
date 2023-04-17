@@ -16,8 +16,9 @@ import { attachPgPool } from "./middleware/attachPool.js";
 import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
-import initializeQueue from "./helpers/initializeQueue.js";
+import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { NodePgClient } from "drizzle-orm/node-postgres/session.js";
+import { Song } from "./types/types.js";
 
 export interface appWithExtras extends express.Application, WithWebsocketMethod {
   locals: {
@@ -26,10 +27,11 @@ export interface appWithExtras extends express.Application, WithWebsocketMethod 
     __dirname: string;
     queues: string[][];
     queueIndex: number;
-    currentTime: number;
-    originalTimestamp: NodeJS.HRTime;
-    lastTimestamp: NodeJS.HRTime;
+    currentTime: bigint;
+    lastTimestamp: bigint;
     shuffleBy: string;
+    interval: NodeJS.Timer;
+    md5ToSong: { [key: string]: Song };
   };
 }
 
@@ -46,9 +48,18 @@ app.locals.db = db;
 app.locals.__dirname = __dirname;
 app.locals.shuffleBy = "random";
 loadSongs(app)
-  .then((md5s) => {
+  .then((albums) => {
+    const md5s = albums.flatMap((album) => album.songs.map((s) => s.md5));
+    const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
+      album.songs.forEach((song) => {
+        acc[song.md5] = song;
+      });
+      return acc;
+    }, {});
     app.locals.md5s = md5s;
+    app.locals.md5ToSong = md5ToSong;
     initializeQueue(app as appWithExtras);
+    app.locals.interval = setInterval(advanceTime.bind(null, app as appWithExtras), 10);
   })
   .catch((err) => console.log("error occurred when trying to process paths."));
 
