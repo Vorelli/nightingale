@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Desktop from "./Desktop";
 import { useDispatch } from "react-redux";
 import {
+  ClientSong,
   currentSongRequest,
   currentSongRequestSuccess,
   setStartTime,
@@ -55,14 +56,18 @@ const App = () => {
     }
   }, [reloadSong]);
 
+  interface md5ToSong {
+    [key: string]: ClientSong;
+  }
+
   useEffect(() => {
     dispatch(songsRequest());
     fetch(URL + "/api/songs")
       .then((data) => data.json())
-      .then((data) => {
+      .then((data: ClientSong[]) => {
         console.log("data from server", data);
-        const keys = data.map((song) => song.md5);
-        const songs = {};
+        const keys = data.map((song: ClientSong) => song.md5);
+        const songs: md5ToSong = {};
         for (var i = 0; i < keys.length; i++) {
           songs[keys[i]] = data[i];
         }

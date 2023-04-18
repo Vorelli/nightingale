@@ -18,23 +18,7 @@ import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
 import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { NodePgClient } from "drizzle-orm/node-postgres/session.js";
-import { Song } from "./types/types.js";
-
-export interface appWithExtras extends express.Application, WithWebsocketMethod {
-  locals: {
-    md5s: string[];
-    db: NodePgClient;
-    __dirname: string;
-    queues: string[][];
-    queueIndex: number;
-    currentTime: bigint;
-    lastTimestamp: bigint;
-    shuffleBy: string;
-    md5ToSong: { [key: string]: Song };
-    status: "PLAYING" | "PAUSED";
-    getWss: Function;
-  };
-}
+import { Song, appWithExtras } from "./types/types.js";
 
 var options = {
   key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),

@@ -1,4 +1,4 @@
-import { appWithExtras } from "../server";
+import { appWithExtras } from "../types/types";
 
 function initializeQueue(app: appWithExtras) {
   app.locals.queues = [shuffle(app.locals.md5s)];

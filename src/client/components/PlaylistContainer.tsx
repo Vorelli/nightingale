@@ -21,7 +21,7 @@ function PlaylistContainer({}: Props) {
       headerName: "Duration",
       width: 100,
       type: "number",
-      valueFormatter: (params) => {
+      valueFormatter: (params: { value: number }) => {
         return Math.floor(params.value / 1000 / 60) + ":" + ((params.value / 1000 / 60) % 60);
       },
     },

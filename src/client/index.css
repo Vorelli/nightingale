@@ -86,7 +86,7 @@ body,
 #main-player.big {
   width: 100%;
   height: 100%;
-  grid-template: 12.5% 57.5% 17.5% 12.5%/20% 80%
+  grid-template: 10% 60% 17.5% 12.5%/20% 80%
 }
 
 #main-player.small {

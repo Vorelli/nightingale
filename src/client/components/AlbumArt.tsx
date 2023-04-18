@@ -7,6 +7,8 @@ type Props = {};
 
 function AlbumArt({}: Props) {
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
+  const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+
   const song = songs[currentSong || ""];
   function isClientSong(object: any): object is ClientSong {
     if (typeof object === "boolean") return false;
@@ -17,7 +19,10 @@ function AlbumArt({}: Props) {
     song && (
       <img
         key={7}
-        className="albumArt w-full h-full row-start-3 row-span-2 col-start-1 object-contain bg-base-200 shadow-md shadow-base-300 p-2"
+        className={
+          "albumArt w-full h-full row-start-3 row-span-2 col-start-1 object-contain bg-base-200 shadow-md shadow-base-300 " +
+          (hidden ? "p-1" : "p-2")
+        }
         src={`/streaming/${song.md5}.jpg`}
         alt={"album art for " + song.albumArtist + " - " + song.albumName}
       />

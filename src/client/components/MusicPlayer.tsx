@@ -24,6 +24,8 @@ function MusicPlayer({}: Props) {
   const dispatch = useDispatch();
   const [localVolume, setLocalVolume] = useState(5);
   const [currentT, setCurrentT] = useState(0);
+  const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+  const [sharedIconSx, setSharedIconSx] = useState({ width: "24px", height: "24px" });
 
   function handlePlayPause() {}
   function handleSeek(ev: Event) {
@@ -62,23 +64,34 @@ function MusicPlayer({}: Props) {
     }
   }, [localVolume, audioRef]);
 
+  useEffect(() => {
+    const w = hidden ? "16px" : "24px";
+    setSharedIconSx({
+      height: w,
+      width: w,
+    });
+  }, [hidden]);
+
   return (
     <>
       <div
         key={9}
-        className="controlPanel w-full h-full bg-base-300 border-0 flex items-center shadow-md shadow-base-300 row-start-4"
+        className={
+          "controlPanel w-full h-full bg-base-300 border-0 flex items-center shadow-md shadow-base-300 row-start-4" +
+          (hidden ? " !h-[50px]" : "")
+        }
       >
         <MyIconButton>
-          <SkipPreviousIcon />
+          <SkipPreviousIcon sx={sharedIconSx} />
         </MyIconButton>
         <MyIconButton>
-          <PauseIcon />
+          <PauseIcon sx={sharedIconSx} />
         </MyIconButton>
         <MyIconButton>
-          <SkipNextIcon />
+          <SkipNextIcon sx={sharedIconSx} />
         </MyIconButton>
         <MyIconButton>
-          <StopIcon />
+          <StopIcon sx={sharedIconSx} />
         </MyIconButton>
         <Box sx={{ display: "flex", flexGrow: 1 }}>
           <Slider
@@ -86,7 +99,8 @@ function MusicPlayer({}: Props) {
             max={(song && song.duration) || 100}
             value={currentT * 1000}
             onChange={handleSeek}
-            className="bg-primary"
+            className="bg-base-300"
+            size="small"
             sx={{ width: "100%", margin: "0 10px" }}
           />
         </Box>
@@ -97,6 +111,7 @@ function MusicPlayer({}: Props) {
             value={localVolume}
             onChange={handleVolumeChange}
             className="bg-primary"
+            size="small"
             sx={{ width: "100%", margin: "0 10px" }}
           />
         </Box>

@@ -110,12 +110,5 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "exclude": ["src/client", "node_modules", "dist"],
-  "include": [
-    "./src/**/*.ts",
-    "src/client/components/App.tsx",
-    "src/client/index.tsx",
-    "src/client/solid-js.d.tsx",
-    "node_modules/audio-type-detect/audio-type-detect.d.ts",
-    "dist/helpers/loadSongs.spec.ts"
-  ]
+  "include": ["./src/server/**/*.ts"]
 }
