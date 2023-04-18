@@ -35,7 +35,8 @@ const DesktopWindow = (props: {
   };
 
   useEffect(() => {
-    setHeight(hidden ? 100 : 600);
+    setHeight(hidden ? 110 : 600);
+    setWidth(hidden ? 400 : 800);
   }, [hidden]);
 
   return (
@@ -72,8 +73,13 @@ const DesktopWindow = (props: {
         }
         ref={container}
       >
-        <header className="w-full h-10 flex justify-between box-border items-center select-none col-span-2">
-          <div className="flex-1 flex justify-start space-x-2 items-center pt-2 header hover:cursor-move">
+        <header className="w-full h-10 flex justify-between box-border items-center select-none space-x-2 col-span-2">
+          <div
+            className={
+              "flex-1 flex justify-start space-x-4 items-center pt-2 header hover:cursor-move" +
+              (hidden ? " text-sm" : "")
+            }
+          >
             <div className="w-10 h-10 bg-base-200 mask mask-circle">
               <img draggable={false} className="w-8 h-8 relative left-1 top-1" src={props.icon} />
             </div>
