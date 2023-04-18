@@ -1,10 +1,15 @@
 import React, { PropsWithChildren, useEffect, useRef, useState } from "react";
 import HeaderBar from "./HeaderBar";
-import Draggable, { DraggableEvent } from "react-draggable";
+import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
 import { AppDispatch } from "../redux/store";
 import { ActionCreatorWithPayload } from "@reduxjs/toolkit";
+
+interface Position {
+  x: number;
+  y: number;
+}
 
 const DesktopWindow = (props: {
   title?: string;
@@ -22,6 +27,7 @@ const DesktopWindow = (props: {
   const container = useRef(null);
   const dispatch: AppDispatch = useDispatch();
   const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
+  const [fixedPos, setFixedPos] = useState<undefined | Position>(undefined);
 
   window.onresize = (ev: UIEvent) => {
     setWindowHeight(window.innerHeight);
@@ -29,7 +35,7 @@ const DesktopWindow = (props: {
   };
 
   useEffect(() => {
-    setHeight(hidden ? 100 : 400);
+    setHeight(hidden ? 100 : 600);
   }, [hidden]);
 
   return (
@@ -40,10 +46,19 @@ const DesktopWindow = (props: {
         right: windowWidth - width - 5,
         bottom: windowHeight - height - 5,
       }}
+      position={fixedPos}
       defaultPosition={{ x: 50, y: 50 }}
       onDrag={(ev: DraggableEvent) => {
         if (ev.target instanceof Element) {
         }
+      }}
+      onStart={(ev: DraggableEvent) => {
+        setFixedPos(undefined);
+      }}
+      onStop={(ev: DraggableEvent, data: DraggableData) => {
+        const newX = Math.round(data.x / 10) * 10;
+        const newY = Math.round(data.y / 10) * 10;
+        setFixedPos({ x: newX, y: newY });
       }}
       key="main"
       handle=".header"

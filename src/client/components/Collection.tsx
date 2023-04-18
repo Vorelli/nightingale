@@ -280,5 +280,5 @@ function groupSongsBy(
     return acc;
   }, {} as GroupedSongs);
 }
-
+Collection.whyDidYouRender = true;
 export default Collection;

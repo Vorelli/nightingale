@@ -30,8 +30,9 @@ export interface appWithExtras extends express.Application, WithWebsocketMethod 
     currentTime: bigint;
     lastTimestamp: bigint;
     shuffleBy: string;
-    interval: NodeJS.Timer;
     md5ToSong: { [key: string]: Song };
+    status: "PLAYING" | "PAUSED";
+    getWss: Function;
   };
 }
 
@@ -42,27 +43,40 @@ var options = {
 var appStart: express.Application = express();
 var httpsServer = https.createServer(options, appStart);
 
-var { app }: { app: express.Application & WithWebsocketMethod } = express_ws(appStart);
-express_ws(app, httpsServer);
+var { app }: express_ws.Instance = express_ws(appStart);
+var { getWss } = express_ws(app, httpsServer);
+
+app.locals.getWss = getWss;
+console.log(getWss().clients.forEach((client) => {}));
 app.locals.db = db;
 app.locals.__dirname = __dirname;
 app.locals.shuffleBy = "random";
-loadSongs(app)
-  .then((albums) => {
-    const md5s = albums.flatMap((album) => album.songs.map((s) => s.md5));
-    const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
-      album.songs.forEach((song) => {
-        acc[song.md5] = song;
-      });
-      return acc;
-    }, {});
-    app.locals.md5s = md5s;
-    app.locals.md5ToSong = md5ToSong;
-    initializeQueue(app as appWithExtras);
-    app.locals.interval = setInterval(advanceTime.bind(null, app as appWithExtras), 10);
-  })
-  .catch((err) => console.log("error occurred when trying to process paths."));
+app.locals.wait = new Promise<void>((resolve, reject) => {
+  loadSongs(app)
+    .then((albums) => {
+      const md5s = albums.flatMap((album) => album.songs.map((s) => s.md5));
+      const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
+        album.songs.forEach((song) => {
+          acc[song.md5] = song;
+        });
+        return acc;
+      }, {});
+      app.locals.md5s = md5s;
+      app.locals.md5ToSong = md5ToSong;
+      initializeQueue(app as appWithExtras);
+      setTimeout(advanceTime.bind(null, app as appWithExtras), 10);
+    })
+    .then(() => resolve())
+    .catch((err) => {
+      reject(err);
+      console.log("error occurred when trying to process paths.", err);
+    });
+});
 
+app.use(async (_req, _res, next) => {
+  await app.locals.wait; //Wait until songs are loaded before trying to resolve requests.
+  next();
+});
 app.use(attachPgPool(pool, db));
 app.use(setCorsAndHeaders);
 app.use(sessionsMiddleware);

@@ -52,7 +52,7 @@ function PlaylistLabel(props: Props) {
   }
 
   return (
-    <li className="playlistLabel hover:before:opacity-0 before:transition-all before:duration-500 hover:shadow-base-100 transition-all hover:shadow-lg rounded-[5px] before:rounded-[5px] text-neutral-content shadow shadow-neutral-focus border-primary border-solid m-[1px] w-20 h-[30px] bg-secondary relative z-10 before:z-[-10] border-[1px] border-transparent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0">
+    <li className="playlistLabel hover:before:opacity-0 before:transition-all before:duration-500 hover:shadow-base-100 transition-all hover:shadow-lg rounded-[5px] before:rounded-[5px] text-neutral-content shadow shadow-neutral-focus border-primary border-solid m-[1px] w-fit max-h-[35px] h-[30px] bg-secondary relative z-10 before:z-[-10] border-[1px] border-transparent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 flex">
       {(editing && (
         <input
           onBlur={(ev) => handleNameChange()}
@@ -65,12 +65,12 @@ function PlaylistLabel(props: Props) {
             }
           }}
           type="text"
-          className="w-fit h-fit max-w-[3em]"
+          className="w-fit h-fit"
           value={currentName}
           onChange={(ev) => setCurrentName(ev.target.value)}
         />
       )) || (
-        <p className="float-left max-w-[3em] overflow-y-hidden" onClick={(ev) => handleClick(ev)}>
+        <p className="overflow-y-hidden" onClick={(ev) => handleClick(ev)}>
           {props.playlist.name} ({props.playlist.songs.length})
         </p>
       )}

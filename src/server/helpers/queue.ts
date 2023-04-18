@@ -2,6 +2,7 @@ import { appWithExtras } from "../server";
 
 function initializeQueue(app: appWithExtras) {
   app.locals.queues = [shuffle(app.locals.md5s)];
+  app.locals.status = "PLAYING";
   app.locals.queueIndex = 0;
   generateNextQueue(app);
   generatePreviousQueue(app);
@@ -46,24 +47,39 @@ function shuffle(arr: any[]) {
   return arr.sort(() => 0.5 - Math.random());
 }
 
-function advanceTime(app: appWithExtras) {
-  if (!app.locals.lastTimestamp) {
-    app.locals.lastTimestamp = process.hrtime.bigint();
-    app.locals.currentTime = 0n;
-    return;
+function nextSong(app: appWithExtras) {
+  app.locals.queueIndex++;
+  if (app.locals.queueIndex === app.locals.queues.length - 1) {
+    generateNextQueue(app);
   }
-  console.log(app.locals.currentTime);
-  const current = process.hrtime.bigint();
-  const diff = current - app.locals.lastTimestamp;
-  app.locals.currentTime += diff;
-  app.locals.lastTimestamp = current;
+  app.locals.currentTime = 0n;
+  app.locals.getWss().clients.forEach((client: WebSocket) => {
+    client.send("nextSong");
+  });
+}
 
-  const currentSong = app.locals.md5ToSong[app.locals.queues[app.locals.queueIndex][0]];
-  if (app.locals.currentTime > currentSong.duration * 1000 * 1000) {
-    //let me eknow
-    // this works! now to keep the party going!
-    console.log("we reached the end", app.locals.currentTime, currentSong.duration);
+function advanceTime(app: appWithExtras) {
+  const current = process.hrtime.bigint();
+  if (app.locals.status === "PLAYING") {
+    if (!app.locals.lastTimestamp) {
+      app.locals.lastTimestamp = process.hrtime.bigint();
+      app.locals.currentTime = 0n;
+      setTimeout(advanceTime.bind(null, app), app.locals.status === "PLAYING" ? 10 : 1000);
+      return;
+    }
+    const diff = current - app.locals.lastTimestamp;
+    app.locals.currentTime += diff;
+
+    const currentSong = app.locals.md5ToSong[app.locals.queues[app.locals.queueIndex][0]];
+    if (app.locals.currentTime > currentSong.duration * 1000 * 1000) {
+      //let me eknow
+      // this works! now to keep the party going!
+      nextSong(app);
+      console.log("we reached the end. now playing", app.locals.queues[app.locals.queueIndex][0]);
+    }
   }
+  app.locals.lastTimestamp = current;
+  setTimeout(advanceTime.bind(null, app), app.locals.status === "PLAYING" ? 10 : 1000);
 }
 
 export { initializeQueue, advanceTime };

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Desktop from "./Desktop";
 import { useDispatch } from "react-redux";
-import { songsRequest, songsRequestSuccess } from "../redux/reducers/songsReducer";
+import {
+  currentSongRequest,
+  currentSongRequestSuccess,
+  setStartTime,
+  songsRequest,
+  songsRequestSuccess,
+} from "../redux/reducers/songsReducer";
 import {
   ClientPlaylist,
   requestPlaylists,
@@ -11,7 +17,43 @@ import {
 const App = () => {
   const [count, setCount] = useState(0);
   const dispatch = useDispatch();
-  const URL = "https://toscanonatale.dev";
+  const HOST = "toscanonatale.dev";
+  const URL = "https://" + HOST;
+  const [reloadSong, setReloadSong] = useState(true);
+
+  useEffect(() => {
+    const ws = new WebSocket("wss://" + HOST);
+    ws.onopen = function () {
+      console.log("connected to web socket server");
+    };
+
+    ws.onmessage = function (data) {
+      console.log("received message:", data);
+      if (data.data === "nextSong") {
+        console.log("reloading song");
+        setReloadSong(true);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reloadSong) {
+      dispatch(currentSongRequest());
+      fetch(URL + "/api/sync")
+        .then((data) => data.json())
+        .then((syncData) => {
+          console.log("sync data", syncData);
+          if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
+            dispatch(currentSongRequestSuccess(syncData.currentSong));
+            dispatch(setStartTime(syncData.currentTime));
+          }
+        })
+        .catch((err) => {
+          console.log("error encountered when trying to sync with the server", err);
+        });
+      setReloadSong(false);
+    }
+  }, [reloadSong]);
 
   useEffect(() => {
     dispatch(songsRequest());
@@ -19,9 +61,16 @@ const App = () => {
       .then((data) => data.json())
       .then((data) => {
         console.log("data from server", data);
-        dispatch(songsRequestSuccess(data));
+        const keys = data.map((song) => song.md5);
+        const songs = {};
+        for (var i = 0; i < keys.length; i++) {
+          songs[keys[i]] = data[i];
+        }
+        dispatch(songsRequestSuccess(songs));
       });
+  }, []);
 
+  useEffect(() => {
     dispatch(requestPlaylists());
     fetch(URL + "/api/playlists")
       .then((data) => data.json())
@@ -50,5 +99,5 @@ const App = () => {
 
   return <Desktop />;
 };
-
+App.whyDidYouRender = true;
 export default App;

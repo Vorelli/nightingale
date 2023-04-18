@@ -97,4 +97,24 @@ router.get("/playlists", (req, res) => {
     });
 });
 
+function toObject(toBeJson: any) {
+  return JSON.parse(
+    JSON.stringify(
+      toBeJson,
+      (key, value) => (typeof value === "bigint" ? value.toString() : value) // return everything else unchanged
+    )
+  );
+}
+
+router.get("/sync", (req, res) => {
+  const { locals } = req.app;
+  const sync = {
+    currentTime:
+      (locals.currentTime && (locals.currentTime / BigInt(Math.pow(10, 6))).toString()) || 0,
+    currentSong: locals.queues[locals.queueIndex][0],
+  };
+
+  res.status(200).send(toObject(sync));
+});
+
 export default router;

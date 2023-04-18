@@ -7,10 +7,7 @@ type Props = {};
 
 function PlaylistContainer({}: Props) {
   const dispatch = useDispatch();
-  const { playlists, loading, playlistIndex } = useSelector((state: RootState) => {
-    console.log("state", state);
-    return state.playlists;
-  });
+  const { playlists, loading, playlistIndex } = useSelector((state: RootState) => state.playlists);
   const { songs } = useSelector((state: RootState) => state.songs);
 
   const rows = playlists[playlistIndex]?.songs.map((song: string) => songs[song]);
@@ -49,14 +46,12 @@ function PlaylistContainer({}: Props) {
 }
   */
 
-  console.log(playlists);
-
   return (
     <div className="h-full w-full row-start-2 row-span-2">
-      <header>
+      <header className="ml-1 mt-1">
         <ul
           key={5}
-          className="playlistBar flex flex-col mt-1 ml-1 h-[30px] w-full overflow-x-auto relative "
+          className="playlistBar flex mt-1 ml-1 h-[35px] w-full overflow-x-auto relative "
         >
           {playlists.map((playlist: any) => (
             <PlaylistLabel key={playlist.id} playlist={playlist} />

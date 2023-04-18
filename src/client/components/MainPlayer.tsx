@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import DesktopWindow from "./DesktopWindow";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
-import LeftDesktopPanel from "./LeftDesktopPanel";
 import RightDesktopPanel from "./RightDesktopPanel";
 import { toggleHidden, toggleOnTop } from "../redux/reducers/windowReducer";
 import BottomDesktopPanel from "./BottomDesktopPanel";
@@ -11,11 +10,9 @@ import CurrentQueueList from "./CurrentQueueList";
 import Collection from "./Collection";
 import FilterBar from "./FilterBar";
 import AlbumArt from "./AlbumArt";
-import ControlPanel from "./ControlPanel";
+import MusicPlayer from "./MusicPlayer";
 
-type Props = {};
-
-function MainPlayer({}: Props) {
+const MainPlayer = function MainPlayer() {
   const windowName = "main";
   const { hidden } = useSelector((s: RootState) => s.windows[windowName]);
 
@@ -38,16 +35,15 @@ function MainPlayer({}: Props) {
             </div>
             <PlaylistContainer key={1} />
             <AlbumArt key={4} />
-            <ControlPanel key={3} />
           </>
         ) : (
-          <footer key={2} className="w-full h-10">
-            Here is the footer (going to be mini player)
-          </footer>
+          <></>
         ),
+        <AlbumArt key={4} />,
+        <MusicPlayer />,
       ]}
     </DesktopWindow>
   );
-}
-
+};
+MainPlayer.whyDidYouRender = true;
 export default MainPlayer;
