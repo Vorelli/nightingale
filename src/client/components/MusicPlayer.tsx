@@ -8,6 +8,7 @@ import SkipNextIcon from "@mui/icons-material/SkipNext";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
+import StyledSlider from "./StyledSlider";
 
 interface WithValue {
   value: number;
@@ -26,6 +27,9 @@ function MusicPlayer({}: Props) {
   const [currentT, setCurrentT] = useState(0);
   const { hidden } = useSelector((s: RootState) => s.windows["main"]);
   const [sharedIconSx, setSharedIconSx] = useState({ width: "24px", height: "24px" });
+  const [sharedSliderClass, setSharedSliderClass] = useState(
+    "bg-gradient-to-r from-secondary via-accent to-secondary"
+  );
 
   function handlePlayPause() {}
   function handleSeek(ev: Event) {
@@ -72,12 +76,23 @@ function MusicPlayer({}: Props) {
     });
   }, [hidden]);
 
+  function formatTimeseekSlider(value: number) {
+    const hours = Math.floor(value / 60 / 60);
+    const minutes = Math.floor(value / 60);
+    const remainingSeconds = Math.floor(value % 60);
+    const minutesText = minutes < 10 ? "0" + minutes : minutes;
+    const secondsText = remainingSeconds < 10 ? "0" + remainingSeconds : remainingSeconds;
+    const hoursText = hours > 0 ? (hours < 10 ? "0" + hours : hours) + ":" : "";
+    const formattedString = hoursText + minutesText + ":" + secondsText;
+    return formattedString;
+  }
+
   return (
     <>
       <div
         key={9}
         className={
-          "controlPanel w-full h-full bg-base-300 border-0 flex items-center shadow-md shadow-base-300 row-start-4" +
+          "controlPanel w-full h-full bg-neutral border-0 flex items-center shadow-md shadow-base-300 row-start-4" +
           (hidden ? " !h-[50px]" : "")
         }
       >
@@ -91,18 +106,20 @@ function MusicPlayer({}: Props) {
           <SkipNextIcon sx={sharedIconSx} />
         </MyIconButton>
         <Box sx={{ display: "flex", flexGrow: 1 }}>
-          <Slider
+          <StyledSlider
             min={0}
-            max={(song && song.duration) || 100}
-            value={currentT * 1000}
+            max={(song && song.duration / 1000) || 100}
+            value={currentT}
             onChange={handleSeek}
-            className="bg-base-200"
+            className={sharedSliderClass}
+            valueLabelDisplay="auto"
+            valueLabelFormat={formatTimeseekSlider}
             size="small"
             sx={{ width: "100%", margin: "0 10px" }}
           />
         </Box>
         <Box sx={{ display: "flex", width: "50px" }}>
-          <Slider
+          <StyledSlider
             min={0}
             max={100}
             value={localVolume}
