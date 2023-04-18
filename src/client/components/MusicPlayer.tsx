@@ -90,16 +90,13 @@ function MusicPlayer({}: Props) {
         <MyIconButton>
           <SkipNextIcon sx={sharedIconSx} />
         </MyIconButton>
-        <MyIconButton>
-          <StopIcon sx={sharedIconSx} />
-        </MyIconButton>
         <Box sx={{ display: "flex", flexGrow: 1 }}>
           <Slider
             min={0}
             max={(song && song.duration) || 100}
             value={currentT * 1000}
             onChange={handleSeek}
-            className="bg-base-300"
+            className="bg-base-200"
             size="small"
             sx={{ width: "100%", margin: "0 10px" }}
           />
@@ -110,7 +107,7 @@ function MusicPlayer({}: Props) {
             max={100}
             value={localVolume}
             onChange={handleVolumeChange}
-            className="bg-primary"
+            className="bg-base-200"
             size="small"
             sx={{ width: "100%", margin: "0 10px" }}
           />

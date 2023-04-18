@@ -20,8 +20,8 @@ function AlbumArt({}: Props) {
       <img
         key={7}
         className={
-          "albumArt w-full h-full row-start-3 row-span-2 col-start-1 object-contain bg-base-200 shadow-md shadow-base-300 " +
-          (hidden ? "p-1" : "p-2")
+          "albumArt box-border border-solid border-primary border-[1px] w-full h-full row-start-3 row-span-2 col-start-1 object-contain bg-neutral shadow-md shadow-base-300 " +
+          (hidden ? "p-[1px]" : "p-[3px]")
         }
         src={`/streaming/${song.md5}.jpg`}
         alt={"album art for " + song.albumArtist + " - " + song.albumName}
