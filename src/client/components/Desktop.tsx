@@ -4,6 +4,7 @@ import MainPlayer from "./MainPlayer";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { setCurrentTime } from "../redux/reducers/songsReducer";
+import Background from "./Background";
 
 const Desktop = function Desktop() {
   function handleClick(ev: React.MouseEvent) {
@@ -19,6 +20,7 @@ const Desktop = function Desktop() {
   return (
     <div onContextMenu={handleClick} className="desktop h-full w-full bg-base-100">
       <MainPlayer />
+      <Background />
     </div>
   );
 };

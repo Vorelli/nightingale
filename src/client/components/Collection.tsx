@@ -44,18 +44,15 @@ function Collection({}: Props) {
 
   useEffect(() => {
     let groupedSongs: GroupedSongs | SuperGroupedSongs = {};
-    console.log(groupBy, songs);
     switch (groupBy) {
       case "artistAlbum":
         groupedSongs = groupSongsBy("albumArtist", songs);
-        console.log(groupedSongs);
         groupedSongs = groupGroupsOfSongsBy("albumName", groupedSongs);
         break;
       default:
         groupedSongs = groupSongsBy(groupBy, songs);
         break;
     }
-    console.log(groupedSongs);
     setGroupedSongs(groupedSongs);
   }, [groupBy, songs]);
 
@@ -65,7 +62,6 @@ function Collection({}: Props) {
         setIcons([getIconsByGrouping("albumArtist"), getIconsByGrouping("albumName")]);
         break;
       default:
-        console.log(getIconsByGrouping(groupBy));
         setIcons([getIconsByGrouping(groupBy)]);
         break;
     }
@@ -285,7 +281,6 @@ function groupSongsBy(
   key: string,
   songs: { [key: string]: ClientSong } | ClientSong[]
 ): { [key: string]: ClientSong[] } {
-  console.log(key, songs, "groupSongsBy");
   return Object.values(songs).reduce((acc, song) => {
     if (!acc[song[key]]) {
       acc[song[key]] = [];

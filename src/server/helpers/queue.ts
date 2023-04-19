@@ -1,6 +1,9 @@
 import { appWithExtras } from "../types/types";
+import sqlite3 from "sqlite3";
+const smDb = new sqlite3.Database("../persist.db", sqlite3.OPEN_READWRITE);
 
 function initializeQueue(app: appWithExtras) {
+  //smDb.all();
   app.locals.queues = [shuffle(app.locals.md5s)];
   app.locals.status = "PLAYING";
   app.locals.queueIndex = 0;
