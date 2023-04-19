@@ -1,10 +1,9 @@
 import {} from "dotenv/config";
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import path from "path";
 import { pool, db } from "./db/schema.js";
 import https from "https";
 import fs from "fs";
-import { WithWebsocketMethod } from "express-ws";
 import express_ws from "express-ws";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,8 +16,8 @@ import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
 import { initializeQueue, advanceTime } from "./helpers/queue.js";
-import { NodePgClient } from "drizzle-orm/node-postgres/session.js";
 import { Song, appWithExtras } from "./types/types.js";
+import cors from "cors";
 
 var options = {
   key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),
@@ -29,6 +28,13 @@ var httpsServer = https.createServer(options, appStart);
 
 var { app }: express_ws.Instance = express_ws(appStart);
 var { getWss } = express_ws(app, httpsServer);
+
+const corsOptions = {
+  origin: "http://localhost:8081",
+};
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.locals.getWss = getWss;
 console.log(getWss().clients.forEach((client) => {}));

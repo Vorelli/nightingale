@@ -47,15 +47,17 @@ function shuffle(arr: any[]) {
   return arr.sort(() => 0.5 - Math.random());
 }
 
+function setTimeAndSend(app: appWithExtras, time: bigint) {
+  app.locals.currentTime = time;
+  sendSync(app);
+}
+
 function nextSong(app: appWithExtras) {
   app.locals.queueIndex++;
   if (app.locals.queueIndex === app.locals.queues.length - 1) {
     generateNextQueue(app);
   }
-  app.locals.currentTime = 0n;
-  app.locals.getWss().clients.forEach((client: WebSocket) => {
-    client.send("nextSong");
-  });
+  setTimeAndSend(app, 0n);
 }
 
 function advanceTime(app: appWithExtras) {
@@ -82,4 +84,23 @@ function advanceTime(app: appWithExtras) {
   setTimeout(advanceTime.bind(null, app), app.locals.status === "PLAYING" ? 10 : 1000);
 }
 
-export { initializeQueue, advanceTime };
+function sendSync(app: appWithExtras) {
+  app.locals.getWss().clients.forEach((client: WebSocket) => {
+    client.send("sync");
+  });
+}
+
+function previousSong(app: appWithExtras) {
+  const current = app.locals.currentTime;
+  if (current <= BigInt(5000000000)) {
+    // 5 seconds
+    app.locals.queueIndex--;
+    if (app.locals.queueIndex === 0) {
+      generatePreviousQueue(app);
+      sendSync(app);
+    }
+  }
+  setTimeAndSend(app, 0n);
+}
+
+export { initializeQueue, advanceTime, nextSong, previousSong, sendSync };

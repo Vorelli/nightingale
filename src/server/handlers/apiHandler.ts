@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Response, Request } from "express";
 import {
   ReturningPlaylists,
   albumArtists,
@@ -12,6 +12,8 @@ import {
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm/expressions.js";
 import { Pool } from "pg";
+import { appWithExtras } from "../types/types.js";
+import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
 const router = express.Router();
 
 router.get("/songs", (req, res) => {
@@ -107,14 +109,54 @@ function toObject(toBeJson: any) {
 }
 
 router.get("/sync", (req, res) => {
-  const { locals } = req.app;
+  const { status, currentTime, queues, queueIndex } = (req.app as appWithExtras).locals;
   const sync = {
-    currentTime:
-      (locals.currentTime && (locals.currentTime / BigInt(Math.pow(10, 6))).toString()) || 0,
-    currentSong: locals.queues[locals.queueIndex][0],
+    currentTime: (currentTime && (currentTime / BigInt(Math.pow(10, 6))).toString()) || 0,
+    currentSong: queues[queueIndex][0],
+    status: status,
   };
 
   res.status(200).send(toObject(sync));
+});
+
+router.put("/playpause", (req, res) => {
+  const app = req.app as appWithExtras;
+  app.locals.status = app.locals.status === "PLAYING" ? "PAUSED" : "PLAYING";
+  app.locals.getWss().clients.forEach((client: WebSocket) => {
+    client.send(app.locals.status);
+  });
+  res.sendStatus(200);
+});
+
+router.put("/next", (req, res) => {
+  nextSong(req.app as appWithExtras);
+  sendSync(req.app as appWithExtras);
+  res.sendStatus(200);
+});
+
+router.put("/prev", (req, res) => {
+  previousSong(req.app as appWithExtras);
+  res.sendStatus(200);
+});
+
+router.put("/time", (req: Request, res: Response) => {
+  console.log("before parse", req.query.newTime);
+  const parsedNewTime = typeof req.query.newTime === "string" && parseFloat(req.query.newTime);
+  if (
+    req.query &&
+    typeof req.query.newTime === "string" &&
+    parsedNewTime &&
+    !isNaN(parsedNewTime)
+  ) {
+    const app = req.app as appWithExtras;
+    app.locals.currentTime = BigInt(parsedNewTime);
+    app.locals.getWss().clients.forEach((client: WebSocket) => {
+      client.send("setTime " + app.locals.currentTime / BigInt(Math.pow(10, 6)));
+    });
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(400);
+  }
 });
 
 export default router;

@@ -11,11 +11,13 @@ interface InitialState {
     | "playsDesc"
     | "ratingAsc"
     | "ratingDesc";
+  status: "PAUSED" | "PLAYING";
 }
 
 const initialState: InitialState = {
   groupBy: "artistAlbum",
   sortBy: "alphaAsc",
+  status: "PLAYING",
 };
 
 export const settingsReducer = createSlice({
@@ -28,9 +30,12 @@ export const settingsReducer = createSlice({
     setSortBy: (state, action) => {
       state.sortBy = action.payload.sortBy;
     },
+    setStatus: (state, action) => {
+      state.status = action.payload;
+    },
   },
 });
 
-export const { setSortBy, setGroupBy } = settingsReducer.actions;
+export const { setSortBy, setStatus, setGroupBy } = settingsReducer.actions;
 
 export default settingsReducer.reducer;

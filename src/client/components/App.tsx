@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Desktop from "./Desktop";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   ClientSong,
   currentSongRequest,
@@ -14,13 +14,15 @@ import {
   requestPlaylists,
   requestPlaylistsSuccess,
 } from "../redux/reducers/playlistsReducer";
+import { setStatus } from "../redux/reducers/settingsReducer";
+import { RootState } from "../redux/store";
 
 const App = () => {
   const [count, setCount] = useState(0);
   const dispatch = useDispatch();
-  const HOST = "toscanonatale.dev";
-  const URL = "https://" + HOST;
   const [reloadSong, setReloadSong] = useState(true);
+  const { URL, HOST } = useSelector((s: RootState) => s.global);
+  const { status } = useSelector((s: RootState) => s.settings);
 
   useEffect(() => {
     const ws = new WebSocket("wss://" + HOST);
@@ -30,9 +32,20 @@ const App = () => {
 
     ws.onmessage = function (data) {
       console.log("received message:", data);
-      if (data.data === "nextSong") {
-        console.log("reloading song");
+      if (data.data === "sync") {
         setReloadSong(true);
+      } else if (data.data === "PLAYING") {
+        dispatch(setStatus("PLAYING"));
+      } else if (data.data === "PAUSED") {
+        dispatch(setStatus("PAUSED"));
+      } else if (data.data.indexOf("setTime ") === 0) {
+        const parsedTime = parseFloat(data.data.slice(8));
+        if (!isNaN(parsedTime)) {
+          dispatch(setStartTime(parsedTime));
+          dispatch(setStatus(status));
+        } else {
+          console.log("received unexpected data", data);
+        }
       }
     };
   }, []);
@@ -47,12 +60,13 @@ const App = () => {
           if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
             dispatch(currentSongRequestSuccess(syncData.currentSong));
             dispatch(setStartTime(syncData.currentTime));
+            dispatch(setStatus(syncData.status));
           }
         })
         .catch((err) => {
           console.log("error encountered when trying to sync with the server", err);
-        });
-      setReloadSong(false);
+        })
+        .finally(() => setReloadSong(false));
     }
   }, [reloadSong]);
 
@@ -96,11 +110,6 @@ const App = () => {
         }
       });
   }, []);
-
-  useEffect(() => {
-    console.log("Count:", count);
-  });
-  console.log("hello");
 
   return <Desktop />;
 };
