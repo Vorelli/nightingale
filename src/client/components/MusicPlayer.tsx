@@ -99,5 +99,5 @@ function MusicPlayer({}: Props) {
     </>
   );
 }
-MusicPlayer.whyDidYouRender = true;
+//MusicPlayer.whyDidYouRender = true;
 export default MusicPlayer;

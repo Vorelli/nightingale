@@ -7,7 +7,6 @@ type Props = { onClick?: MouseEventHandler; width?: number; children: ReactNode 
 
 function MyIconButton({ onClick, children, width }: Props) {
   const windowHidden = useSelector((s: RootState) => s.windows["main"].hidden);
-  console.log("width", width);
   return (
     <IconButton
       className={

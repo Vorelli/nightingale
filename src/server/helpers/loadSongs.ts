@@ -1,4 +1,4 @@
-import fs, { PathLike } from "fs";
+import fs from "fs";
 import express from "express";
 import md5File from "md5-file";
 import {
@@ -14,13 +14,6 @@ import {
   songs,
   Songs,
   Genres,
-  NewAlbumArtists,
-  NewAlbums,
-  NewGenres,
-  NewAlbumGenres,
-  NewSongs,
-  NewArtists,
-  ReturningSongs,
   ReturningArtists,
   ReturningGenres,
   ReturningAlbums,
@@ -32,25 +25,12 @@ import { isAudio } from "./isAudio.js";
 import { importMusicMetadata } from "./audioMetadata.js";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg/index.js";
-import { IAudioMetadata, ICommonTagsResult } from "music-metadata";
-import {
-  AnyPgTable,
-  PgInsert,
-  PgTable,
-  SelectedFieldsFlat,
-  boolean,
-} from "drizzle-orm/pg-core/index.js";
+import { ICommonTagsResult } from "music-metadata";
+import { AnyPgTable } from "drizzle-orm/pg-core/index.js";
 import { NodePgDatabase } from "drizzle-orm/node-postgres/driver.js";
-import { QueryResult } from "pg";
-import { Album, Song } from "../types/types.js";
-import {
-  getAlbumToInsert,
-  getArtistsToInsert,
-  getGenresToInsert,
-  getSongsToInsert,
-  getAlbumArtistsToInsert,
-  getAlbumGenresToInsert,
-} from "./dbHelpers.js";
+import {} from "pg";
+import { Album } from "../types/types.js";
+import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
 import { sql } from "drizzle-orm";
 
 interface innerJoinReturn {
@@ -510,7 +490,6 @@ function craftAlbumObj(
         lyrics:
           (tags.lyrics && formatLyrics(tags.lyrics))?.join("\n") ||
           "No lyrics available for this song. Consider adding them with an ID3 tag editor!",
-        diskCharacter: tags.disk.no + "" || 0 + "",
         name: tags.title || "No title available for this song.MD5:" + md5,
       },
     ],

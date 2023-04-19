@@ -48,6 +48,7 @@ function Collection({}: Props) {
     switch (groupBy) {
       case "artistAlbum":
         groupedSongs = groupSongsBy("albumArtist", songs);
+        console.log(groupedSongs);
         groupedSongs = groupGroupsOfSongsBy("albumName", groupedSongs);
         break;
       default:
@@ -239,9 +240,7 @@ function Collection({}: Props) {
 }
 
 function labelFromSong(song: ClientSong): string {
-  return `${song.diskCharacter !== 0 ? song.diskCharacter : ""} ${
-    song.track !== 0 ? song.track : ""
-  } - ${song.name}`;
+  return `${song.track !== 0 ? song.track : ""} - ${song.name}`;
 }
 
 function getIconsByGrouping(groupBy: string): [JSX.Element, JSX.Element] {
@@ -268,17 +267,32 @@ function groupGroupsOfSongsBy(
   }, {} as SuperGroupedSongs);
 }
 
+function insertIntoSorted(arr: ClientSong[], value: ClientSong) {
+  var l = 0;
+  var r = arr.length;
+  while (l < r) {
+    var m = Math.floor((r - l) / 2) + l;
+    if (arr[m].track < value.track) {
+      l = m + 1;
+    } else {
+      r = m;
+    }
+  }
+  arr.splice(l, 0, value);
+}
+
 function groupSongsBy(
   key: string,
   songs: { [key: string]: ClientSong } | ClientSong[]
 ): { [key: string]: ClientSong[] } {
+  console.log(key, songs, "groupSongsBy");
   return Object.values(songs).reduce((acc, song) => {
     if (!acc[song[key]]) {
       acc[song[key]] = [];
     }
-    acc[song[key]].push(song);
+    insertIntoSorted(acc[song[key]], song);
     return acc;
   }, {} as GroupedSongs);
 }
-Collection.whyDidYouRender = true;
+//Collection.whyDidYouRender = true;
 export default Collection;

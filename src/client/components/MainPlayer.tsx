@@ -11,15 +11,28 @@ import Collection from "./Collection";
 import FilterBar from "./FilterBar";
 import AlbumArt from "./AlbumArt";
 import MusicPlayer from "./MusicPlayer";
+import TitleAnimation from "./TitleAnimation";
 
 const MainPlayer = function MainPlayer() {
   const windowName = "main";
   const { hidden } = useSelector((s: RootState) => s.windows[windowName]);
+  const { currentSong, songs } = useSelector((s: RootState) => s.songs);
+  const { status } = useSelector((s: RootState) => s.settings);
+  const song = songs[currentSong || 0];
 
   return (
     <DesktopWindow
       icon={"/icon.png"}
-      title={"Nightingale Playing <anim> The Mountain Goats - Tallahassee - No Children"}
+      title={
+        "Nightingale " +
+          status +
+          //" " +
+          //<TitleAnimation /> +
+          " " +
+          (song &&
+            song.albumArtist &&
+            song.albumArtist + " - " + song.albumName + " - " + song.name) || "Loading..."
+      }
       storeName={windowName}
       toggleHidden={toggleHidden}
       toggleOnTop={toggleOnTop}
@@ -37,5 +50,5 @@ const MainPlayer = function MainPlayer() {
     </DesktopWindow>
   );
 };
-MainPlayer.whyDidYouRender = true;
+//MainPlayer.whyDidYouRender = true;
 export default MainPlayer;

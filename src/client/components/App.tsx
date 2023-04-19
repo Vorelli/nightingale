@@ -42,7 +42,7 @@ const App = () => {
         const parsedTime = parseFloat(data.data.slice(8));
         if (!isNaN(parsedTime)) {
           dispatch(setStartTime(parsedTime));
-          dispatch(setStatus(status));
+          console.log("FROM APP sending status:", status);
         } else {
           console.log("received unexpected data", data);
         }
@@ -113,5 +113,5 @@ const App = () => {
 
   return <Desktop />;
 };
-App.whyDidYouRender = true;
+//App.whyDidYouRender = true;
 export default App;

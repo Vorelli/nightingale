@@ -15,7 +15,6 @@ import {
 import { drizzle } from "drizzle-orm/node-postgres/index.js";
 import { InferModel, sql } from "drizzle-orm/index.js";
 import pg from "pg";
-import { eq, or } from "drizzle-orm/expressions";
 const { Pool } = pg;
 
 const pool = new Pool({
@@ -91,7 +90,6 @@ export const songs = pgTable(
     path: text("path"),
     duration: doublePrecision("duration").notNull(),
     track: integer("track"),
-    diskCharacter: varchar("diskCharacter", { length: 8 }),
     lyrics: text("lyrics"),
     albumId: uuid("albumId").notNull(),
   },

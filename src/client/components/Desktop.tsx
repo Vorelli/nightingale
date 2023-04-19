@@ -22,5 +22,5 @@ const Desktop = function Desktop() {
     </div>
   );
 };
-Desktop.whyDidYouRender = true;
+//Desktop.whyDidYouRender = true;
 export default Desktop;

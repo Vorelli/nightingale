@@ -11,7 +11,6 @@ interface ClientSong {
   genres: string[];
   year: number;
   track: number;
-  diskCharacter: number;
   lyrics: string[];
   [key: string]: any;
 }

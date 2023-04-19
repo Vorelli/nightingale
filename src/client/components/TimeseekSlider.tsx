@@ -37,7 +37,6 @@ function TimeseekSlider({ localVolume }: Props) {
 
   useEffect(() => {
     if (!currentSongLoading) {
-      console.log(audioRef.current, "current audioRef");
       let audio: null | HTMLAudioElement = audioRef.current;
       if (!audio) return;
       else audio = audioRef.current as unknown as HTMLAudioElement;

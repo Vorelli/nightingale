@@ -8,7 +8,6 @@ export interface Song {
   path: string | null;
   duration: number;
   track: number | null;
-  diskCharacter: string | null;
   lyrics: string | null;
 }
 
