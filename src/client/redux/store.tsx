@@ -4,6 +4,7 @@ import playlistsReducer from "./reducers/playlistsReducer";
 import settingsReducer from "./reducers/settingsReducer";
 import songsReducer from "./reducers/songsReducer";
 import globalReducer from "./reducers/globalReducer";
+import audioReducer from "./reducers/audioReducer";
 
 const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
     settings: settingsReducer,
     songs: songsReducer,
     global: globalReducer,
+    audio: audioReducer,
   },
 });
 export default store;

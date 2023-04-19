@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import StyledSlider from "./StyledSlider";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import { AudioContextState, useAudioContext } from "./AudioContextProvider";
 
 type Props = { localVolume: number };
 
@@ -18,6 +19,21 @@ function TimeseekSlider({ localVolume }: Props) {
     "bg-gradient-to-r from-secondary via-accent to-secondary"
   );
   const [movingTime, setMovingTime] = useState(false);
+  const context = useAudioContext();
+  const dispatch = useDispatch();
+  const [audioSource, setAudioSource] = useState<MediaElementAudioSourceNode | null>(null);
+
+  useEffect(() => {
+    if (context !== null && audioRef.current) {
+      const c = context as AudioContextState;
+      if (!audioSource && c.audioContext !== null && c.analyzerNode !== null) {
+        const audioSource = c.audioContext.createMediaElementSource(audioRef.current);
+        audioSource.connect(c.analyzerNode);
+        c.analyzerNode.connect(c.audioContext.destination);
+        setAudioSource(audioSource);
+      }
+    }
+  }, [audioRef, context]);
 
   useEffect(() => {
     if (audioRef.current && !movingTime) {

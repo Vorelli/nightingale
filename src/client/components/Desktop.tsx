@@ -18,7 +18,7 @@ const Desktop = function Desktop() {
   }
 
   return (
-    <div onContextMenu={handleClick} className="desktop h-full w-full bg-base-100">
+    <div onContextMenu={handleClick} className="desktop h-full w-full bg-transparent">
       <MainPlayer />
       <Background />
     </div>
