@@ -220,13 +220,13 @@ function Collection({}: Props) {
 
     useEffect(() => {
       if (!nodeContext) return;
-      setNodes(nodeContext.nodes || []);
+      setNodes(nodeContext.nodes as string[]);
     }, [hidden]);
 
     return (
       <div
         ref={collectionList}
-        className="collectionList flex-1 overflow-x-hidden overflow-y-auto w-full scroll-smooth scroll-m-44"
+        className="collectionList flex-1 overflow-x-hidden overflow-y-auto w-full scroll-smooth scroll-m-44 text-xs"
         style={{ maxWidth: "100%", maxHeight: "calc(100% - 60px)" }}
       >
         <TreeView
