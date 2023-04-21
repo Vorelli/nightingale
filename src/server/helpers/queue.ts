@@ -4,11 +4,15 @@ const smDb = new sqlite3.Database("../persist.db", sqlite3.OPEN_READWRITE);
 
 function initializeQueue(app: appWithExtras) {
   //smDb.all();
-  app.locals.queues = [shuffle(app.locals.md5s)];
+  setQueue(app, shuffle(app.locals.md5s));
   app.locals.status = "PLAYING";
-  app.locals.queueIndex = 0;
   generateNextQueue(app);
   generatePreviousQueue(app);
+}
+
+function setQueue(app: appWithExtras, queue: any[]) {
+  app.locals.queues = [queue];
+  app.locals.queueIndex = 0;
 }
 
 function randomIndexFromQueue(queue: any[]): number {

@@ -14,6 +14,7 @@ import { alpha, styled } from "@mui/material/styles";
 import { TransitionProps } from "@mui/material/transitions";
 import { useSpring, animated } from "@react-spring/web";
 import { Box, Collapse } from "@mui/material";
+import { useNodeContext } from "./NodeContextProvider";
 
 type Props = {};
 
@@ -213,6 +214,15 @@ function Collection({}: Props) {
     groupedSongs: GroupedSongs | SuperGroupedSongs;
     icons: JSX.Element[][];
   }) {
+    const [nodes, setNodes] = useState(new Array<string>());
+    const nodeContext = useNodeContext();
+    const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+
+    useEffect(() => {
+      if (!nodeContext) return;
+      setNodes(nodeContext.nodes || []);
+    }, [hidden]);
+
     return (
       <div
         ref={collectionList}
@@ -221,7 +231,12 @@ function Collection({}: Props) {
       >
         <TreeView
           disableSelection={true}
-          defaultExpanded={["root"]}
+          //defaultExpanded={nodes}
+          expanded={nodes}
+          onNodeToggle={(ev, nodeIds) => {
+            nodeContext?.setNodes(nodeIds);
+            setNodes(nodeIds);
+          }}
           className="justify-self-start"
           multiSelect={false}
           sx={{ height: "80%", width: "100%", maxHeight: "80%" }}

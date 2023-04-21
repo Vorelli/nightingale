@@ -23,7 +23,9 @@ function Background({}: Props) {
       analyzer.getByteFrequencyData(dataArray);
 
       // Normalize the frequency data to a range between 1 and 100
-      const normalizedData = Array.from(dataArray).slice(0, -1 * Math.floor(numBars * 0.1) + 1); //.map((value) => (value / 255) * 100));
+      const normalizedData = Array.from(dataArray)
+        .slice(0, -1 * Math.floor(numBars * 0.1) + 1)
+        .map((val) => val * 2); //.map((value) => (value / 255) * 100));
 
       // Update scaleY of the bars using animejs
       /* anime({
@@ -60,7 +62,11 @@ function Background({}: Props) {
 
   return (
     <div className="fixed z-[-20] top-0 left-0 w-full h-full bg-neutral">
-      <div className={"barContainer m-auto sm:max-w-sm lg:max-w-lg h-full flex items-center"}>
+      <div
+        className={
+          "barContainer m-auto xs:-max-w-ms sm:max-w-sm lg:max-w-lg h-full flex items-center"
+        }
+      >
         {data.map<ReactElement>((l, i) => {
           return <Bar key={i} l={l} />;
         })}

@@ -17,6 +17,7 @@ import {
 import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
 import { AudioContextProvider } from "./AudioContextProvider";
+import { NodeContextProvider } from "./NodeContextProvider";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -106,9 +107,11 @@ const App = () => {
   }, []);
 
   return (
-    <AudioContextProvider>
-      <Desktop />
-    </AudioContextProvider>
+    <NodeContextProvider>
+      <AudioContextProvider>
+        <Desktop />
+      </AudioContextProvider>
+    </NodeContextProvider>
   );
 };
 //App.whyDidYouRender = true;
