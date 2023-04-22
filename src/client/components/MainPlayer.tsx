@@ -10,8 +10,9 @@ import AlbumArt from "./AlbumArt";
 import MusicPlayer from "./MusicPlayer";
 import { useAudioContext } from "./AudioContextProvider";
 import MyIconButton from "./MyIconButton";
-import { PlayArrowOutlined } from "@mui/icons-material";
+import { Label, PlayArrowOutlined } from "@mui/icons-material";
 import { setReloadSong } from "../redux/reducers/globalReducer";
+import { Button } from "@mui/material";
 
 const MainPlayer = function MainPlayer() {
   const windowName = "main";
@@ -54,10 +55,17 @@ const MainPlayer = function MainPlayer() {
       id="main-player"
     >
       {(!audioPlayable && (
-        <div className="content-[''] bg-black z-50 absolute w-full h-full flex items-center justify-center">
+        <div className="content-[''] bg-black z-50 absolute w-full h-full flex items-center justify-center flex-col">
           <MyIconButton width={100} onClick={tryToPlay}>
             <PlayArrowOutlined sx={{ width: "50px", height: "50px" }} />
           </MyIconButton>
+          <a
+            target="_blank"
+            href="https://www.tenforums.com/tutorials/116467-allow-block-sites-play-sound-google-chrome.html#option4"
+          >
+            <Button sx={{ textDecoration: "underline" }}>How To Disable Pop Up</Button>
+          </a>
+          <p>Please set Audio to Allow</p>
         </div>
       )) || <></>}
       {(!hidden && (
