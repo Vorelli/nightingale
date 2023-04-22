@@ -13,16 +13,22 @@ import AlbumArt from "./AlbumArt";
 import MusicPlayer from "./MusicPlayer";
 import TitleAnimation from "./TitleAnimation";
 import { useAudioContext } from "./AudioContextProvider";
+import MyIconButton from "./MyIconButton";
+import { PlayArrowOutlined } from "@mui/icons-material";
+import { setReloadSong } from "../redux/reducers/globalReducer";
 
 const MainPlayer = function MainPlayer() {
   const windowName = "main";
   const { hidden } = useSelector((s: RootState) => s.windows[windowName]);
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
   const { status } = useSelector((s: RootState) => s.settings);
+  const { audioPlayable } = useSelector((s: RootState) => s.global);
   const song = songs[currentSong || 0];
-  /*   const audioContext = useAudioContext();
+  const audioContext = useAudioContext();
+  const audio = audioContext?.audioRef;
+  const dispatch = useDispatch();
 
-  useEffect(() => {
+  /*useEffect(() => {
     console.log("audioContext", audioContext?.audioRef?.current);
     if (!audioContext?.audioRef?.current) return;
     try {
@@ -40,6 +46,17 @@ const MainPlayer = function MainPlayer() {
       console.log("error occurred when trying to force play the audio component");
     }
   }, [audioContext]); */
+
+  function tryToPlay() {
+    if (!audio || !audio.current) return;
+    else {
+      const a = audio.current as HTMLAudioElement;
+      a.muted = true;
+      a.play()
+        .then(() => dispatch(setReloadSong(true)))
+        .finally(() => (a.muted = false));
+    }
+  }
 
   return (
     <DesktopWindow
@@ -59,6 +76,13 @@ const MainPlayer = function MainPlayer() {
       toggleOnTop={toggleOnTop}
       id="main-player"
     >
+      {(!audioPlayable && (
+        <div className="content-[''] bg-black z-50 absolute w-full h-full flex items-center justify-center">
+          <MyIconButton onClick={tryToPlay}>
+            <PlayArrowOutlined />
+          </MyIconButton>
+        </div>
+      )) || <></>}
       {(!hidden && (
         <div className="collection-container flex flex-col row-start-2 col-start-1">
           <FilterBar />
