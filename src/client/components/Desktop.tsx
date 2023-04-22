@@ -1,9 +1,5 @@
-import React, { memo, useEffect, useRef, useState } from "react";
-import DesktopWindow from "./DesktopWindow";
+import React from "react";
 import MainPlayer from "./MainPlayer";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../redux/store";
-import { setCurrentTime } from "../redux/reducers/songsReducer";
 import Background from "./Background";
 
 const Desktop = function Desktop() {

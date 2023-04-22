@@ -1,13 +1,12 @@
 import React from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import PlaylistLabel from "./PlaylistLabel";
 import { RootState } from "../redux/store";
 
 type Props = {};
 
 function PlaylistContainer({}: Props) {
-  const dispatch = useDispatch();
-  const { playlists, loading, playlistIndex } = useSelector((state: RootState) => state.playlists);
+  const { playlists, playlistIndex } = useSelector((state: RootState) => state.playlists);
   const { songs } = useSelector((state: RootState) => state.songs);
 
   const rows = playlists[playlistIndex]?.songs.map((song: string) => songs[song]);
@@ -27,24 +26,6 @@ function PlaylistContainer({}: Props) {
     },
     { field: "year", headerName: "Year", width: 100 },
   ];
-
-  /*
-  interface ClientSong {
-  md5: string;
-  name: string;
-  path: string;
-  duration: number;
-  albumArtist: string;
-  artists: string[];
-  albumName: string;
-  genres: string[];
-  year: number;
-  track: number;
-  diskCharacter: number;
-  lyrics: string[];
-  [key: string]: any;
-}
-  */
 
   return (
     <div className="h-full w-full row-start-2 row-span-2">

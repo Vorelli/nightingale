@@ -1,13 +1,4 @@
 import React from "react";
-/* import anime from "animejs/lib/anime";
-
-anime({
-  targets: "div",
-  translateX: 250,
-  rotate: "1turn",
-  backgroundColor: "#FFF",
-  duration: 800,
-}); */
 
 type Props = {};
 

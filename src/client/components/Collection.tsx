@@ -1,4 +1,4 @@
-import React, { Ref, RefObject, useEffect, useRef, useState } from "react";
+import React, { RefObject, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { ClientSong } from "../redux/reducers/songsReducer";
@@ -13,7 +13,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import { alpha, styled } from "@mui/material/styles";
 import { TransitionProps } from "@mui/material/transitions";
 import { useSpring, animated } from "@react-spring/web";
-import { Box, Collapse } from "@mui/material";
+import { Collapse } from "@mui/material";
 import { useNodeContext } from "./NodeContextProvider";
 
 type Props = {};
@@ -32,8 +32,6 @@ function Collection({}: Props) {
   const [groupedSongs, setGroupedSongs] = useState({} as GroupedSongs | SuperGroupedSongs);
   const [icons, setIcons] = useState([] as JSX.Element[][]);
   const collectionList = useRef(null);
-  const [x, setX] = useState(0);
-  const [y, setY] = useState(0);
 
   // all groupBy is going to be doing is:
   //  - take the passed in key
@@ -231,7 +229,6 @@ function Collection({}: Props) {
       >
         <TreeView
           disableSelection={true}
-          //defaultExpanded={nodes}
           expanded={nodes}
           onNodeToggle={(ev, nodeIds) => {
             nodeContext?.setNodes(nodeIds);

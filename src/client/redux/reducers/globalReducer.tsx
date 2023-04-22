@@ -8,7 +8,7 @@ interface InitialState {
 }
 const HOST = process.env.HOST as string;
 const PROTO = process.env.PROTO as string;
-console.log("host", HOST, "proto", PROTO);
+
 const initialState: InitialState = {
   HOST,
   URL: PROTO + HOST,

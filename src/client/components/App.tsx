@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Desktop from "./Desktop";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -23,7 +23,11 @@ import { setReloadSong } from "../redux/reducers/globalReducer";
 const App = () => {
   const dispatch = useDispatch();
   const { URL, HOST, reloadSong } = useSelector((s: RootState) => s.global);
-  console.log(URL, HOST);
+
+  interface md5ToSong {
+    [key: string]: ClientSong;
+  }
+
   useEffect(() => {
     const ws = new WebSocket((process.env.PROTO === "https://" ? "wss://" : "ws://") + HOST);
     ws.onerror = function (err) {
@@ -49,7 +53,6 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    console.log("reloadSong", reloadSong);
     if (reloadSong) {
       dispatch(currentSongRequest());
       fetch(URL + "/api/sync")
@@ -67,10 +70,6 @@ const App = () => {
         .finally(() => dispatch(setReloadSong(false)));
     }
   }, [reloadSong]);
-
-  interface md5ToSong {
-    [key: string]: ClientSong;
-  }
 
   useEffect(() => {
     dispatch(songsRequest());
