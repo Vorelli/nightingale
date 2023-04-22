@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 
 export type AudioContextState = {
   audioContext: AudioContext | null;
   analyzerNode: AnalyserNode | null;
+  audioRef: React.MutableRefObject<null>;
 };
 
 const AudioContextStateContext = createContext<null | AudioContextState>(null);
@@ -20,6 +21,7 @@ export function useAudioContext() {
 export function AudioContextProvider({ children }: Props) {
   const [audioContext, setAudioContext] = useState<null | AudioContext>(null);
   const [analyzerNode, setAnalyzerNode] = useState<null | AnalyserNode>(null);
+  const audioRef = useRef(null);
   const { numBars } = useSelector((s: RootState) => s.audio);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function AudioContextProvider({ children }: Props) {
   }, []);
 
   return (
-    <AudioContextStateContext.Provider value={{ audioContext, analyzerNode }}>
+    <AudioContextStateContext.Provider value={{ audioContext, analyzerNode, audioRef }}>
       {children}
     </AudioContextStateContext.Provider>
   );

@@ -79,6 +79,7 @@
     "autoprefixer": "^10.4.14",
     "babel-loader": "^9.1.2",
     "css-loader": "^6.7.3",
+    "dotenv-webpack": "^8.0.1",
     "drizzle-kit": "^0.17.4",
     "html-webpack-plugin": "^5.5.0",
     "mini-css-extract-plugin": "^2.7.5",

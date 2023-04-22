@@ -19,15 +19,17 @@ import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { Song, appWithExtras } from "./types/types.js";
 import cors from "cors";
 
-var options = {
-  key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),
-  cert: fs.readFileSync(path.resolve(__dirname, process.env.CERT_PATH as string)),
-};
+let httpsServer: null | https.Server = null;
 var appStart: express.Application = express();
-var httpsServer = https.createServer(options, appStart);
-
-var { app }: express_ws.Instance = express_ws(appStart);
-var { getWss } = express_ws(app, httpsServer);
+var { app, getWss }: express_ws.Instance = express_ws(appStart);
+if (process.env.KEY_PATH && process.env.CERT_PATH) {
+  var options = {
+    key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),
+    cert: fs.readFileSync(path.resolve(__dirname, process.env.CERT_PATH as string)),
+  };
+  httpsServer = https.createServer(options, appStart);
+  ({ getWss } = express_ws(app, httpsServer));
+}
 
 const corsOptions = {
   origin: "http://localhost:8081",
@@ -73,6 +75,7 @@ app.use(sessionsMiddleware);
 app.use(logger);
 
 app.use(express.static(path.join(__dirname, "../public")));
+console.log("static path:", path.join(__dirname, "../public"));
 attachWebsocketRoutes(app);
 app.use("/api", apiHandler);
 

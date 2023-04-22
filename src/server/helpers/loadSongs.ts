@@ -419,7 +419,7 @@ async function getSongInfo(
         let audioFileChecking = checkIfFileExists(getPath(app, md5, "mp4")).catch(async () => {
           const streamingPath = getPath(app, md5, "mp4");
           return new Promise<void>((resolve, reject) => {
-            ffmpeg(filePath as string)
+            ffmpeg(filePath as string, {})
               .withNoVideo()
               .withAudioCodec("aac")
               .withAudioBitrate(192)

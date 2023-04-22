@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DesktopWindow from "./DesktopWindow";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
@@ -12,6 +12,7 @@ import FilterBar from "./FilterBar";
 import AlbumArt from "./AlbumArt";
 import MusicPlayer from "./MusicPlayer";
 import TitleAnimation from "./TitleAnimation";
+import { useAudioContext } from "./AudioContextProvider";
 
 const MainPlayer = function MainPlayer() {
   const windowName = "main";
@@ -19,6 +20,26 @@ const MainPlayer = function MainPlayer() {
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
   const { status } = useSelector((s: RootState) => s.settings);
   const song = songs[currentSong || 0];
+  /*   const audioContext = useAudioContext();
+
+  useEffect(() => {
+    console.log("audioContext", audioContext?.audioRef?.current);
+    if (!audioContext?.audioRef?.current) return;
+    try {
+      console.log("trying to play in the next second");
+      const audio = audioContext.audioRef.current as HTMLAudioElement;
+      audio.muted = true;
+      audio
+        .play()
+        .then(() => audio.pause())
+        .then(() => console.log("got to the next line successfully"))
+        .then(() => (audio.muted = false))
+        .catch((err) => console.log("error encountered when trying to play audio", err));
+    } catch (err) {
+      console.log("no permission", err);
+      console.log("error occurred when trying to force play the audio component");
+    }
+  }, [audioContext]); */
 
   return (
     <DesktopWindow

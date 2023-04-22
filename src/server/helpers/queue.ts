@@ -1,6 +1,6 @@
 import { appWithExtras } from "../types/types";
 import sqlite3 from "sqlite3";
-const smDb = new sqlite3.Database("../persist.db", sqlite3.OPEN_READWRITE);
+//const smDb = new sqlite3.Database("../persist.db", sqlite3.OPEN_READWRITE);
 
 function initializeQueue(app: appWithExtras) {
   //smDb.all();

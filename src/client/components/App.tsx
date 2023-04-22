@@ -18,21 +18,21 @@ import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
 import { AudioContextProvider } from "./AudioContextProvider";
 import { NodeContextProvider } from "./NodeContextProvider";
+import { setReloadSong } from "../redux/reducers/globalReducer";
 
 const App = () => {
   const dispatch = useDispatch();
-  const [reloadSong, setReloadSong] = useState(true);
-  const { URL, HOST } = useSelector((s: RootState) => s.global);
-
+  const { URL, HOST, reloadSong } = useSelector((s: RootState) => s.global);
+  console.log(URL, HOST);
   useEffect(() => {
-    const ws = new WebSocket("wss://" + HOST);
+    const ws = new WebSocket((process.env.PROTO === "https://" ? "wss://" : "ws://") + HOST);
     ws.onerror = function (err) {
       console.log("failed to connect to the websocket server:", err);
     };
 
     ws.onmessage = function (data) {
       if (data.data === "sync") {
-        setReloadSong(true);
+        dispatch(setReloadSong(true));
       } else if (data.data === "PLAYING") {
         dispatch(setStatus("PLAYING"));
       } else if (data.data === "PAUSED") {
@@ -49,6 +49,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    console.log("reloadSong", reloadSong);
     if (reloadSong) {
       dispatch(currentSongRequest());
       fetch(URL + "/api/sync")
@@ -63,7 +64,7 @@ const App = () => {
         .catch((err) => {
           console.log("error encountered when trying to sync with the server", err);
         })
-        .finally(() => setReloadSong(false));
+        .finally(() => dispatch(setReloadSong(false)));
     }
   }, [reloadSong]);
 
@@ -114,5 +115,5 @@ const App = () => {
     </NodeContextProvider>
   );
 };
-//App.whyDidYouRender = true;
+App.whyDidYouRender = true;
 export default App;
