@@ -74,12 +74,8 @@ function TimeseekSlider({ localVolume, handlePlay, handlePause }: Props) {
     }
   }, [context?.firstTime, status, currentSongLoading, startingTime, audioPlayable]);
 
-  navigator.mediaSession.setActionHandler("play", () => {
-    handlePlay();
-  });
-  navigator.mediaSession.setActionHandler("pause", () => {
-    handlePause();
-  });
+  navigator.mediaSession.setActionHandler("play", () => handlePlay());
+  navigator.mediaSession.setActionHandler("pause", () => handlePause());
 
   function tryToPlay(audio: HTMLAudioElement) {
     if (status === "PLAYING" && audioPlayable) {
