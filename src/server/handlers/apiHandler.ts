@@ -126,6 +126,24 @@ router.put("/playpause", (req, res) => {
   res.sendStatus(200);
 });
 
+router.put("/play", (req, res) => {
+  const app = req.app as appWithExtras;
+  app.locals.status = "PLAYING";
+  app.locals.getWss().clients.forEach((client: WebSocket) => {
+    client.send(app.locals.status);
+  });
+  res.sendStatus(200);
+});
+
+router.put("/pause", (req, res) => {
+  const app = req.app as appWithExtras;
+  app.locals.status = "PAUSED";
+  app.locals.getWss().clients.forEach((client: WebSocket) => {
+    client.send(app.locals.status);
+  });
+  res.sendStatus(200);
+});
+
 router.put("/next", (req, res) => {
   nextSong(req.app as appWithExtras);
   sendSync(req.app as appWithExtras);

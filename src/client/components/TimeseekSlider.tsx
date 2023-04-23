@@ -6,9 +6,9 @@ import { RootState } from "../redux/store";
 import { AudioContextState, useAudioContext } from "./AudioContextProvider";
 import { setAudioPlayable, setReloadSong } from "../redux/reducers/globalReducer";
 
-type Props = { localVolume: number };
+type Props = { localVolume: number; handlePlay: Function; handlePause: Function };
 
-function TimeseekSlider({ localVolume }: Props) {
+function TimeseekSlider({ localVolume, handlePlay, handlePause }: Props) {
   const state = useSelector((s: RootState) => s.songs);
   const { status } = useSelector((s: RootState) => s.settings);
   const { currentSong, startingTime, songs, currentSongLoading } = state;
@@ -43,17 +43,18 @@ function TimeseekSlider({ localVolume }: Props) {
   }, [localVolume, audioRef]);
 
   useEffect(() => {
-    if (currentSong && !!audioRef && audioRef.current) {
+    console.log(context, currentSong, audioRef);
+    if (context && !context.firstTime && currentSong && !!audioRef && audioRef.current) {
       const audio = audioRef.current as HTMLAudioElement;
       audio.src = "/streaming/" + currentSong + ".mp4";
       audio.load();
       audio.currentTime = startingTime / 1000;
       audio.volume = localVolume / 100;
     }
-  }, [startingTime, currentSong]);
+  }, [context?.firstTime, startingTime, currentSong]);
 
   useEffect(() => {
-    if (!currentSongLoading) {
+    if (!currentSongLoading && !context?.firstTime) {
       if (!audioRef) return;
       let audio: null | undefined | HTMLAudioElement = audioRef?.current;
       if (!audio) return;
@@ -71,7 +72,14 @@ function TimeseekSlider({ localVolume }: Props) {
           }
         });
     }
-  }, [status, currentSongLoading, startingTime, audioPlayable]);
+  }, [context?.firstTime, status, currentSongLoading, startingTime, audioPlayable]);
+
+  navigator.mediaSession.setActionHandler("play", () => {
+    handlePlay();
+  });
+  navigator.mediaSession.setActionHandler("pause", () => {
+    handlePause();
+  });
 
   function tryToPlay(audio: HTMLAudioElement) {
     if (status === "PLAYING" && audioPlayable) {
@@ -138,6 +146,12 @@ function TimeseekSlider({ localVolume }: Props) {
         <audio
           onTimeUpdate={(ev) => {
             handleTimeUpdate(ev);
+          }}
+          onPlay={(ev) => {
+            (ev.currentTarget as HTMLAudioElement).play();
+          }}
+          onPause={(ev) => {
+            (ev.currentTarget as HTMLAudioElement).pause();
           }}
           controls={false}
           ref={audioRef}

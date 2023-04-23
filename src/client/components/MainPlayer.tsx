@@ -26,14 +26,16 @@ const MainPlayer = function MainPlayer() {
   const dispatch = useDispatch();
 
   function tryToPlay() {
+    console.log(audioContext?.firstTime);
     if (!audio || !audio.current) return;
-    else {
+    return audioContext.setFirstTime(false);
+    /* else {
       const a = audio.current as HTMLAudioElement;
       a.muted = true;
       a.play()
         .then(() => dispatch(setReloadSong(true)))
         .finally(() => (a.muted = false));
-    }
+    } */
   }
 
   return (

@@ -6,6 +6,8 @@ export type AudioContextState = {
   audioContext: AudioContext | null;
   analyzerNode: AnalyserNode | null;
   audioRef: React.MutableRefObject<null>;
+  firstTime: boolean;
+  setFirstTime: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const AudioContextStateContext = createContext<null | AudioContextState>(null);
@@ -21,6 +23,7 @@ export function useAudioContext() {
 export function AudioContextProvider({ children }: Props) {
   const [audioContext, setAudioContext] = useState<null | AudioContext>(null);
   const [analyzerNode, setAnalyzerNode] = useState<null | AnalyserNode>(null);
+  const [firstTime, setFirstTime] = useState(true);
   const audioRef = useRef(null);
   const { numBars } = useSelector((s: RootState) => s.audio);
 
@@ -37,7 +40,9 @@ export function AudioContextProvider({ children }: Props) {
   }, []);
 
   return (
-    <AudioContextStateContext.Provider value={{ audioContext, analyzerNode, audioRef }}>
+    <AudioContextStateContext.Provider
+      value={{ audioContext, analyzerNode, audioRef, firstTime, setFirstTime }}
+    >
       {children}
     </AudioContextStateContext.Provider>
   );

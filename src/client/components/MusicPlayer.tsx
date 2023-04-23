@@ -26,6 +26,14 @@ function MusicPlayer({}: Props) {
     fetch(URL + "/api/playpause", { method: "PUT" });
   }
 
+  function handlePlay() {
+    fetch(URL + "/api/play", { method: "PUT" });
+  }
+
+  function handlePause() {
+    fetch(URL + "/api/pause", { method: "PUT" });
+  }
+
   function handleLastClick() {
     fetch(URL + "/api/prev", { method: "PUT" });
   }
@@ -79,7 +87,11 @@ function MusicPlayer({}: Props) {
         <MyIconButton onClick={handleNextClick}>
           <SkipNextIcon sx={iconSx} />
         </MyIconButton>
-        <TimeseekSlider localVolume={localVolume} />
+        <TimeseekSlider
+          handlePlay={handlePlay}
+          handlePause={handlePause}
+          localVolume={localVolume}
+        />
         <Box className="flex w-[100px] items-center">
           <MyIconButton width={25} onClick={toggleMute}>
             {audioIcon}
