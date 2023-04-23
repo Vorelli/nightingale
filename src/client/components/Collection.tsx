@@ -105,6 +105,9 @@ function Collection({}: Props) {
     "& .MuiTreeItem-content": {
       paddingLeft: "0",
     },
+    "& .MuiCollapse-root": {
+      marginLeft: "5px",
+    },
   });
 
   const StyledTreeItemDashed = styled((props: TreeItemProps) => (
