@@ -32,7 +32,7 @@ if (process.env.KEY_PATH && process.env.CERT_PATH) {
 }
 
 const corsOptions = {
-  origin: "http://localhost:8081",
+  origin: "http://localhost:8080",
 };
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -56,6 +56,7 @@ app.locals.wait = new Promise<void>((resolve, reject) => {
       app.locals.md5s = md5s;
       app.locals.md5ToSong = md5ToSong;
       initializeQueue(app as appWithExtras);
+      //setDefaultPlaylist(app as appWithExtras);
       setTimeout(advanceTime.bind(null, app as appWithExtras), 10);
     })
     .then(() => resolve())

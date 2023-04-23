@@ -119,6 +119,7 @@ export const playlistSongs = pgTable(
   "playlistSongs",
   {
     playlistId: uuid("playlistId").notNull(),
+    order: integer("order"),
     songMd5: varchar("songMd5", { length: 32 }),
   },
   (playlistSongs) => ({
