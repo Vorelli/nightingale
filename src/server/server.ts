@@ -18,6 +18,7 @@ import apiHandler from "./handlers/apiHandler.js";
 import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { Song, appWithExtras } from "./types/types.js";
 import cors from "cors";
+import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 
 let httpsServer: null | https.Server = null;
 var appStart: express.Application = express();
@@ -39,13 +40,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.locals.getWss = getWss;
-console.log(getWss().clients.forEach((client) => {}));
 app.locals.db = db;
 app.locals.__dirname = __dirname;
 app.locals.shuffleBy = "random";
 app.locals.wait = new Promise<void>((resolve, reject) => {
   loadSongs(app)
-    .then((albums) => {
+    .then(async (albums) => {
       const md5s = albums.flatMap((album) => album.songs.map((s) => s.md5));
       const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
         album.songs.forEach((song) => {
@@ -56,7 +56,7 @@ app.locals.wait = new Promise<void>((resolve, reject) => {
       app.locals.md5s = md5s;
       app.locals.md5ToSong = md5ToSong;
       initializeQueue(app as appWithExtras);
-      //setDefaultPlaylist(app as appWithExtras);
+      await setDefaultPlaylist(app as appWithExtras);
       setTimeout(advanceTime.bind(null, app as appWithExtras), 10);
     })
     .then(() => resolve())
