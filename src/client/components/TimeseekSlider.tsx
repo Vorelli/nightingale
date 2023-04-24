@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { AudioContextState, useAudioContext } from "./AudioContextProvider";
 import { setAudioPlayable, setReloadSong } from "../redux/reducers/globalReducer";
+import { secondsToTime } from "../helpers/time";
 
 type Props = { localVolume: number; handlePlay: Function; handlePause: Function };
 
@@ -105,17 +106,6 @@ function TimeseekSlider({ localVolume, handlePlay, handlePause }: Props) {
     typeof value === "number" ? setCurrentT(value) : setCurrentT(value[0]);
   }
 
-  function formatTimeseekSlider(value: number) {
-    const hours = Math.floor(value / 60 / 60);
-    const minutes = Math.floor(value / 60);
-    const remainingSeconds = Math.floor(value % 60);
-    const minutesText = minutes < 10 ? "0" + minutes : minutes;
-    const secondsText = remainingSeconds < 10 ? "0" + remainingSeconds : remainingSeconds;
-    const hoursText = hours > 0 ? (hours < 10 ? "0" + hours : hours) + ":" : "";
-    const formattedString = hoursText + minutesText + ":" + secondsText;
-    return formattedString;
-  }
-
   return (
     <Box sx={{ display: "flex", flexGrow: 1 }}>
       <StyledSlider
@@ -134,7 +124,7 @@ function TimeseekSlider({ localVolume, handlePlay, handlePause }: Props) {
         }}
         className={sharedSliderClass}
         valueLabelDisplay="auto"
-        valueLabelFormat={formatTimeseekSlider}
+        valueLabelFormat={secondsToTime}
         size="small"
         sx={{ width: "100%", margin: "0 10px" }}
       />

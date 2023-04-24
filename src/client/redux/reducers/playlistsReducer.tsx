@@ -33,25 +33,10 @@ export const playlistsReducer = createSlice({
       state.loading = true;
     },
     setPlaylistIndex: (state, action) => {
-      const index = state.playlists.reduce((acc, playlist, i) => {
-        return acc !== -1 || playlist.id !== action.payload ? acc : i;
-      }, -1);
-      if (index === -1) {
-        console.log(
-          "for some reason, couldn't find the playlist",
-          action.payload,
-          index,
-          state.playlists.length
-        );
-        return;
-      }
-      state.playlistIndex = index;
+      state.playlistIndex = action.payload;
     },
     changePlaylistName: (state, action) => {
-      const playlist = state.playlists.find((playlist) => playlist.id === action.payload.id);
-      if (playlist) {
-        playlist.name = action.payload.name;
-      }
+      state.playlists[action.payload.id].name = action.payload.name;
     },
   },
 });

@@ -1,4 +1,4 @@
-import { NodePgClient } from "drizzle-orm/node-postgres";
+import { NodePgClient, NodePgDatabase } from "drizzle-orm/node-postgres";
 import express from "express";
 import { WithWebsocketMethod } from "express-ws";
 
@@ -24,7 +24,7 @@ export interface Album {
 export interface appWithExtras extends express.Application, WithWebsocketMethod {
   locals: {
     md5s: string[];
-    db: NodePgClient;
+    db: NodePgDatabase;
     __dirname: string;
     queues: string[][];
     queueIndex: number;

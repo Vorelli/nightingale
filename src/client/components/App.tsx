@@ -13,6 +13,7 @@ import {
   ClientPlaylist,
   requestPlaylists,
   requestPlaylistsSuccess,
+  setPlaylistIndex,
 } from "../redux/reducers/playlistsReducer";
 import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
@@ -90,6 +91,7 @@ const App = () => {
     fetch(URL + "/api/playlists")
       .then((data) => data.json())
       .then((data) => {
+        console.log(data);
         if (data.length === 0) {
           dispatch(
             requestPlaylistsSuccess([
@@ -102,6 +104,7 @@ const App = () => {
           );
         } else {
           dispatch(requestPlaylistsSuccess(data));
+          dispatch(setPlaylistIndex(Object.keys(data)[0]));
         }
       });
   }, []);

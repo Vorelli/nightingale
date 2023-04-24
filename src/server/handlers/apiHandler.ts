@@ -6,6 +6,7 @@ import {
   albums,
   artists,
   genres,
+  playlistSongs,
   playlists,
   songs,
 } from "../db/schema.js";
@@ -87,12 +88,21 @@ FROM
 });
 
 router.get("/playlists", (req, res) => {
-  return res.locals.db
+  return (res.locals.db as NodePgDatabase)
     .select()
     .from(playlists)
-    .then((result: ReturningPlaylists[]) => {
+    .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
+    .then((result) => {
       console.log(result);
-      const data = result;
+      const data = result.reduce((acc, val) => {
+        acc[val.playlists.id] = acc[val.playlists.id] || {};
+        acc[val.playlists.id].songs = acc[val.playlists.id].songs || [];
+        acc[val.playlists.id].songs[val.playlistSongs.order || 0] =
+          val.playlistSongs.songMd5 || "missingMd5";
+        acc[val.playlists.id].id = val.playlists.id;
+        acc[val.playlists.id].name = val.playlists.name;
+        return acc;
+      }, {} as { [key: string]: { [key: string]: any } });
       res.json(data);
     });
 });

@@ -119,17 +119,22 @@ export const playlistSongs = pgTable(
   "playlistSongs",
   {
     playlistId: uuid("playlistId").notNull(),
+    order: integer("order"),
     songMd5: varchar("songMd5", { length: 32 }),
   },
   (playlistSongs) => ({
     songMd5Fk: foreignKey({
       columns: [playlistSongs.songMd5],
       foreignColumns: [songs.md5],
-    }),
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
     playlistIdFk: foreignKey({
       columns: [playlistSongs.playlistId],
       foreignColumns: [playlists.id],
-    }),
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
   })
 );
 
