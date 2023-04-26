@@ -2,8 +2,8 @@ import {} from "dotenv/config";
 import { app, httpsServer } from "./server.js";
 import https from "https";
 
-const PORT = parseInt(process.env.PORT as string) || 443;
-const HTTP_PORT = parseInt(process.env.HTTP_PORT as string) || 80;
+const PORT = parseInt(process.env.PORT as string) || 4000;
+const HTTP_PORT = parseInt(process.env.HTTP_PORT as string) || 3000;
 const ADDRESS = process.env.ADDRESS || "0.0.0.0";
 
 if (httpsServer) {

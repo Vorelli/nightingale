@@ -1,0 +1,6 @@
+music/
+public/
+keyAndCert/
+.env
+streaming/
+node_modules/
