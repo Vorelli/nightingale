@@ -25,13 +25,11 @@ function PlaylistLabel(props: Props) {
     }
   }, [editing]);
 
-  function handleClick(ev: React.MouseEvent) {
-    console.log("now", "hi");
+  function handleClick(_ev: React.MouseEvent) {
     const now = new Date();
     setLastClick(now);
     if (lastClick !== undefined) {
       const diff = now.getTime() - lastClick?.getTime();
-      console.log("diff", diff);
       if (diff && diff < 500) {
         //double click... should rename the label now.
         setEditing(true);

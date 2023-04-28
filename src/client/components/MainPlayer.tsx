@@ -25,18 +25,11 @@ const MainPlayer = function MainPlayer() {
   const audio = audioContext?.audioRef;
   const dispatch = useDispatch();
 
-  function tryToPlay() {
-    console.log(audioContext?.firstTime);
-    if (!audio || !audio.current) return;
-    return audioContext.setFirstTime(false);
-    /* else {
-      const a = audio.current as HTMLAudioElement;
-      a.muted = true;
-      a.play()
-        .then(() => dispatch(setReloadSong(true)))
-        .finally(() => (a.muted = false));
-    } */
-  }
+  const handleButtonClick = () => {
+    if (audioContext) {
+      audioContext.runFirstTime();
+    }
+  };
 
   return (
     <DesktopWindow
@@ -58,7 +51,7 @@ const MainPlayer = function MainPlayer() {
     >
       {(!audioPlayable && (
         <div className="content-[''] bg-black z-50 absolute w-full h-full flex items-center justify-center flex-col">
-          <MyIconButton width={100} onClick={tryToPlay}>
+          <MyIconButton width={100} onClick={handleButtonClick}>
             <PlayArrowOutlined sx={{ width: "50px", height: "50px" }} />
           </MyIconButton>
           <a

@@ -56,13 +56,24 @@ function PlaylistContainer({}: Props) {
               className="flex justify-between"
               key={(row && row.md5) || Math.floor(Math.random() * 1000000)}
             >
-              {columns.map((column) => (
-                <h2 className={"text-center"} style={{ flex: column.width }} key={column.field}>
-                  {column.field === "duration"
-                    ? millisecondsToTime(row[column.field])
-                    : row[column.field]}
-                </h2>
-              ))}
+              {columns
+                .map((column) => {
+                  return (
+                    (row && (
+                      <h2
+                        className={"text-center"}
+                        style={{ flex: column.width }}
+                        key={column.field}
+                      >
+                        {column.field === "duration"
+                          ? millisecondsToTime(row[column.field])
+                          : row[column.field]}
+                      </h2>
+                    )) ||
+                    null
+                  );
+                })
+                .filter((v) => v !== null)}
             </div>
           ))}
       </article>

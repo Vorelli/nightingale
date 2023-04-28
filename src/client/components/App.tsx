@@ -91,7 +91,6 @@ const App = () => {
     fetch(URL + "/api/playlists")
       .then((data) => data.json())
       .then((data) => {
-        console.log(data);
         if (data.length === 0) {
           dispatch(
             requestPlaylistsSuccess([
