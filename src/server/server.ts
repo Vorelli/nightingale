@@ -26,8 +26,8 @@ var appStart: express.Application = express();
 var { app, getWss }: express_ws.Instance = express_ws(appStart);
 if (process.env.KEY_PATH && process.env.CERT_PATH) {
   var options = {
-    key: fs.readFileSync(path.resolve(__dirname, process.env.KEY_PATH as string)),
-    cert: fs.readFileSync(path.resolve(__dirname, process.env.CERT_PATH as string)),
+    key: fs.readFileSync(path.resolve(process.env.KEY_PATH as string)),
+    cert: fs.readFileSync(path.resolve(process.env.CERT_PATH as string)),
   };
   httpsServer = https.createServer(options, appStart);
   ({ getWss } = express_ws(app, httpsServer));

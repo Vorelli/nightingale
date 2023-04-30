@@ -48,7 +48,7 @@ async function useParseFile(filePath: string) {
 
 export const loadSongs = (app: express.Application): Promise<Album[]> => {
   const musicDir = process.env.MUSIC_DIRECTORY as string;
-  return processPaths([path.resolve(app.locals.__dirname, musicDir)]).then((filePromises) => {
+  return processPaths([path.resolve(musicDir)]).then((filePromises) => {
     console.log("inside the .then", filePromises);
     return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));
   });
@@ -482,7 +482,7 @@ function craftAlbumObj(
       {
         md5,
         path: path.relative(
-          path.resolve(app.locals.__dirname, process.env.MUSIC_DIRECTORY as string),
+          path.resolve(process.env.MUSIC_DIRECTORY as string),
           path.resolve(filePath)
         ),
         duration: duration || 10000,
