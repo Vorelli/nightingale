@@ -10,15 +10,15 @@ const HeaderBar = (props: {
   const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
 
   return (
-    <div className="flex justify-end pt-2">
+    <div className="flex justify-end pt-2 space-x-1">
       <button
-        className="btn btn-sm btn-ghost rounded-none border-2 border-primary btn-square transition-colors hover:border-primary-focus hover:cursor-pointer right-2 relative"
+        className="btn btn-sm btn-ghost rounded-none border-2 border-primary btn-square transition-colors hover:border-primary-focus hover:cursor-pointer relative"
         onClick={(ev) => props.onShowHideClick(ev)}
       >
         {!hidden ? "-" : "+"}
       </button>
       <button
-        className="btn btn-sm btn-ghost rounded-none border-2 border-secondary btn-square hover:border-secondary-focus hover:cursor-pointer right-1 relative h-2"
+        className="btn btn-sm btn-ghost rounded-none border-2 border-secondary btn-square hover:border-secondary-focus hover:cursor-pointer relative h-2"
         onClick={(ev) => props.onMoveToTopClick(ev)}
       >
         ↑

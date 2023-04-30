@@ -52,7 +52,6 @@ export function AudioContextProvider({ children }: Props) {
   }
 
   async function tryToPlay(audio: HTMLAudioElement) {
-    console.log("status", status);
     if (status === "PLAYING") {
       await audioContext?.resume();
       await audio.play();
@@ -62,7 +61,7 @@ export function AudioContextProvider({ children }: Props) {
   }
 
   useEffect(() => {
-    if (!firstTime && audioRef && audioRef.current) {
+    if (!firstTime && audioRef && audioRef.current && !currentSongLoading) {
       dispatch(setReloadSong(true));
       tryToPlay(audioRef.current);
     }
@@ -117,43 +116,15 @@ export function AudioContextProvider({ children }: Props) {
 
     const playAudio = async () => {
       try {
-        audio.muted = true;
-        await audio.play();
         dispatch(setReloadSong(true));
         dispatch(setAudioPlayable(true));
-        audio.muted = false;
-        tryToPlay(audio);
       } catch (err) {
-        console.log(err);
         dispatch(setAudioPlayable(false));
       }
     };
     playAudio();
-
-    /* audio.muted = true;
-    audio
-      .play()
-      .then(() => dispatch(setReloadSong(true)))
-      .then(() => {
-        dispatch(setAudioPlayable(true));
-      })
-      .then(() => !!audio && tryToPlay(audio))
-      .catch((err) => {
-        console.log(err);
-        dispatch(setAudioPlayable(false));
-      })
-      .finally(() => {
-        if (!!audio) {
-          audio.muted = false;
-        }
-      }); */
   }
-  /*   useEffect(() => {
-    if (!currentSongLoading && !firstTime) {
 
-    }
-  }, [firstTime, status, currentSongLoading, startingTime, audioPlayable]);
- */
   return (
     <AudioContextStateContext.Provider
       value={{

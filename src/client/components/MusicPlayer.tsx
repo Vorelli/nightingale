@@ -11,6 +11,7 @@ import StyledSlider from "./StyledSlider";
 import TimeseekSlider from "./TimeseekSlider";
 import HeadphonesIcon from "@mui/icons-material/Headphones";
 import HeadsetOffIcon from "@mui/icons-material/HeadsetOff";
+import { useAudioContext } from "./AudioContextProvider";
 
 type Props = {};
 
@@ -21,6 +22,7 @@ function MusicPlayer({}: Props) {
   const [iconSx, setIconSx] = useState({ width: "24px", height: "24px" });
   const { URL } = useSelector((s: RootState) => s.global);
   const [lastVolume, setLastVolume] = useState(0);
+  const audioContext = useAudioContext();
 
   function handlePlayPause() {
     fetch(URL + "/api/playpause", { method: "PUT" });
@@ -33,6 +35,12 @@ function MusicPlayer({}: Props) {
   function handleNextClick() {
     fetch(URL + "/api/next", { method: "PUT" });
   }
+
+  useEffect(() => {
+    if (audioContext && audioContext.audioRef && audioContext.audioRef.current) {
+      audioContext.audioRef.current.volume = localVolume / 100;
+    }
+  }, [localVolume]);
 
   function handleVolumeChange(_ev: Event, value: number | number[]) {
     if (typeof value === "number") {

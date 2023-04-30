@@ -7,6 +7,7 @@ import fs from "fs";
 import express_ws from "express-ws";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import compression from "compression";
 
 import { sessionsMiddleware } from "./middleware/sessions.js";
 import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
@@ -35,6 +36,7 @@ if (process.env.KEY_PATH && process.env.CERT_PATH) {
 const corsOptions = {
   origin: "http://localhost:8080",
 };
+app.use(compression());
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
