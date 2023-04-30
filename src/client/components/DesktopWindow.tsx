@@ -77,19 +77,21 @@ const DesktopWindow = (props: {
         <header
           className={
             (hidden ? "space-x-0.5 " : "space-x-2 ") +
-            "w-full h-10 flex justify-between box-border items-center select-none col-span-2"
+            "w-full h-12 flex justify-between box-border items-center select-none col-span-2"
           }
         >
           <div
             className={
-              "flex-1 flex justify-start items-center pt-2 header hover:cursor-move" +
+              "flex-1 flex justify-start items-center mt-2 h-10 header hover:cursor-move" +
               (hidden ? " space-x-2 text-sm" : " space-x-4 ")
             }
           >
-            <div className="min-w-[40px] max-w-[40px] h-10 bg-base-200 mask mask-circle">
+            <div className="min-w-[40px] max-w-[40px] h-10 bg-base-200 mask mask-circle h-full">
               <img draggable={false} className="w-8 h-8 relative left-1 top-1" src={props.icon} />
             </div>
-            <h1 className="justify-start">{props.title || "Default Title"}</h1>
+            <h1 className="justify-start h-full overflow-y-auto">
+              {props.title || "Default Title"}
+            </h1>
           </div>
           <HeaderBar
             storeName={props.storeName}
