@@ -28,8 +28,12 @@ function TimeseekSlider({ localVolume }: Props) {
   useEffect(() => {
     if (context && currentSong && !!audioRef && audioRef.current) {
       const audio = audioRef.current as HTMLAudioElement;
-      audio.src = "/streaming/" + currentSong + ".mp4";
-      audio.load();
+      const currentSrc = audio.src;
+      const indexOfStreaming = currentSrc.indexOf("/streaming/");
+      if (indexOfStreaming === -1 || currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)) {
+        audio.src = "/streaming/" + currentSong + ".mp4";
+        audio.load();
+      }
       audio.currentTime = startingTime / 1000;
       audio.volume = localVolume / 100;
     }
