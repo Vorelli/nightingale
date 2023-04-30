@@ -1,6 +1,6 @@
 {
   "name": "nightingale",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A personal radio server. Stream from anywhere",
   "main": "src/server/index.js",
   "scripts": {
