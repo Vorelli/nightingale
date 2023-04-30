@@ -49,7 +49,6 @@ async function useParseFile(filePath: string) {
 export const loadSongs = (app: express.Application): Promise<Album[]> => {
   const musicDir = process.env.MUSIC_DIRECTORY as string;
   return processPaths([path.resolve(musicDir)]).then((filePromises) => {
-    console.log("inside the .then", filePromises);
     return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));
   });
 
@@ -58,22 +57,16 @@ export const loadSongs = (app: express.Application): Promise<Album[]> => {
     parentDir = ""
   ): Promise<{ md5: string; filePath: string }[]> {
     let filePromises: Promise<{ md5: string; filePath: string }>[] = [];
-    console.log("parentDir:", parentDir);
-
     const tempPaths: Promise<{ p: string; files: fs.Dirent[] }>[] = [];
+
     for (let i = 0; i < pathsInMusic.length; i++) {
       const filePath = pathsInMusic[i];
-      console.log(filePath);
       if (typeof filePath === "string" || filePath.isDirectory()) {
         tempPaths.push(handleDir(filePath, parentDir));
       } else if (filePath.isFile() || filePath.isSymbolicLink()) {
         const actualFilePath = path.join(parentDir, filePath.name);
-        console.log("actualFilePath", actualFilePath);
         filePromises.push(
-          md5File(actualFilePath).then((md5) => {
-            console.log("this is the md5", md5, actualFilePath);
-            return { md5, filePath: actualFilePath };
-          })
+          md5File(actualFilePath).then((md5) => ({ md5, filePath: actualFilePath }))
         );
       }
     }
@@ -145,6 +138,7 @@ function processMd5s(
   md5s: { md5: string; filePath: string }[]
 ): Promise<Album[]> {
   console.log("these are the md5s received", md5s);
+  console.log("FILES WITH MD5s NOT IN DB:");
   return Promise.all(
     md5s.map(async ({ md5, filePath }) => {
       return new Promise<boolean | Album>((resolve, reject) => {
@@ -213,9 +207,7 @@ function processMd5s(
         for (var i = 0; i < mergedAlbumsKeys.length; i++) {
           inserts.push(insertIntoDb(app, mergedAlbums.get(mergedAlbumsKeys[i]) as Album));
         } */
-        console.log("here are the inserts", inserts, inserts.length);
         insertAllIntoDb(app, mergedAlbums).then(() => {
-          console.log("done doing all inserts into db! now returning all md5s!");
           console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
           resolve(songList.flat());
         });
@@ -237,7 +229,6 @@ function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
 }
 
 function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>): Promise<void> {
-  console.log("beginning of insert");
   const db: NodePgDatabase = app.locals.db;
   const artistLookUps = Array.from(albumList.values()).flatMap((album) =>
     album.artists.map((artist) =>
@@ -288,13 +279,10 @@ function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>
         artistInsert,
         genreInsert,
       ]);
-      console.log("insersts", inserts);
-      console.log("returnfromDb", returnFromDb);
 
       const nameToId = <T>(arr: T[], tagKey: keyof T, tagValue: keyof T): Map<any, any> => {
         const map = new Map<any, any>();
         arr.forEach((a: T) => {
-          console.log("eachA", a);
           if (a[tagValue] !== undefined) {
             map.set(a[tagValue], a[tagKey]);
           }
@@ -312,15 +300,12 @@ function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>
         "id",
         "name"
       );
-      console.log("artistNameToId:", artistNameToId);
-      console.log("genreNameToId:", genreNameToId);
 
       var albumsToInsert = Array.from(albumList.values()).map((album: Album) =>
         getAlbumToInsert(album, artistNameToId.get(album.albumArtist))
       );
 
       const insertedAlbums: ReturningAlbums[] = await insertIntoTable(albums, albumsToInsert);
-      console.log("insertedAlbums", insertedAlbums);
 
       const albumToId = insertedAlbums.reduce((acc, cur) => {
         if (cur.name && cur.id) {
@@ -400,7 +385,6 @@ async function getSongInfo(
           (durationInSeconds) => durationInSeconds * 1000
         );
         let tags = await useParseFile(filePath).then((tags) => tags.common);
-        console.log("the filepath", filePath);
 
         let imageChecking = checkIfFileExists(getPath(app, md5, "jpg")).catch(async () => {
           if (tags.picture && tags.picture.length > 0) {
@@ -409,8 +393,6 @@ async function getSongInfo(
             fs.writeFile(streamingPath, newImage, (err) => {
               if (err) {
                 console.log("Error occurred when trying to write new image to disk:", err);
-              } else {
-                console.log("Wrote new image to", streamingPath);
               }
             });
           }

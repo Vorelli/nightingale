@@ -18,8 +18,6 @@ import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
 const router = express.Router();
 
 router.get("/songs", (req, res) => {
-  console.log((res.locals.db as NodePgDatabase).select().from(songs).toSQL());
-
   const query = `
   SELECT
   song_data.md5,
@@ -93,7 +91,6 @@ router.get("/playlists", (req, res) => {
     .from(playlists)
     .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
     .then((result) => {
-      console.log(result);
       const data = result.reduce((acc, val) => {
         acc[val.playlists.id] = acc[val.playlists.id] || {};
         acc[val.playlists.id].songs = acc[val.playlists.id].songs || [];
@@ -111,7 +108,7 @@ function toObject(toBeJson: any) {
   return JSON.parse(
     JSON.stringify(
       toBeJson,
-      (key, value) => (typeof value === "bigint" ? value.toString() : value) // return everything else unchanged
+      (_key, value) => (typeof value === "bigint" ? value.toString() : value) // return everything else unchanged
     )
   );
 }
