@@ -43,7 +43,7 @@ function PlaylistContainer({}: Props) {
         </ul>
       </header>
       <article className="w-full overflow-x-auto h-full mt-2 bg-base-200">
-        <header className="w-full flex justify-between">
+        <header className="w-full h-6 flex justify-between">
           {columns.map((column) => (
             <h2 className={"text-center"} style={{ flex: column.width }} key={column.field}>
               {column.headerName}
@@ -53,7 +53,7 @@ function PlaylistContainer({}: Props) {
         {rows &&
           rows.map((row, i) => (
             <div
-              className="flex justify-between"
+              className="flex h-6 justify-between"
               key={(row && row.md5) || Math.floor(Math.random() * 1000000)}
             >
               {columns
@@ -61,7 +61,7 @@ function PlaylistContainer({}: Props) {
                   return (
                     (row && (
                       <h2
-                        className={"text-center"}
+                        className={"text-center overflow-x-hidden overflow-y-auto h-full"}
                         style={{ flex: column.width }}
                         key={column.field}
                       >

@@ -502,9 +502,5 @@ function formatLyrics(lyrics: string[]): string[] {
 }
 
 function getPath(app: express.Application, fileName: string, ext: string) {
-  return path.resolve(
-    app.locals.__dirname,
-    process.env.STREAMING_DIR as string,
-    fileName + "." + ext
-  );
+  return path.resolve(app.locals.__dirname, "../public/streaming/", fileName + "." + ext);
 }
