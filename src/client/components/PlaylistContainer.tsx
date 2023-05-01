@@ -14,7 +14,7 @@ function PlaylistContainer({}: Props) {
   const columns = [
     //{ field: "track", headerName: "Track", width: 25 },
     { field: "name", headerName: "Title", width: 150 },
-    { field: "albumArtist", headerName: "Artist", width: 100 },
+    { field: "albumArtist", headerName: "Artist", width: 75 },
     { field: "albumName", headerName: "Album", width: 200 },
     {
       field: "duration",
@@ -29,7 +29,7 @@ function PlaylistContainer({}: Props) {
   ];
 
   return (
-    <div className="h-full w-full row-start-2 row-span-2 flex flex-col">
+    <div className="h-full text-xs w-full row-start-2 row-span-2 flex flex-col">
       <header className="ml-1 mt-1">
         <ul
           key={5}
@@ -43,7 +43,7 @@ function PlaylistContainer({}: Props) {
         </ul>
       </header>
       <article className="w-full overflow-x-auto h-full mt-2 bg-base-200">
-        <header className="w-full h-6 flex justify-between">
+        <header className="w-full h-4 flex justify-between">
           {columns.map((column) => (
             <h2 className={"text-center"} style={{ flex: column.width }} key={column.field}>
               {column.headerName}
@@ -53,7 +53,7 @@ function PlaylistContainer({}: Props) {
         {rows &&
           rows.map((row, i) => (
             <div
-              className="flex h-6 justify-between"
+              className="flex h-4 justify-between"
               key={(row && row.md5) || Math.floor(Math.random() * 1000000)}
             >
               {columns
