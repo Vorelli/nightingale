@@ -39,8 +39,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
 ### Via Docker
 
 <ol>
-  <li>
-    <h3>Prerequisites</h3>
+  <li>Prerequisites
     <p>
       This method uses (externally)
       <ul>
@@ -67,8 +66,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
 ### Locally
 
 <ol>
-  <li>
-    <h3>Prerequisites</h3>
+  <li>Prerequisites
     <p>
       This method requires (externally):
       <ul>
@@ -84,15 +82,10 @@ Nightingale offers a wide range of features designed to enhance your music strea
   <li>
     <h3>Clone the repository.</h3>
   </li>
-  <li>
-    <h3>Install dependencies via npm install</h3>
-  </li>
-  <li>
-    <h3>Duplicate the .env.copy and rename it to .env</h3>
-  </li>
-  <li>
-    <h3>Add values to the .env:</h3>
-    <h3>Please note: If you're going to be using https, the KEY_PATH and CERT_PATH are required.</h3>
+  <li>Install dependencies via npm install</li>
+  <li>Duplicate the .env.copy and rename it to .env</li>
+  <li>Add values to the .env:
+    <p>Please note: If you're going to be using https, the KEY_PATH and CERT_PATH are required.</p>
 
     # REQUIRED
     # All specified paths should be absolute
@@ -109,12 +102,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
     HTTP_PORT=Port for the http server
 
   </li>
-  <li>
-    <h3>Start the server with:</h3>
-
-    npm start
-
-  </li>
+  <li>Start the server with: <code>npm start</code></li>
 </ol>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
