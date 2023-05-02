@@ -60,7 +60,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
   </li>
   <li>Run docker-compose up -d</li>
   <li>The server should be available at the ports provided (4000 for https by default).</li>
-  <li>To stop and remove the Nightingale container, run the following command from the same directory as the docker-compose.yml file:<code>docker-compose down</code></li>
+  <li>To stop and remove the Nightingale container, run the following command from the same directory as the docker-compose.yml file: <code>docker-compose down</code></li>
 </ol>
 
 ### Locally
