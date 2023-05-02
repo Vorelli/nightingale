@@ -30,7 +30,7 @@ const App = () => {
   }
 
   useEffect(() => {
-    const ws = new WebSocket((process.env.PROTO === "https://" ? "wss://" : "ws://") + HOST);
+    const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + HOST);
     ws.onerror = function (err) {
       console.log("failed to connect to the websocket server:", err);
     };
@@ -56,12 +56,14 @@ const App = () => {
   useEffect(() => {
     if (reloadSong) {
       dispatch(currentSongRequest());
+      const timeBefore = new Date();
       fetch(URL + "/api/sync")
         .then((data) => data.json())
         .then((syncData) => {
           if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
             dispatch(currentSongRequestSuccess(syncData.currentSong));
-            dispatch(setStartTime(syncData.currentTime));
+            const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
+            dispatch(setStartTime(parseInt(syncData.currentTime) + ping / 2));
             dispatch(setStatus(syncData.status));
           }
         })

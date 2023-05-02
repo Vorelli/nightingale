@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import Dotenv from "dotenv-webpack";
+//import Dotenv from "dotenv-webpack";
 
 export default {
   entry: ["./src/client/index.tsx", "./src/client/index.css"],
@@ -37,6 +37,6 @@ export default {
   plugins: [
     new HtmlWebpackPlugin({ template: path.resolve(__dirname, "src/client/index.html") }),
     new MiniCssExtractPlugin(),
-    new Dotenv({}),
+    //new Dotenv({}),
   ],
 };

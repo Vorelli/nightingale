@@ -6,8 +6,8 @@ interface InitialState {
   audioPlayable: boolean;
   reloadSong: boolean;
 }
-const HOST = (process.env.HOST as string) || "localhost:3000";
-const PROTO = (process.env.PROTO as string) || "http://";
+const HOST = location.host;
+const PROTO = location.protocol + "//";
 
 const initialState: InitialState = {
   HOST,

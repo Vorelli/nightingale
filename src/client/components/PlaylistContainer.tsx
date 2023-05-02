@@ -29,7 +29,7 @@ function PlaylistContainer({}: Props) {
   ];
 
   return (
-    <div className="h-full text-xs w-full row-start-2 row-span-2 flex flex-col">
+    <div className="h-full w-full row-start-2 row-span-2 flex flex-col">
       <header className="ml-1 mt-1">
         <ul
           key={5}
@@ -42,7 +42,7 @@ function PlaylistContainer({}: Props) {
             })}
         </ul>
       </header>
-      <article className="w-full overflow-x-auto h-full mt-2 bg-base-200">
+      <article className="w-full text-xs overflow-x-auto h-full mt-2 bg-base-200">
         <header className="w-full h-4 flex justify-between">
           {columns.map((column) => (
             <h2 className={"text-center"} style={{ flex: column.width }} key={column.field}>

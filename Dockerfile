@@ -1,4 +1,4 @@
-FROM node:16 AS base
+FROM node:16-alpine AS base
 
 WORKDIR /app
 COPY package*.json ./
@@ -10,8 +10,11 @@ COPY . .
 RUN npm run build
 RUN npm run build:back
 
-FROM node:16 AS release
+FROM node:16-alpine AS release
+RUN apk add  --no-cache ffmpeg
 WORKDIR /app
+RUN mkdir /app/public
+RUN mkdir /app/public/streaming
 COPY --from=build /app/package*.json ./
 RUN npm ci --omit=dev
 

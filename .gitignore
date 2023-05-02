@@ -1,11 +1,9 @@
 package-lock.json
 node_modules/
 dist/
-public/
 keyAndCert
 keyAndCert/
 .env
 migrations-folder/
 music/
 streaming/
-ffmpeg
