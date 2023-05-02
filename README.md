@@ -79,9 +79,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
         <a href="https://gist.github.com/cecilemuller/9492b848eb8fe46d462abeb26656c4f8">guide</a> and generate keys and certs for localhost.</p>
     </p>
   </li>
-  <li>
-    <h3>Clone the repository.</h3>
-  </li>
+  <li>Clone the repository.</li>
   <li>Install dependencies via npm install</li>
   <li>Duplicate the .env.copy and rename it to .env</li>
   <li>Add values to the .env:
