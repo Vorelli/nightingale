@@ -1,0 +1,1 @@
+docker build -t vorelli/nightingale:$TAG .

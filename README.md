@@ -48,7 +48,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
       </ul>
     </p>
   </li>
-  <li>Copy the provided compose.yaml and edit to your hearts content, but don't forget:
+  <li>Copy the provided compose.yaml.copy and rename to compose.yaml and edit to your hearts content, but don't forget:
     <ul>
       <li>Replace /path/to/keysAndCerts with the path to your SSL key and certificate files.</li>
       <li>Replace /path/to/music with the path to your music library.</li>

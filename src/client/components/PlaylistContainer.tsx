@@ -59,7 +59,7 @@ function PlaylistContainer({}: Props) {
               {columns
                 .map((column) => {
                   return (
-                    (row && (
+                    (row && row[column.field] && (
                       <h2
                         className={"text-center overflow-x-hidden overflow-y-auto h-full"}
                         style={{ flex: column.width }}

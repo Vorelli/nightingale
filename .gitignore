@@ -7,3 +7,8 @@ keyAndCert/
 migrations-folder/
 music/
 streaming/
+compose.yaml
+public/bundle.js
+public/bundle.js.LICENSE.txt
+public/main.css
+public/index.html
