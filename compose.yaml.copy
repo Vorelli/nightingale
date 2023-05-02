@@ -5,14 +5,15 @@ services:
     image: vorelli/nightingale:latest
     container_name: nightingale
     environment:
-      - KEY_PATH=keyAndCert/privkey.pem
-      - CERT_PATH=keyAndCert/fullchain.pem
+      - KEY_PATH=keyAndCert/localhost.key
+      - CERT_PATH=keyAndCert/localhost.crt
       - DATABASE_URL=database uri connection string
       - COOKIE_SECRET=generate via [openssl rand -hex 32]
       - MUSIC_DIRECTORY=music/
     volumes:
-      - /path/to/keysAndCerts:/app/keyAndCert
-      - /path/to/music:/app/music
+      - /path/to/keyAndCert:/app/keyAndCert
+      - /path/to/music/library:/app/music
+      - /path/to/local/streaming/folder:/app/public/streaming
     ports:
       - "4000:4000"
       - "3000:3000"
