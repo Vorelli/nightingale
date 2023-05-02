@@ -24,13 +24,53 @@ Built using a modern tech stack, Nightingale features Express.js, TypeScript, Re
 
 With Nightingale, you never have to worry about interrupting your favorite song when switching between devices or sharing your music with others. Enjoy a continuous, synchronized, and communal music experience that follows you wherever you go.
 
+## Features
+
+Nightingale offers a wide range of features designed to enhance your music streaming experience:
+
+- Synchronized playback across multiple devices for a seamless listening experience
+- Music sharing with friends and family to enjoy a communal listening experience
+- Modern and responsive user interface built with React and TailwindCSS
+- Scalable and efficient backend powered by Express.js, TypeScript, and PostgreSQL
+- Easy deployment with Docker and Docker Compose
+
 ## Installation
+
+### Via Docker
 
 <ol>
   <li>
     <h3>Prerequisites</h3>
     <p>
-      This repository uses (externally):
+      This method uses (externally)
+      <ul>
+        <li>Docker</li>
+        <li>Docker Compose</li>
+      </ul>
+    </p>
+  </li>
+  <li>Copy the provided compose.yaml and edit to your hearts content, but don't forget:
+    <ul>
+      <li>Replace /path/to/keysAndCerts with the path to your SSL key and certificate files.</li>
+      <li>Replace /path/to/music with the path to your music library.</li>
+      <li>Replace database uri connection string with your PostgreSQL connection string.</li>
+      <li>Replace generate via [openssl rand -hex 32] with a randomly generated secret string.</li>
+      <li>Change local ports to whatever you want (left side). 4000 is https/3000 is http</li>
+      <li>NOTE! WebSockets is only working on https. Fix incoming for http, but use https until then.</li>
+    </ul>
+  </li>
+  <li>Run docker-compose up -d</li>
+  <li>The server should be available at the ports provided (4000 for https by default).</li>
+  <li>To stop and remove the Nightingale container, run the following command from the same directory as the docker-compose.yml file:<code>docker-compose down</code></li>
+</ol>
+
+### Locally
+
+<ol>
+  <li>
+    <h3>Prerequisites</h3>
+    <p>
+      This method requires (externally):
       <ul>
         <li>FFmpeg</li>
         <li>Postgres database</li>

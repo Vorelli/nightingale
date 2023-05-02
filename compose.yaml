@@ -2,7 +2,7 @@
 version: "1.0"
 services:
   nightingale:
-    image: vorelli/nightingale:v2
+    image: vorelli/nightingale:latest
     container_name: nightingale
     environment:
       - KEY_PATH=keyAndCert/privkey.pem
@@ -14,6 +14,6 @@ services:
       - /path/to/keysAndCerts:/app/keyAndCert
       - /path/to/music:/app/music
     ports:
-      - "443:4000"
-      - "80:3000"
+      - "4000:4000"
+      - "3000:3000"
     restart: unless-stopped
