@@ -8,6 +8,7 @@ import express_ws from "express-ws";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import compression from "compression";
+import morgan from "morgan";
 
 import { sessionsMiddleware } from "./middleware/sessions.js";
 import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
@@ -34,8 +35,10 @@ if (process.env.KEY_PATH && process.env.CERT_PATH) {
 }
 
 const corsOptions = {
-  origin: "http://localhost:8080",
+  origin: "http://192.168.0.200:8080",
 };
+app.options("*", cors(corsOptions));
+app.use(morgan("dev"));
 app.use(compression());
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -75,7 +78,6 @@ app.use(async (_req, _res, next) => {
 app.use(attachPgPool(pool, db));
 app.use(setCorsAndHeaders);
 app.use(sessionsMiddleware);
-app.use(logger);
 
 app.use(express.static(path.join(__dirname, "../public")));
 console.log("static path:", path.join(__dirname, "../public"));

@@ -6,6 +6,10 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin";
 //import Dotenv from "dotenv-webpack";
 
 export default {
+  devServer: {
+    compress: true,
+    host: "0.0.0.0",
+  },
   entry: ["./src/client/index.tsx", "./src/client/index.css"],
   module: {
     rules: [

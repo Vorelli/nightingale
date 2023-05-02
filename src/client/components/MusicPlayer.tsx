@@ -25,7 +25,7 @@ function MusicPlayer({}: Props) {
   const audioContext = useAudioContext();
 
   function handlePlayPause() {
-    fetch(URL + "/api/playpause", { method: "PUT" });
+    fetch(URL + "/api/playpause/", { method: "PUT" });
   }
 
   function handleLastClick() {

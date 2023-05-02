@@ -54,27 +54,6 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (reloadSong) {
-      dispatch(currentSongRequest());
-      const timeBefore = new Date();
-      fetch(URL + "/api/sync")
-        .then((data) => data.json())
-        .then((syncData) => {
-          if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
-            dispatch(currentSongRequestSuccess(syncData.currentSong));
-            const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
-            dispatch(setStartTime(parseInt(syncData.currentTime) + ping / 2));
-            dispatch(setStatus(syncData.status));
-          }
-        })
-        .catch((err) => {
-          console.log("error encountered when trying to sync with the server", err);
-        })
-        .finally(() => dispatch(setReloadSong(false)));
-    }
-  }, [reloadSong]);
-
-  useEffect(() => {
     dispatch(songsRequest());
     fetch(URL + "/api/songs")
       .then((data) => data.json())

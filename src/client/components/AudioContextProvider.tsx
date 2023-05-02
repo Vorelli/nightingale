@@ -2,6 +2,12 @@ import React, { createContext, useContext, useEffect, useRef, useState } from "r
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { setAudioPlayable, setReloadSong } from "../redux/reducers/globalReducer";
+import {
+  currentSongRequest,
+  currentSongRequestSuccess,
+  setStartTime,
+} from "../redux/reducers/songsReducer";
+import { setStatus } from "../redux/reducers/settingsReducer";
 
 export type AudioContextState = {
   audioContext: AudioContext | null;
@@ -36,6 +42,7 @@ export function AudioContextProvider({ children }: Props) {
   const dispatch = useDispatch();
   const [movingTime, setMovingTime] = useState(false);
   const [currentT, setCurrentT] = useState(0);
+  const { URL } = useSelector((s: RootState) => s.global);
 
   const { status } = useSelector((s: RootState) => s.settings);
   const { startingTime, currentSongLoading } = useSelector((s: RootState) => s.songs);
@@ -51,12 +58,12 @@ export function AudioContextProvider({ children }: Props) {
     fetch("/api/pause", { method: "PUT" });
   }
 
-  async function tryToPlay(audio: HTMLAudioElement) {
-    if (status === "PLAYING") {
-      await audioContext?.resume();
-      await audio.play();
-    } else {
-      await audio.pause();
+  function tryToPlay(audio: HTMLAudioElement) {
+    if (audioContext && status === "PLAYING" && audio.paused) {
+      audioContext.resume();
+      audio.play();
+    } else if (!audio.paused && status === "PAUSED") {
+      audio.pause();
     }
   }
 
@@ -86,6 +93,7 @@ export function AudioContextProvider({ children }: Props) {
 
     if (audioRef.current === null) {
       const audioElement = new Audio();
+      document.body.appendChild(audioElement);
       audioRef.current = audioElement;
     }
 
@@ -105,24 +113,38 @@ export function AudioContextProvider({ children }: Props) {
     }
   }, [audioRef, audioContext]);
 
-  function runFirstTime() {
-    if (!firstTime) return;
+  const reloadSong = () => {
+    dispatch(currentSongRequest());
+    const timeBefore = new Date();
+    fetch(URL + "/api/sync")
+      .then((data) => data.json())
+      .then((syncData) => {
+        if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
+          dispatch(currentSongRequestSuccess(syncData.currentSong));
+          const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
+          dispatch(setStartTime(parseInt(syncData.currentTime) + ping / 2));
+          dispatch(setStatus(syncData.status));
+        }
+      })
+      .catch((err) => {
+        console.log("error encountered when trying to sync with the server", err);
+      });
+  };
+
+  function runFirstTime(ev: React.MouseEvent | React.TouchEvent) {
+    console.log(ev);
+    ev.preventDefault();
+    let audio2: null | HTMLAudioElement = audioRef.current;
+    console.log("firstTime", firstTime, "audioRef", audioRef, "audio2", audio2);
+    if (!firstTime || !audioRef || !audio2) return;
     setFirstTime(false);
-    if (!audioRef) return;
-    let audio2: null | undefined | HTMLAudioElement = audioRef?.current;
-    if (!audio2) return;
 
-    let audio = audioRef.current as unknown as HTMLAudioElement;
-
-    const playAudio = async () => {
-      try {
-        dispatch(setReloadSong(true));
-        dispatch(setAudioPlayable(true));
-      } catch (err) {
-        dispatch(setAudioPlayable(false));
-      }
-    };
-    playAudio();
+    try {
+      reloadSong();
+      dispatch(setAudioPlayable(true));
+    } catch (err) {
+      dispatch(setAudioPlayable(false));
+    }
   }
 
   return (

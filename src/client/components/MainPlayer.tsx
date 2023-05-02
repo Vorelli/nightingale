@@ -10,8 +10,7 @@ import AlbumArt from "./AlbumArt";
 import MusicPlayer from "./MusicPlayer";
 import { useAudioContext } from "./AudioContextProvider";
 import MyIconButton from "./MyIconButton";
-import { Label, PlayArrowOutlined } from "@mui/icons-material";
-import { setReloadSong } from "../redux/reducers/globalReducer";
+import { PlayArrowOutlined } from "@mui/icons-material";
 import { Button } from "@mui/material";
 
 const MainPlayer = function MainPlayer() {
@@ -22,12 +21,10 @@ const MainPlayer = function MainPlayer() {
   const { audioPlayable } = useSelector((s: RootState) => s.global);
   const song = songs[currentSong || 0];
   const audioContext = useAudioContext();
-  const audio = audioContext?.audioRef;
-  const dispatch = useDispatch();
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (ev: React.TouchEvent | React.MouseEvent) => {
     if (audioContext) {
-      audioContext.runFirstTime();
+      audioContext.runFirstTime(ev);
     }
   };
 
