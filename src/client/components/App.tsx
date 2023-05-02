@@ -17,13 +17,14 @@ import {
 } from "../redux/reducers/playlistsReducer";
 import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
-import { AudioContextProvider } from "./AudioContextProvider";
+import { AudioContextProvider, useAudioContext } from "./AudioContextProvider";
 import { NodeContextProvider } from "./NodeContextProvider";
 import { setReloadSong } from "../redux/reducers/globalReducer";
 
 const App = () => {
   const dispatch = useDispatch();
   const { URL, HOST, reloadSong } = useSelector((s: RootState) => s.global);
+  const audioContext = useAudioContext();
 
   interface md5ToSong {
     [key: string]: ClientSong;
@@ -37,7 +38,7 @@ const App = () => {
 
     ws.onmessage = function (data) {
       if (data.data === "sync") {
-        dispatch(setReloadSong(true));
+        audioContext?.reloadSong();
       } else if (data.data === "PLAYING") {
         dispatch(setStatus("PLAYING"));
       } else if (data.data === "PAUSED") {

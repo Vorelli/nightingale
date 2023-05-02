@@ -14,6 +14,7 @@ export type AudioContextState = {
   analyzerNode: AnalyserNode | null;
   audioRef: React.MutableRefObject<null | HTMLAudioElement>;
   runFirstTime: Function;
+  reloadSong: Function;
   audioSource: MediaElementAudioSourceNode | null;
   setAudioSource: React.Dispatch<React.SetStateAction<null | MediaElementAudioSourceNode>>;
   movingTime: boolean;
@@ -154,6 +155,7 @@ export function AudioContextProvider({ children }: Props) {
         analyzerNode,
         audioRef,
         runFirstTime,
+        reloadSong,
         audioSource,
         setAudioSource,
         currentT,
