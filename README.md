@@ -45,6 +45,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
       <ul>
         <li>Docker</li>
         <li>Docker Compose</li>
+        <li>Postgres database</li>
       </ul>
     </p>
   </li>
