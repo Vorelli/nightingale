@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { dbRun } from "./db/schema.js";
 import https from "https";
 import fs from "fs";
@@ -27,6 +27,7 @@ function firstRun(): [appWithExtras, Server<typeof IncomingMessage, typeof Serve
   let httpsServer: null | https.Server = null;
   var appStart: express.Application = express();
   var { app, getWss }: express_ws.Instance = express_ws(appStart);
+  var httpGetWss = getWss;
   if (process.env.KEY_PATH && process.env.CERT_PATH) {
     var options = {
       key: fs.readFileSync(path.resolve(process.env.KEY_PATH as string)),
@@ -36,17 +37,19 @@ function firstRun(): [appWithExtras, Server<typeof IncomingMessage, typeof Serve
     ({ getWss } = express_ws(app, httpsServer));
   }
 
-  const corsOptions = {
-    origin: "http://192.168.0.200:8080",
-  };
-  app.options("*", cors(corsOptions));
   app.use(morgan("dev"));
   app.use(compression());
-  app.use(cors(corsOptions));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  app.locals.getWss = getWss;
+  app.locals.getWss = function () {
+    const httpClients = httpGetWss();
+    const httpsClients = Array.from(getWss().clients.values());
+    for (let i = 0; i < httpsClients.length; i++) {
+      httpClients.clients.add(httpsClients[i]);
+    }
+    return { clients: httpClients.clients };
+  };
   app.locals.db = db;
   app.locals.__dirname = __dirname;
   app.locals.shuffleBy = "random";
@@ -79,10 +82,10 @@ function firstRun(): [appWithExtras, Server<typeof IncomingMessage, typeof Serve
   });
   app.use(attachPgPool(pool, db));
   app.use(setCorsAndHeaders);
+  app.options("*", setCorsAndHeaders);
   app.use(sessionsMiddleware);
 
   app.use(express.static(path.join(__dirname, "../public")));
-  console.log("static path:", path.join(__dirname, "../public"));
   attachWebsocketRoutes(app);
   app.use("/api", apiHandler);
   return [app as appWithExtras, httpsServer];

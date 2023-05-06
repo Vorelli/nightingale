@@ -23,7 +23,7 @@ interface GroupedSongs {
 }
 
 interface SuperGroupedSongs {
-  [key: string]: { [key: string]: ClientSong[] };
+  [key: string]: GroupedSongs;
 }
 
 function Collection({}: Props) {
@@ -65,6 +65,28 @@ function Collection({}: Props) {
         break;
     }
   }, [groupBy]);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", (ev) => {
+      let collectionDiv: HTMLDivElement | null =
+        collectionList.current && (collectionList as RefObject<HTMLDivElement>).current;
+      if (collectionDiv === null) {
+        return;
+      }
+      collectionDiv = collectionDiv as HTMLDivElement;
+      let temp: DOMRect = collectionDiv.getBoundingClientRect();
+      if (collectionList.current !== null) {
+        (collectionList.current as HTMLDivElement).style.setProperty(
+          "--x",
+          `${ev.clientX - temp.x}px`
+        );
+        (collectionList.current as HTMLDivElement).style.setProperty(
+          "--y",
+          `${ev.clientY - temp.y}px`
+        );
+      }
+    });
+  }, []);
 
   function TransitionComponent(props: TransitionProps) {
     const style = useSpring({
@@ -187,26 +209,6 @@ function Collection({}: Props) {
       </StyledTreeItemDashed>
     );
   }
-
-  window.onmousemove = (ev) => {
-    let collectionDiv: HTMLDivElement | null =
-      collectionList.current && (collectionList as RefObject<HTMLDivElement>).current;
-    if (collectionDiv === null) {
-      return;
-    }
-    collectionDiv = collectionDiv as HTMLDivElement;
-    let temp: DOMRect = collectionDiv.getBoundingClientRect();
-    if (collectionList.current !== null) {
-      (collectionList.current as HTMLDivElement).style.setProperty(
-        "--x",
-        `${ev.clientX - temp.x}px`
-      );
-      (collectionList.current as HTMLDivElement).style.setProperty(
-        "--y",
-        `${ev.clientY - temp.y}px`
-      );
-    }
-  };
 
   function CollectionList({
     groupedSongs,

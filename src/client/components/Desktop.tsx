@@ -49,7 +49,11 @@ const Desktop = function Desktop() {
         }
       }
     };
-  }, []);
+
+    return () => {
+      ws.close();
+    };
+  }, [HOST]);
 
   useEffect(() => {
     dispatch(songsRequest());

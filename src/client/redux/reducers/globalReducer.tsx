@@ -6,8 +6,9 @@ interface InitialState {
   audioPlayable: boolean;
   reloadSong: boolean;
 }
-const HOST = location.host.indexOf("8080") !== -1 ? "toscanonatale.dev" : location.host;
-const PROTO = HOST === "toscanonatale.dev" ? "https://" : location.protocol + "//";
+const HOST =
+  location.host.indexOf("192.168.0.200:8080") !== -1 ? "192.168.0.200:3000" : location.host;
+const PROTO = location.protocol + "//";
 
 const initialState: InitialState = {
   HOST,
