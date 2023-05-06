@@ -80,21 +80,28 @@ function MusicPlayer({}: Props) {
           (hidden ? " !h-[50px]" : "")
         }
       >
-        <MyIconButton onClick={handleLastClick}>
+        <MyIconButton name="Previous" onClick={handleLastClick}>
           <SkipPreviousIcon sx={iconSx} />
         </MyIconButton>
-        <MyIconButton onClick={handlePlayPause}>{pausePlayIcon}</MyIconButton>
-        <MyIconButton onClick={handleNextClick}>
+        <MyIconButton name={status === "PLAYING" ? "Pause" : "Play"} onClick={handlePlayPause}>
+          {pausePlayIcon}
+        </MyIconButton>
+        <MyIconButton name="Previous" onClick={handleNextClick}>
           <SkipNextIcon sx={iconSx} />
         </MyIconButton>
         <TimeseekSlider localVolume={localVolume} />
         <Box className="flex w-[100px] items-center">
-          <MyIconButton width={25} onClick={toggleMute}>
+          <MyIconButton
+            name={localVolume === 0 ? "Unmute" : "Mute"}
+            width={25}
+            onClick={toggleMute}
+          >
             {audioIcon}
           </MyIconButton>
           <StyledSlider
             min={0}
             max={100}
+            aria-label="Volume"
             value={localVolume}
             onChange={handleVolumeChange}
             valueLabelDisplay="auto"

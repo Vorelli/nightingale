@@ -48,7 +48,7 @@ const MainPlayer = function MainPlayer() {
     >
       {(!audioPlayable && (
         <div className="content-[''] bg-black z-50 absolute w-full h-full flex items-center justify-center flex-col">
-          <MyIconButton width={100} onClick={handleButtonClick}>
+          <MyIconButton name="EnablePlayback" width={100} onClick={handleButtonClick}>
             <PlayArrowOutlined sx={{ width: "50px", height: "50px" }} />
           </MyIconButton>
           <a

@@ -62,6 +62,7 @@ function PlaylistLabel(props: Props) {
               setEditing(false);
             }
           }}
+          id="editLabel"
           type="text"
           className="w-fit h-fit"
           value={currentName}
@@ -72,7 +73,11 @@ function PlaylistLabel(props: Props) {
           {props.playlist.name} ({props.playlist.songs.length})
         </p>
       )}
-      <IconButton onClick={handleDeleteClick} sx={{ padding: "0", float: "right" }}>
+      <IconButton
+        title="DeletePlaylist"
+        onClick={handleDeleteClick}
+        sx={{ padding: "0", float: "right" }}
+      >
         <CloseIcon />
       </IconButton>
     </li>

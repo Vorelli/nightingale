@@ -55,6 +55,7 @@ function TimeseekSlider({ localVolume }: Props) {
     <Box sx={{ display: "flex", flexGrow: 1 }}>
       <StyledSlider
         min={0}
+        aria-label="seekSlider"
         max={(song && song.duration / 1000) || 100}
         value={context?.currentT}
         onChange={handleTimeChange}

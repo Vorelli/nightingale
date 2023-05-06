@@ -87,7 +87,12 @@ const DesktopWindow = (props: {
             }
           >
             <div className="min-w-[40px] max-w-[40px] bg-base-200 mask mask-circle h-full">
-              <img draggable={false} className="w-8 h-8 relative left-1 top-1" src={props.icon} />
+              <img
+                alt="Nightingale Logo"
+                draggable={false}
+                className="w-8 h-8 relative left-1 top-1"
+                src={props.icon}
+              />
             </div>
             <h1 className="justify-start h-full overflow-y-auto">
               {props.title || "Default Title"}

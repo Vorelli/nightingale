@@ -3,9 +3,14 @@ import React, { MouseEventHandler, PropsWithChildren, ReactNode } from "react";
 import { RootState } from "../redux/store";
 import { useSelector } from "react-redux";
 
-type Props = { onClick?: MouseEventHandler; width?: number; children: ReactNode | ReactNode[] };
+type Props = {
+  onClick?: MouseEventHandler;
+  width?: number;
+  children: ReactNode | ReactNode[];
+  name: string;
+};
 
-function MyIconButton({ onClick, children, width }: Props) {
+function MyIconButton({ onClick, children, width, name }: Props) {
   const windowHidden = useSelector((s: RootState) => s.windows["main"].hidden);
   return (
     <IconButton
@@ -16,6 +21,7 @@ function MyIconButton({ onClick, children, width }: Props) {
       onClick={onClick}
       style={width !== undefined ? { width: width + "px", height: width + "px" } : {}}
       sx={{ display: "flex" }}
+      title={name}
     >
       {children}
     </IconButton>
