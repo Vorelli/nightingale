@@ -13,7 +13,7 @@ services:
     volumes:
       - /path/to/keyAndCert:/app/keyAndCert
       - /path/to/music/library:/app/music
-      - /path/to/local/streaming/folder:/app/public/streaming
+      - /path/to/streaming/folder:/app/public/streaming
     ports:
       - "4000:4000"
       - "3000:3000"
