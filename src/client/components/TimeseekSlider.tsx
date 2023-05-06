@@ -31,7 +31,9 @@ function TimeseekSlider({ localVolume }: Props) {
       const currentSrc = audio.src;
       const indexOfStreaming = currentSrc.indexOf("/streaming/");
       if (indexOfStreaming === -1 || currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)) {
-        audio.src = "/streaming/" + currentSong + ".mp4";
+        const newSrc = URL + "/streaming/" + currentSong + ".mp4";
+        console.log("src", newSrc);
+        audio.src = newSrc;
         audio.load();
       }
       audio.currentTime = startingTime / 1000;

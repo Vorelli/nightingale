@@ -223,6 +223,7 @@ function Collection({}: Props) {
       if (!nodeContext) return;
       setNodes(nodeContext.nodes as string[]);
     }, [hidden]);
+    console.log(nodes);
 
     return (
       <div

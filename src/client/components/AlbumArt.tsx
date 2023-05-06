@@ -8,6 +8,7 @@ function AlbumArt({}: Props) {
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
   const { hidden } = useSelector((s: RootState) => s.windows["main"]);
   const song = songs[currentSong || ""];
+  const { URL } = useSelector((s: RootState) => s.global);
 
   return (
     song && (
@@ -17,7 +18,7 @@ function AlbumArt({}: Props) {
           "albumArt box-border border-solid border-primary border-[1px] w-full h-full row-start-3 row-span-2 col-start-1 object-contain bg-neutral shadow-md shadow-base-300 " +
           (hidden ? "p-[1px]" : "p-[3px]")
         }
-        src={`/streaming/${song.md5}.jpg`}
+        src={`${URL}/streaming/${song.md5}.jpg`}
         alt={"album art for " + song.albumArtist + " - " + song.albumName}
       />
     )

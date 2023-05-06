@@ -12,14 +12,10 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core/index.js";
-import { drizzle } from "drizzle-orm/node-postgres/index.js";
+import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres/index.js";
 import { InferModel, sql } from "drizzle-orm/index.js";
 import pg from "pg";
 const { Pool } = pg;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 export const artists = pgTable(
   "artists",
@@ -150,8 +146,6 @@ export const session = pgTable(
   })
 );
 
-const db = drizzle(pool);
-
 export type Artists = InferModel<typeof artists>;
 export type Albums = InferModel<typeof albums>;
 export type AlbumGenres = InferModel<typeof albumGenres>;
@@ -177,4 +171,14 @@ export type ReturningGenres = InferModel<typeof genres, "select">;
 export type ReturningPlaylists = InferModel<typeof playlists, "select">;
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, "select">;
 
-export { pool, db };
+function dbRun(): [NodePgDatabase, pg.Pool] {
+  console.log("databaseURL", process.env.DATABASE_URL);
+
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  const db = drizzle(pool);
+  return [db, pool];
+}
+
+export { dbRun };

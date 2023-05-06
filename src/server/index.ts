@@ -1,6 +1,12 @@
-import {} from "dotenv/config";
-import { app, httpsServer } from "./server.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import { config } from "dotenv-esm";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+await config({ path: path.join(__dirname, "../.env") });
+import { firstRun } from "./server.js";
 import https from "https";
+
+const [app, httpsServer] = firstRun();
 
 const PORT = parseInt(process.env.PORT as string) || 4000;
 const HTTP_PORT = parseInt(process.env.HTTP_PORT as string) || 3000;

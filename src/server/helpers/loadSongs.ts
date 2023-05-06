@@ -47,6 +47,7 @@ async function useParseFile(filePath: string) {
 }
 
 export const loadSongs = (app: express.Application): Promise<Album[]> => {
+  console.log(process.env);
   const musicDir = process.env.MUSIC_DIRECTORY as string;
   return processPaths([path.resolve(musicDir)]).then((filePromises) => {
     return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));
