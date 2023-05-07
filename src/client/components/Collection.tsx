@@ -14,7 +14,6 @@ import { alpha, styled } from "@mui/material/styles";
 import { TransitionProps } from "@mui/material/transitions";
 import { useSpring, animated } from "@react-spring/web";
 import { Collapse } from "@mui/material";
-import { useNodeContext } from "./NodeContextProvider";
 
 type Props = {
   groupBy: string;
@@ -227,7 +226,6 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy }: Prop
         setNodes(JSON.parse(localStorage.getItem("nodes") ?? "[]"));
       }
     }, []);
-    console.log(nodes);
 
     return (
       <div

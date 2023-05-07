@@ -140,10 +140,8 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
   };
 
   function runFirstTime(ev: React.MouseEvent | React.TouchEvent) {
-    console.log(ev);
     ev.preventDefault();
     let audio2: null | HTMLAudioElement = audioRef.current;
-    console.log("firstTime", firstTime, "audioRef", audioRef, "audio2", audio2);
     if (!firstTime || !audioRef || !audio2) return;
     setFirstTime(false);
 

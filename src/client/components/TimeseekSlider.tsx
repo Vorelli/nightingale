@@ -46,7 +46,6 @@ const TimeseekSliderInner = React.memo(function TimeseekSlider({
       const indexOfStreaming = currentSrc.indexOf("/streaming/");
       if (indexOfStreaming === -1 || currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)) {
         const newSrc = URL + "/streaming/" + currentSong + ".mp4";
-        console.log("src", newSrc);
         audio.crossOrigin = "anonymous";
         audio.src = newSrc;
         audio.load();
