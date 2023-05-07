@@ -18,6 +18,9 @@ import { Collapse } from "@mui/material";
 type Props = {
   groupBy: string;
   sortBy: string;
+  songs: {
+    [key: string]: ClientSong;
+  };
 };
 
 interface GroupedSongs {
@@ -28,8 +31,7 @@ interface SuperGroupedSongs {
   [key: string]: GroupedSongs;
 }
 
-const InnerCollection = React.memo(function Collection({ groupBy, sortBy }: Props) {
-  const { songs } = useSelector((s: RootState) => s.songs);
+const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs }: Props) {
   const [groupedSongs, setGroupedSongs] = useState({} as GroupedSongs | SuperGroupedSongs);
   const [icons, setIcons] = useState([] as JSX.Element[][]);
   const collectionList = useRef(null);
@@ -311,8 +313,10 @@ function groupSongsBy(
 
 function Collection() {
   const { groupBy, sortBy } = useSelector((state: any) => state.settings);
+  const { songs } = useSelector((s: RootState) => s.songs);
 
-  return <InnerCollection groupBy={groupBy} sortBy={sortBy} />;
+  return <InnerCollection songs={songs} groupBy={groupBy} sortBy={sortBy} />;
 }
+InnerCollection.whyDidYouRender = true;
 
 export default Collection;
