@@ -18,11 +18,13 @@ import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
 import { useAudioContext } from "./AudioContextProvider";
 
-const Desktop = function Desktop() {
-  const dispatch = useDispatch();
-  const { URL, HOST, reloadSong } = useSelector((s: RootState) => s.global);
-  const audioContext = useAudioContext();
+interface Props {
+  reloadSong: Function | undefined;
+}
 
+const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
+  const dispatch = useDispatch();
+  const { URL, HOST } = useSelector((s: RootState) => s.global);
   interface md5ToSong {
     [key: string]: ClientSong;
   }
@@ -35,7 +37,7 @@ const Desktop = function Desktop() {
 
     ws.onmessage = function (data) {
       if (data.data === "sync") {
-        audioContext?.reloadSong();
+        reloadSong && reloadSong();
       } else if (data.data === "PLAYING") {
         dispatch(setStatus("PLAYING"));
       } else if (data.data === "PAUSED") {
@@ -107,6 +109,16 @@ const Desktop = function Desktop() {
       <Background />
     </div>
   );
-};
+});
+
+function Desktop() {
+  const audioContext = useAudioContext();
+  const reloadSong = audioContext?.reloadSong;
+  const actuallyReloadSong = React.useMemo(() => {
+    return () => reloadSong && reloadSong(arguments);
+  }, []);
+
+  return <InnerDesktop reloadSong={actuallyReloadSong} />;
+}
 //Desktop.whyDidYouRender = true;
 export default Desktop;

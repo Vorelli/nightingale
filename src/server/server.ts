@@ -11,14 +11,12 @@ import morgan from "morgan";
 
 import { sessionsMiddleware } from "./middleware/sessions.js";
 import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
-import { logger } from "./middleware/logger.js";
 import { attachPgPool } from "./middleware/attachPool.js";
 import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
 import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { Song, appWithExtras } from "./types/types.js";
-import cors from "cors";
 import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 import { IncomingMessage, Server, ServerResponse } from "http";
 

@@ -1,14 +1,17 @@
 import React from "react";
 import Desktop from "./Desktop";
-import { AudioContextProvider, useAudioContext } from "./AudioContextProvider";
+import { AudioContextProvider } from "./AudioContextProvider";
 import { NodeContextProvider } from "./NodeContextProvider";
+import { TimeseekContextProvider } from "./TimeseekContextProvider";
 
 const App = () => {
   return (
     <NodeContextProvider>
-      <AudioContextProvider>
-        <Desktop />
-      </AudioContextProvider>
+      <TimeseekContextProvider>
+        <AudioContextProvider>
+          <Desktop />
+        </AudioContextProvider>
+      </TimeseekContextProvider>
     </NodeContextProvider>
   );
 };

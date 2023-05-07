@@ -16,7 +16,10 @@ import { useSpring, animated } from "@react-spring/web";
 import { Collapse } from "@mui/material";
 import { useNodeContext } from "./NodeContextProvider";
 
-type Props = {};
+type Props = {
+  groupBy: string;
+  sortBy: string;
+};
 
 interface GroupedSongs {
   [key: string]: ClientSong[];
@@ -26,8 +29,7 @@ interface SuperGroupedSongs {
   [key: string]: GroupedSongs;
 }
 
-function Collection({}: Props) {
-  const { groupBy, sortBy } = useSelector((state: any) => state.settings);
+const InnerCollection = React.memo(function Collection({ groupBy, sortBy }: Props) {
   const { songs } = useSelector((s: RootState) => s.songs);
   const [groupedSongs, setGroupedSongs] = useState({} as GroupedSongs | SuperGroupedSongs);
   const [icons, setIcons] = useState([] as JSX.Element[][]);
@@ -218,13 +220,13 @@ function Collection({}: Props) {
     icons: JSX.Element[][];
   }) {
     const [nodes, setNodes] = useState(new Array<string>());
-    const nodeContext = useNodeContext();
     const { hidden } = useSelector((s: RootState) => s.windows["main"]);
 
     useEffect(() => {
-      if (!nodeContext) return;
-      setNodes(nodeContext.nodes as string[]);
-    }, [hidden]);
+      if (!hidden) {
+        setNodes(JSON.parse(localStorage.getItem("nodes") ?? "[]"));
+      }
+    }, []);
     console.log(nodes);
 
     return (
@@ -237,7 +239,7 @@ function Collection({}: Props) {
           disableSelection={true}
           expanded={nodes}
           onNodeToggle={(ev, nodeIds) => {
-            nodeContext?.setNodes(nodeIds);
+            localStorage.setItem("nodes", JSON.stringify(nodeIds));
             setNodes(nodeIds);
           }}
           className="justify-self-start"
@@ -249,9 +251,10 @@ function Collection({}: Props) {
       </div>
     );
   }
+  CollectionList.whyDidYouRender = true;
 
   return <CollectionList groupedSongs={groupedSongs} icons={icons} />;
-}
+});
 
 function labelFromSong(song: ClientSong): string {
   return `${song.track !== 0 ? song.track : ""} - ${song.name}`;
@@ -307,5 +310,11 @@ function groupSongsBy(
     return acc;
   }, {} as GroupedSongs);
 }
-//Collection.whyDidYouRender = true;
+
+function Collection() {
+  const { groupBy, sortBy } = useSelector((state: any) => state.settings);
+
+  return <InnerCollection groupBy={groupBy} sortBy={sortBy} />;
+}
+
 export default Collection;

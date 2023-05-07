@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  PropsWithChildren,
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { setAudioPlayable, setReloadSong } from "../redux/reducers/globalReducer";
@@ -8,6 +15,7 @@ import {
   setStartTime,
 } from "../redux/reducers/songsReducer";
 import { setStatus } from "../redux/reducers/settingsReducer";
+import { useTimeseekContext } from "./TimeseekContextProvider";
 
 export type AudioContextState = {
   audioContext: AudioContext | null;
@@ -17,23 +25,24 @@ export type AudioContextState = {
   reloadSong: Function;
   audioSource: MediaElementAudioSourceNode | null;
   setAudioSource: React.Dispatch<React.SetStateAction<null | MediaElementAudioSourceNode>>;
-  movingTime: boolean;
-  setMovingTime: React.Dispatch<React.SetStateAction<boolean>>;
-  currentT: number;
-  setCurrentT: React.Dispatch<React.SetStateAction<number>>;
 };
 
 const AudioContextStateContext = createContext<null | AudioContextState>(null);
-
-interface Props {
-  children: React.ReactNode;
-}
 
 export function useAudioContext() {
   return useContext(AudioContextStateContext);
 }
 
-export function AudioContextProvider({ children }: Props) {
+interface Props {
+  movingTime: boolean | undefined;
+  setCurrentT: Function | undefined;
+}
+
+const InnerAudioContextProvider = React.memo(function AudioContextProvider({
+  children,
+  movingTime,
+  setCurrentT,
+}: Props & PropsWithChildren) {
   const [audioContext, setAudioContext] = useState<null | AudioContext>(null);
   const [analyzerNode, setAnalyzerNode] = useState<null | AnalyserNode>(null);
   const [audioSource, setAudioSource] = useState<null | MediaElementAudioSourceNode>(null);
@@ -41,8 +50,6 @@ export function AudioContextProvider({ children }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { numBars } = useSelector((s: RootState) => s.audio);
   const dispatch = useDispatch();
-  const [movingTime, setMovingTime] = useState(false);
-  const [currentT, setCurrentT] = useState(0);
   const { URL } = useSelector((s: RootState) => s.global);
 
   const { status } = useSelector((s: RootState) => s.settings);
@@ -77,7 +84,7 @@ export function AudioContextProvider({ children }: Props) {
 
   function handleTimeUpdate(ev: React.SyntheticEvent<HTMLAudioElement, Event>) {
     if (ev.currentTarget && !movingTime) {
-      setCurrentT((ev.currentTarget as HTMLAudioElement).currentTime);
+      setCurrentT && setCurrentT((ev.currentTarget as HTMLAudioElement).currentTime);
     }
   }
 
@@ -158,10 +165,6 @@ export function AudioContextProvider({ children }: Props) {
         reloadSong,
         audioSource,
         setAudioSource,
-        currentT,
-        setCurrentT,
-        movingTime,
-        setMovingTime,
       }}
     >
       {children}
@@ -182,4 +185,19 @@ export function AudioContextProvider({ children }: Props) {
       )}
     </AudioContextStateContext.Provider>
   );
+});
+
+export function AudioContextProvider({ children }: PropsWithChildren) {
+  const timeseekContext = useTimeseekContext();
+
+  return (
+    <InnerAudioContextProvider
+      setCurrentT={timeseekContext?.setCurrentT}
+      movingTime={timeseekContext?.movingTime}
+    >
+      {children}
+    </InnerAudioContextProvider>
+  );
 }
+
+AudioContextProvider.whyDidYouRender = true;

@@ -3,12 +3,28 @@ import { Box } from "@mui/material";
 import StyledSlider from "./StyledSlider";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { useAudioContext } from "./AudioContextProvider";
+import { AudioContextState, useAudioContext } from "./AudioContextProvider";
 import { secondsToTime } from "../helpers/time";
+import { TimeseekContextState, useTimeseekContext } from "./TimeseekContextProvider";
 
-type Props = { localVolume: number };
+type OriginalProps = { localVolume: number };
+type Props = {
+  localVolume: number;
+  audioRef: React.MutableRefObject<HTMLAudioElement | null> | undefined;
+  movingTime: boolean | undefined;
+  currentT: number | undefined;
+  setMovingTime: undefined | Function;
+  setCurrentT: undefined | Function;
+};
 
-function TimeseekSlider({ localVolume }: Props) {
+const TimeseekSliderInner = React.memo(function TimeseekSlider({
+  localVolume,
+  movingTime,
+  audioRef,
+  currentT,
+  setMovingTime,
+  setCurrentT,
+}: Props) {
   const state = useSelector((s: RootState) => s.songs);
   const { currentSong, startingTime, songs } = state;
   const song = songs[currentSong || 0];
@@ -16,17 +32,15 @@ function TimeseekSlider({ localVolume }: Props) {
   const [sharedSliderClass, _setSharedSliderClass] = useState(
     "bg-gradient-to-r from-secondary via-accent to-secondary"
   );
-  const context = useAudioContext();
-  const audioRef = context?.audioRef;
 
   useEffect(() => {
-    if (!!audioRef && audioRef.current && !context.movingTime) {
+    if (!!audioRef && audioRef.current && !movingTime) {
       (audioRef.current as HTMLAudioElement).volume = localVolume / 100;
     }
   }, [localVolume, audioRef]);
 
   useEffect(() => {
-    if (context && currentSong && !!audioRef && audioRef.current) {
+    if (currentSong && !!audioRef && audioRef.current) {
       const audio = audioRef.current as HTMLAudioElement;
       const currentSrc = audio.src;
       const indexOfStreaming = currentSrc.indexOf("/streaming/");
@@ -43,15 +57,17 @@ function TimeseekSlider({ localVolume }: Props) {
   }, [startingTime, currentSong]);
 
   function handleSeek(_: any) {
-    fetch(URL + "/api/time" + "?newTime=" + (context?.currentT || 1) * Math.pow(10, 9), {
+    fetch(URL + "/api/time" + "?newTime=" + (currentT || 1) * Math.pow(10, 9), {
       method: "PUT",
     });
-    context?.setMovingTime(false);
+    setMovingTime && setMovingTime(false);
   }
 
   function handleTimeChange(ev: Event, value: number | number[]) {
-    context?.setMovingTime(true);
-    typeof value === "number" ? context?.setCurrentT(value) : context?.setCurrentT(value[0]);
+    setMovingTime && setMovingTime(true);
+    typeof value === "number"
+      ? setCurrentT && setCurrentT(value)
+      : setCurrentT && setCurrentT(value[0]);
   }
 
   return (
@@ -60,14 +76,14 @@ function TimeseekSlider({ localVolume }: Props) {
         min={0}
         aria-label="seekSlider"
         max={(song && song.duration / 1000) || 100}
-        value={context?.currentT}
+        value={currentT}
         onChange={handleTimeChange}
         onMouseUp={handleSeek}
         onKeyUp={(ev: React.KeyboardEvent) => {
           if (ev.key === " " || ev.key === "Enter") {
             handleSeek(ev);
           } else if (ev.key === "Escape") {
-            context?.setMovingTime(false);
+            setMovingTime && setMovingTime(false);
           }
           ev.currentTarget.dispatchEvent(new Event("focusout"));
         }}
@@ -79,6 +95,37 @@ function TimeseekSlider({ localVolume }: Props) {
       />
     </Box>
   );
+});
+
+function TimeseekSlider({ localVolume }: OriginalProps) {
+  const timeseekContext = useTimeseekContext();
+  const audioContext = useAudioContext();
+  const setCurrentT = timeseekContext?.setCurrentT;
+  const setMovingTime = timeseekContext?.setMovingTime;
+
+  const actuallySetCurrentT = React.useMemo(() => {
+    return (num: number) => {
+      setCurrentT && setCurrentT(num);
+    };
+  }, []);
+
+  const actuallySetMovingTime = React.useMemo(() => {
+    return (val: boolean) => {
+      setMovingTime && setMovingTime(val);
+    };
+  }, []);
+
+  return (
+    <TimeseekSliderInner
+      localVolume={localVolume}
+      audioRef={audioContext?.audioRef}
+      currentT={timeseekContext?.currentT}
+      movingTime={timeseekContext?.movingTime}
+      setCurrentT={actuallySetCurrentT}
+      setMovingTime={actuallySetMovingTime}
+    />
+  );
 }
-TimeseekSlider.whyDidYouRender = true;
+
+TimeseekSlider.whyDidYouRender = false;
 export default TimeseekSlider;

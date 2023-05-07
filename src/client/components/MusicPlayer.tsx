@@ -1,32 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import MyIconButton from "./MyIconButton";
 import { Box } from "@mui/material";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
-import PauseIcon from "@mui/icons-material/Pause";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StyledSlider from "./StyledSlider";
 import TimeseekSlider from "./TimeseekSlider";
 import HeadphonesIcon from "@mui/icons-material/Headphones";
 import HeadsetOffIcon from "@mui/icons-material/HeadsetOff";
 import { useAudioContext } from "./AudioContextProvider";
+import PlayPauseButton from "./PlayPauseButton";
 
-type Props = {};
+type Props = {
+  audioRef: React.MutableRefObject<HTMLAudioElement | null> | undefined;
+};
 
-function MusicPlayer({}: Props) {
-  const { status } = useSelector((s: RootState) => s.settings);
+const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
   const [localVolume, setLocalVolume] = useState(5);
   const { hidden } = useSelector((s: RootState) => s.windows["main"]);
   const [iconSx, setIconSx] = useState({ width: "24px", height: "24px" });
   const { URL } = useSelector((s: RootState) => s.global);
   const [lastVolume, setLastVolume] = useState(0);
-  const audioContext = useAudioContext();
-
-  function handlePlayPause() {
-    fetch(URL + "/api/playpause/", { method: "PUT" });
-  }
 
   function handleLastClick() {
     fetch(URL + "/api/prev", { method: "PUT" });
@@ -37,8 +32,8 @@ function MusicPlayer({}: Props) {
   }
 
   useEffect(() => {
-    if (audioContext && audioContext.audioRef && audioContext.audioRef.current) {
-      audioContext.audioRef.current.volume = localVolume / 100;
+    if (audioRef && audioRef.current) {
+      audioRef.current.volume = localVolume / 100;
     }
   }, [localVolume]);
 
@@ -65,9 +60,7 @@ function MusicPlayer({}: Props) {
     });
   }, [hidden]);
 
-  const pausePlayIcon =
-    status === "PLAYING" ? <PauseIcon sx={iconSx} /> : <PlayArrowIcon sx={iconSx} />;
-  const audioSx = { width: "16px", height: "16px" };
+  const [audioSx, _] = React.useState({ width: "16px", height: "16px" });
   const audioIcon =
     localVolume === 0 ? <HeadsetOffIcon sx={audioSx} /> : <HeadphonesIcon sx={audioSx} />;
 
@@ -83,9 +76,7 @@ function MusicPlayer({}: Props) {
         <MyIconButton name="Previous" onClick={handleLastClick}>
           <SkipPreviousIcon sx={iconSx} />
         </MyIconButton>
-        <MyIconButton name={status === "PLAYING" ? "Pause" : "Play"} onClick={handlePlayPause}>
-          {pausePlayIcon}
-        </MyIconButton>
+        <PlayPauseButton />
         <MyIconButton name="Previous" onClick={handleNextClick}>
           <SkipNextIcon sx={iconSx} />
         </MyIconButton>
@@ -113,6 +104,12 @@ function MusicPlayer({}: Props) {
       </div>
     </>
   );
+});
+
+function MusicPlayer() {
+  const audioContext = useAudioContext();
+  return <MusicPlayerInner audioRef={audioContext?.audioRef} />;
 }
-//MusicPlayer.whyDidYouRender = true;
+
+MusicPlayer.whyDidYouRender = false;
 export default MusicPlayer;
