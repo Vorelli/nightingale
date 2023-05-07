@@ -126,6 +126,7 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs 
       height: "20px",
       textWrap: "none",
       overflowX: "hidden",
+      overflowY: "hidden",
     },
     "& .MuiTreeItem-content": {
       paddingLeft: "0",
@@ -232,7 +233,7 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs 
     return (
       <div
         ref={collectionList}
-        className="collectionList flex-1 overflow-x-hidden overflow-y-auto w-full scroll-smooth scroll-m-44 text-xs"
+        className="collectionList flex-1 overflow-x-hidden overflow-y-hidden w-full scroll-smooth scroll-m-44 text-xs"
         style={{ maxWidth: "100%", maxHeight: "calc(100% - 60px)" }}
       >
         <TreeView
