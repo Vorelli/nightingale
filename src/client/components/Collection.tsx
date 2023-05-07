@@ -317,6 +317,6 @@ function Collection() {
 
   return <InnerCollection songs={songs} groupBy={groupBy} sortBy={sortBy} />;
 }
-InnerCollection.whyDidYouRender = true;
+//InnerCollection.whyDidYouRender = true;
 
 export default Collection;
