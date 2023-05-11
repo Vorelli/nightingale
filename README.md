@@ -2,7 +2,7 @@
 
 <img src="https://i.imgur.com/FK16UuB.png" alt="Screenshot of Nightingale. Shown on top is the mini player with an audio visualizer underneath in the background. The mini player has the following title: Nightingale PLAYING Buckethead - Pepper's Ghost - Imprint (Dedicated to Takashi Miike)">
 
-A music streaming server like no other.
+An open source, portable, personal, music library streaming service. Access your music on the go
 
 ## Tech Stack
 
