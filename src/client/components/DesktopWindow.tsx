@@ -11,6 +11,11 @@ interface Position {
   y: number;
 }
 
+interface Dimensions {
+  w: number;
+  h: number;
+}
+
 const DesktopWindow = (props: {
   title?: string;
   id?: string;
@@ -20,8 +25,8 @@ const DesktopWindow = (props: {
   toggleHidden: ActionCreatorWithPayload<any, "windows/toggleHidden">;
   toggleOnTop: ActionCreatorWithPayload<any, "windows/toggleOnTop">;
 }) => {
-  const [width, actuallySetWidth] = useState(800);
-  const [height, actuallySetHeight] = useState(600);
+  const [width, setWidth] = useState(800);
+  const [height, setHeight] = useState(600);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const container = useRef(null);
@@ -29,55 +34,61 @@ const DesktopWindow = (props: {
   const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
   const [fixedPos, setFixedPos] = useState<undefined | Position>({ x: 50, y: 50 });
 
-  async function setHeightAndWidth(h: number, w: number) {
-    await actuallySetHeight(h);
-    await actuallySetWidth(w);
-    checkPos();
-  }
-
-  function checkPos() {
-    setFixedPos((pos: Position | undefined): Position | undefined => {
-      if (pos) {
-        const { x, y } = pos;
-        const newX = Math.max(10, windowWidth - width - 10);
-        const newY = Math.max(10, windowHeight - height - 10);
-        return {
-          x: x + width < windowWidth - 20 ? x : newX,
-          y: y + height < windowHeight - 20 ? y : newY,
-        };
-      } else {
-        return pos;
-      }
-    });
-  }
-
-  window.onresize = async (_ev: UIEvent) => {
-    await setWindowHeight(window.innerHeight);
-    await setWindowWidth(window.innerWidth);
-    checkPos();
-  };
+  useEffect(() => {
+    const dims = getWidthAndHeight();
+    setHeight(dims.h);
+    setWidth(dims.w);
+  }, [hidden]);
 
   useEffect(() => {
-    setHeightAndWidth(hidden ? 110 : 600, hidden ? 400 : 800);
-  }, [hidden]);
+    setFixedPos((pos: Position | undefined): Position | undefined => {
+      if (pos === undefined) return undefined;
+      const dims = getWidthAndHeight();
+      const tempX = Math.max(10, windowWidth - dims.w - 10);
+      const x = pos.x + dims.w < windowWidth - 20 ? pos.x : tempX;
+      const tempY = Math.max(10, windowHeight - dims.h - 10);
+      const y = pos.y + dims.h < windowHeight - 20 ? pos.y : tempY;
+      return x === pos.x && y === pos.y ? pos : { x, y };
+    });
+  }, [fixedPos, width, height, windowHeight, windowWidth]);
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowHeight(window.innerHeight);
+      setWindowWidth(window.innerWidth);
+    }
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  });
+
+  function getWidthAndHeight(): Dimensions {
+    return {
+      w: hidden ? 400 : 800,
+      h: hidden ? 110 : 600,
+    };
+  }
 
   return (
     <Draggable
       bounds={{
-        left: 5,
-        top: 5,
-        right: windowWidth - width - 5,
-        bottom: windowHeight - height - 5,
+        left: 10,
+        top: 10,
+        right: windowWidth - width - 10,
+        bottom: windowHeight - height - 10,
       }}
       position={fixedPos}
       onDrag={(ev: DraggableEvent) => {
         if (ev.target instanceof Element) {
         }
       }}
-      onStart={(ev: DraggableEvent) => {
+      onStart={(_ev: DraggableEvent) => {
         setFixedPos(undefined);
       }}
-      onStop={(ev: DraggableEvent, data: DraggableData) => {
+      onStop={(_ev: DraggableEvent, data: DraggableData) => {
         const newX = Math.round(data.x / 10) * 10;
         const newY = Math.round(data.y / 10) * 10;
         setFixedPos({ x: newX, y: newY });
