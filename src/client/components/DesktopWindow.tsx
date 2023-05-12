@@ -20,23 +20,45 @@ const DesktopWindow = (props: {
   toggleHidden: ActionCreatorWithPayload<any, "windows/toggleHidden">;
   toggleOnTop: ActionCreatorWithPayload<any, "windows/toggleOnTop">;
 }) => {
-  const [width, setWidth] = useState(800);
-  const [height, setHeight] = useState(600);
+  const [width, actuallySetWidth] = useState(800);
+  const [height, actuallySetHeight] = useState(600);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const container = useRef(null);
   const dispatch: AppDispatch = useDispatch();
   const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
-  const [fixedPos, setFixedPos] = useState<undefined | Position>(undefined);
+  const [fixedPos, setFixedPos] = useState<undefined | Position>({ x: 50, y: 50 });
 
-  window.onresize = (ev: UIEvent) => {
-    setWindowHeight(window.innerHeight);
-    setWindowWidth(window.innerWidth);
+  async function setHeightAndWidth(h: number, w: number) {
+    await actuallySetHeight(h);
+    await actuallySetWidth(w);
+    checkPos();
+  }
+
+  function checkPos() {
+    setFixedPos((pos: Position | undefined): Position | undefined => {
+      if (pos) {
+        const { x, y } = pos;
+        const newX = Math.max(10, windowWidth - width - 10);
+        const newY = Math.max(10, windowHeight - height - 10);
+        return {
+          x: x + width < windowWidth - 20 ? x : newX,
+          y: y + height < windowHeight - 20 ? y : newY,
+        };
+      } else {
+        return pos;
+      }
+    });
+  }
+
+  window.onresize = async (_ev: UIEvent) => {
+    await setWindowHeight(window.innerHeight);
+    await setWindowWidth(window.innerWidth);
+    checkPos();
   };
 
   useEffect(() => {
-    setHeight(hidden ? 110 : 600);
-    setWidth(hidden ? 400 : 800);
+    setHeightAndWidth(hidden ? 110 : 600, hidden ? 400 : 800);
   }, [hidden]);
 
   return (
@@ -48,7 +70,6 @@ const DesktopWindow = (props: {
         bottom: windowHeight - height - 5,
       }}
       position={fixedPos}
-      defaultPosition={{ x: 50, y: 50 }}
       onDrag={(ev: DraggableEvent) => {
         if (ev.target instanceof Element) {
         }

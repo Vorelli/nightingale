@@ -1,6 +1,6 @@
 import { PlaylistSongs, Playlists, playlistSongs, playlists } from "../db/schema.js";
 import { appWithExtras } from "../types/types";
-import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm/expressions.js";
 
 export function playlistFromQueue(queue: string[], playlistId: string): PlaylistSongs[] {
   const songs = new Array<PlaylistSongs>();
@@ -16,6 +16,19 @@ export function playlistFromQueue(queue: string[], playlistId: string): Playlist
 
 export default async function setDefaultPlaylist(app: appWithExtras) {
   const defaultQueue = app.locals.queues[app.locals.queueIndex];
+
+  const currentDefaultPlaylist = await app.locals.db
+    .select()
+    .from(playlists)
+    .where(eq(playlists.name, "Default"));
+
+  // If it exists, delete its songs from playlistSongs
+  if (currentDefaultPlaylist) {
+    await app.locals.db
+      .delete(playlistSongs)
+      .where(eq(playlistSongs.playlistId, currentDefaultPlaylist[0].id));
+  }
+
   await app.locals.db.delete(playlists).where(eq(playlists.name, "Default"));
   const defaultPlaylist = await app.locals.db
     .insert(playlists)

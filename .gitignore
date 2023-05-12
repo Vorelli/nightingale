@@ -6,9 +6,11 @@ keyAndCert/
 .env
 migrations-folder/
 music/
-streaming/
+**/streaming/*.*
 compose.yaml
 public/bundle.js
 public/bundle.js.LICENSE.txt
 public/main.css
 public/index.html
+.pnpm-debug.log
+pnpm-lock.yaml
