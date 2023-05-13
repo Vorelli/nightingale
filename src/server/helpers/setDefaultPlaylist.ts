@@ -23,7 +23,7 @@ export default async function setDefaultPlaylist(app: appWithExtras) {
     .where(eq(playlists.name, "Default"));
 
   // If it exists, delete its songs from playlistSongs
-  if (currentDefaultPlaylist) {
+  if (currentDefaultPlaylist && currentDefaultPlaylist[0]) {
     await app.locals.db
       .delete(playlistSongs)
       .where(eq(playlistSongs.playlistId, currentDefaultPlaylist[0].id));
