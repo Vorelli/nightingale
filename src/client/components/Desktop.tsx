@@ -36,6 +36,8 @@ const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
     };
 
     ws.onmessage = function (data) {
+      if (!data.data) return;
+
       if (data.data === "sync") {
         reloadSong && reloadSong();
       } else if (data.data === "PLAYING") {
