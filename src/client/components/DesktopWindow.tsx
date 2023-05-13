@@ -57,9 +57,7 @@ const DesktopWindow = (props: {
       setWindowHeight(window.innerHeight);
       setWindowWidth(window.innerWidth);
     }
-
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
     };
