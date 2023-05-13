@@ -7,7 +7,6 @@ import https from "https";
 import fs from "fs";
 import express_ws from "express-ws";
 import compression from "compression";
-import morgan from "morgan";
 
 import { sessionsMiddleware } from "./middleware/sessions.js";
 import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
@@ -20,8 +19,10 @@ import { Song, appWithExtras } from "./types/types.js";
 import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 import { IncomingMessage, Server, ServerResponse } from "http";
 
-function firstRun(): [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null] {
-  const [db, pool] = dbRun();
+async function firstRun(): Promise<
+  [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null]
+> {
+  const [db, pool] = await dbRun();
   let httpsServer: null | https.Server = null;
   var appStart: express.Application = express();
   var { app, getWss }: express_ws.Instance = express_ws(appStart);
@@ -35,7 +36,6 @@ function firstRun(): [appWithExtras, Server<typeof IncomingMessage, typeof Serve
     ({ getWss } = express_ws(app, httpsServer));
   }
 
-  app.use(morgan("dev"));
   app.use(compression());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

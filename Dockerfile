@@ -21,6 +21,7 @@ COPY --from=build /app/package*.json /app/pnpm-lock.yaml ./
 RUN npm install -g pnpm
 RUN pnpm fetch --prod
 RUN pnpm i -r --offline --prod
+RUN pnpm migrate_db
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public

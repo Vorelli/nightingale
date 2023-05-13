@@ -18,7 +18,7 @@ import {
   ReturningGenres,
   ReturningAlbums,
 } from "../db/schema.js";
-import { eq } from "drizzle-orm/expressions.js";
+import { eq } from "drizzle-orm";
 import path from "path";
 import { getAudioDurationInSeconds } from "get-audio-duration";
 import { isAudio } from "./isAudio.js";
@@ -27,7 +27,7 @@ import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg/index.js";
 import { ICommonTagsResult } from "music-metadata";
 import { AnyPgTable } from "drizzle-orm/pg-core/index.js";
-import { NodePgDatabase } from "drizzle-orm/node-postgres/driver.js";
+import { NodePgDatabase } from "drizzle-orm/node-postgres/index";
 import {} from "pg";
 import { Album } from "../types/types.js";
 import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
@@ -47,7 +47,6 @@ async function useParseFile(filePath: string) {
 }
 
 export const loadSongs = (app: express.Application): Promise<Album[]> => {
-  console.log(process.env);
   const musicDir = process.env.MUSIC_DIRECTORY as string;
   return processPaths([path.resolve(musicDir)]).then((filePromises) => {
     return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));

@@ -1,5 +1,4 @@
 import {
-  bigint,
   doublePrecision,
   foreignKey,
   index,
@@ -11,11 +10,15 @@ import {
   uniqueIndex,
   uuid,
   varchar,
-} from "drizzle-orm/pg-core/index.js";
-import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres/index.js";
-import { InferModel, sql } from "drizzle-orm/index.js";
+} from "drizzle-orm/pg-core";
+import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres";
+import { InferModel } from "drizzle-orm";
 import pg from "pg";
 const { Pool } = pg;
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const artists = pgTable(
   "artists",
@@ -171,13 +174,14 @@ export type ReturningGenres = InferModel<typeof genres, "select">;
 export type ReturningPlaylists = InferModel<typeof playlists, "select">;
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, "select">;
 
-function dbRun(): [NodePgDatabase, pg.Pool] {
-  console.log("databaseURL", process.env.DATABASE_URL);
-
+async function dbRun(): Promise<[NodePgDatabase, pg.Pool]> {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   });
   const db = drizzle(pool);
+  await migrate(db, {
+    migrationsFolder: path.resolve(__dirname, "../../migrations-folder"),
+  });
   return [db, pool];
 }
 

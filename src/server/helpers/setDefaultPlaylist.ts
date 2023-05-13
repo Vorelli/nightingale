@@ -1,6 +1,6 @@
 import { PlaylistSongs, Playlists, playlistSongs, playlists } from "../db/schema.js";
 import { appWithExtras } from "../types/types";
-import { eq } from "drizzle-orm/expressions.js";
+import { eq } from "drizzle-orm";
 
 export function playlistFromQueue(queue: string[], playlistId: string): PlaylistSongs[] {
   const songs = new Array<PlaylistSongs>();

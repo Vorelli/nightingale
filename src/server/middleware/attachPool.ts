@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
-import { NodePgDatabase } from "drizzle-orm/node-postgres/driver.js";
+import { NodePgDatabase } from "drizzle-orm/node-postgres/index";
 
 export const attachPgPool = function (pool: Pool, db: NodePgDatabase) {
   const attach = (req: Request, res: Response, next: NextFunction) => {

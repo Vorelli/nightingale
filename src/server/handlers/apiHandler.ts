@@ -11,7 +11,7 @@ import {
   songs,
 } from "../db/schema.js";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm/expressions.js";
+import { eq } from "drizzle-orm";
 import { Pool } from "pg";
 import { appWithExtras } from "../types/types.js";
 import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
@@ -163,7 +163,6 @@ router.put("/prev", (req, res) => {
 });
 
 router.put("/time", (req: Request, res: Response) => {
-  console.log("before parse", req.query.newTime);
   const parsedNewTime = typeof req.query.newTime === "string" && parseFloat(req.query.newTime);
   if (
     req.query &&

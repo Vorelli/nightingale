@@ -6,7 +6,7 @@ await config({ path: path.join(__dirname, "../.env") });
 import { firstRun } from "./server.js";
 import https from "https";
 
-const [app, httpsServer] = firstRun();
+const [app, httpsServer] = await firstRun();
 
 const PORT = parseInt(process.env.PORT as string) || 4000;
 const HTTP_PORT = parseInt(process.env.HTTP_PORT as string) || 3000;
