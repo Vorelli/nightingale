@@ -15,6 +15,7 @@ interface Dimensions {
   w: number;
   h: number;
 }
+const minBound = 10;
 
 const DesktopWindow = (props: {
   title?: string;
@@ -44,10 +45,10 @@ const DesktopWindow = (props: {
     setFixedPos((pos: Position | undefined): Position | undefined => {
       if (pos === undefined) return undefined;
       const dims = getWidthAndHeight();
-      const tempX = Math.max(10, windowWidth - dims.w - 10);
-      const x = pos.x + dims.w < windowWidth - 20 ? pos.x : tempX;
-      const tempY = Math.max(10, windowHeight - dims.h - 10);
-      const y = pos.y + dims.h < windowHeight - 20 ? pos.y : tempY;
+      const tempX = Math.max(10, windowWidth - dims.w - minBound);
+      const x = pos.x + dims.w < windowWidth - minBound * 2 && pos.x >= minBound ? pos.x : tempX;
+      const tempY = Math.max(10, windowHeight - dims.h - minBound);
+      const y = pos.y + dims.h < windowHeight - minBound * 2 && pos.y >= minBound ? pos.y : tempY;
       return x === pos.x && y === pos.y ? pos : { x, y };
     });
   }, [fixedPos, width, height, windowHeight, windowWidth]);
