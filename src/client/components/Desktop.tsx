@@ -17,6 +17,7 @@ import {
 import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
 import { useAudioContext } from "./AudioContextProvider";
+import WindowManager from "./WindowManager";
 
 interface Props {
   reloadSong: Function | undefined;
@@ -107,7 +108,7 @@ const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
 
   return (
     <div onContextMenu={handleClick} className="desktop h-full w-full bg-transparent">
-      <MainPlayer />
+      <WindowManager />
       <Background />
     </div>
   );

@@ -24,7 +24,6 @@ export interface Album {
 export interface appWithExtras extends express.Application, WithWebsocketMethod {
   locals: {
     md5s: string[];
-    db: NodePgDatabase;
     __dirname: string;
     queues: string[][];
     queueIndex: number;

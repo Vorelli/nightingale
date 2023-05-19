@@ -1,8 +1,8 @@
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import express, { NextFunction, Request, Response } from "express";
-import { dbRun } from "./db/schema.js";
+import express from "express";
+import { dbMigrate } from "./db/schema.js";
 import https from "https";
 import fs from "fs";
 import express_ws from "express-ws";
@@ -10,7 +10,6 @@ import compression from "compression";
 
 import { sessionsMiddleware } from "./middleware/sessions.js";
 import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
-import { attachPgPool } from "./middleware/attachPool.js";
 import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
@@ -22,7 +21,7 @@ import { IncomingMessage, Server, ServerResponse } from "http";
 async function firstRun(): Promise<
   [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null]
 > {
-  const [db, pool] = await dbRun();
+  await dbMigrate();
   let httpsServer: null | https.Server = null;
   var appStart: express.Application = express();
   var { app, getWss }: express_ws.Instance = express_ws(appStart);
@@ -48,7 +47,6 @@ async function firstRun(): Promise<
     }
     return { clients: httpClients.clients };
   };
-  app.locals.db = db;
   app.locals.__dirname = __dirname;
   app.locals.shuffleBy = "random";
   app.locals.wait = new Promise<void>((resolve, reject) => {
@@ -78,7 +76,6 @@ async function firstRun(): Promise<
     await app.locals.wait; //Wait until songs are loaded before trying to resolve requests.
     next();
   });
-  app.use(attachPgPool(pool, db));
   app.use(setCorsAndHeaders);
   app.options("*", setCorsAndHeaders);
   app.use(sessionsMiddleware);

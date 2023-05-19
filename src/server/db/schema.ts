@@ -10,12 +10,12 @@ import {
   uniqueIndex,
   uuid,
   varchar,
-} from "drizzle-orm/pg-core";
-import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres";
+} from "drizzle-orm/pg-core/index.js";
+import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres/index.js";
 import { InferModel } from "drizzle-orm";
 import pg from "pg";
 const { Pool } = pg;
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { migrate } from "drizzle-orm/node-postgres/migrator.js";
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -174,15 +174,18 @@ export type ReturningGenres = InferModel<typeof genres, "select">;
 export type ReturningPlaylists = InferModel<typeof playlists, "select">;
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, "select">;
 
-async function dbRun(): Promise<[NodePgDatabase, pg.Pool]> {
+async function dbMigrate(): Promise<void> {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   });
-  const db = drizzle(pool);
-  await migrate(db, {
-    migrationsFolder: path.resolve(__dirname, "../../migrations-folder"),
+  pool.connect(async (error, client, release) => {
+    if (error) throw error;
+    const db = drizzle(client);
+    await migrate(db, {
+      migrationsFolder: path.resolve(__dirname, "../../migrations-folder"),
+    });
+    release();
   });
-  return [db, pool];
 }
 
-export { dbRun };
+export { dbMigrate };

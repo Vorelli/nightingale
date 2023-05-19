@@ -1,5 +1,5 @@
 import cors from "cors";
-import { NextFunction, Request, Response } from "express";
+import { Request } from "express";
 
 const allowlist = [
   "toscanonatale.dev",

@@ -28,10 +28,11 @@ import ffmpeg from "fluent-ffmpeg/index.js";
 import { ICommonTagsResult } from "music-metadata";
 import { AnyPgTable } from "drizzle-orm/pg-core/index.js";
 import { NodePgDatabase } from "drizzle-orm/node-postgres/index";
-import {} from "pg";
+import pg from "pg";
+const { Pool } = pg;
 import { Album } from "../types/types.js";
 import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
-import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres/index.js";
 
 interface innerJoinReturn {
   songs: Songs;
@@ -139,81 +140,97 @@ function processMd5s(
 ): Promise<Album[]> {
   console.log("these are the md5s received", md5s);
   console.log("FILES WITH MD5s NOT IN DB:");
-  return Promise.all(
-    md5s.map(async ({ md5, filePath }) => {
-      return new Promise<boolean | Album>((resolve, reject) => {
-        app.locals.db
-          .select()
-          .from(songs)
-          .innerJoin(albums, eq(songs.albumId, albums.id))
-          .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
-          .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
-          .innerJoin(genres, eq(albumGenres.genreId, genres.id))
-          .innerJoin(artists, eq(albumArtists.artistId, artists.id))
-          .where(eq(songs.md5, md5))
-          .then((rows: innerJoinReturn[]) => {
-            if (rows.length === 0) {
-              resolve(getSongInfo(app, filePath, md5));
 
-              // TODO: use a .then on the getSongInfo to insert it into the database
-              // And once it's in the database, then we don't have to worry about it
-              // And we can just return that 'Albums object'
-            } else {
-              const ret = getAlbumFromRows(app, rows);
-              resolve(ret === undefined ? false : ret);
-              /*
-               name: rows[0].albums.name ?? "Unknown Album Name",
-                yearReleased: rows[0].albums.year || 1970,
-                albumArtist:
-                  (rows[0].albums.albumArtist && findArtistName(rows, rows[0].albums.albumArtist)) ||
-                  "Unknown Artist Name",
-                artists: rows.map((row: innerJoinReturn) => row.artists.name),
-                genres: rows.map((row: innerJoinReturn) => row.genres.name),
-                songs: [rows[0].songs],
-                inDb: true,
-              */
-            }
-          })
-          .catch((error: any) => {
-            console.log("encountered error when trying to lookup songs", error);
-            return reject(error);
+  let pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  return new Promise((resolve, reject) => {
+    pool.connect((err, client, release) => {
+      if (err) return console.error(err);
+      let db = drizzle(client);
+      Promise.all(
+        md5s.map(async ({ md5, filePath }) => {
+          return new Promise<boolean | Album>((resolve, reject) => {
+            db.select()
+              .from(songs)
+              .innerJoin(albums, eq(songs.albumId, albums.id))
+              .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+              .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
+              .innerJoin(genres, eq(albumGenres.genreId, genres.id))
+              .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+              .where(eq(songs.md5, md5))
+              .then((rows: innerJoinReturn[]) => {
+                if (rows.length === 0) {
+                  resolve(getSongInfo(app, filePath, md5));
+
+                  // TODO: use a .then on the getSongInfo to insert it into the database
+                  // And once it's in the database, then we don't have to worry about it
+                  // And we can just return that 'Albums object'
+                } else {
+                  const ret = getAlbumFromRows(app, rows);
+                  resolve(ret === undefined ? false : ret);
+                  /*
+                name: rows[0].albums.name ?? "Unknown Album Name",
+                  yearReleased: rows[0].albums.year || 1970,
+                  albumArtist:
+                    (rows[0].albums.albumArtist && findArtistName(rows, rows[0].albums.albumArtist)) ||
+                    "Unknown Artist Name",
+                    artists: rows.map((row: innerJoinReturn) => row.artists.name),
+                    genres: rows.map((row: innerJoinReturn) => row.genres.name),
+                  songs: [rows[0].songs],
+                  inDb: true,
+                */
+                }
+              })
+              .catch((error: any) => {
+                console.log("encountered error when trying to lookup songs", error);
+                return reject(error);
+              });
           });
-      });
-    })
-  )
-    .then((songList) => songList.filter((song) => typeof song !== "boolean") as Album[])
-    .then((songList: Album[]) => {
-      // songList is an array of Albums or booleans
-      // could be in the database or could need to be added.
-      // Does it matter if I just spam insert a bunch of data that already exists?
-      const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
-      const mergedAlbums: Map<string, Album> = new Map();
-      for (let i = 0; i < songsNotInDb.length; i++) {
-        const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
-        let song = mergedAlbums.get(normalizedName);
-        if (!song?.name) {
-          mergedAlbums.set(normalizedName, JSON.parse(JSON.stringify(songsNotInDb[i])));
-        } else {
-          song?.songs.push(songsNotInDb[i].songs[0]);
-        }
-      }
-      console.log("merged albums:", mergedAlbums);
+        })
+      )
+        .then((songList) => songList.filter((song) => typeof song !== "boolean") as Album[])
+        .then((songList: Album[]) => {
+          // songList is an array of Albums or booleans
+          // could be in the database or could need to be added.
+          // Does it matter if I just spam insert a bunch of data that already exists?
+          const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
+          const mergedAlbums: Map<string, Album> = new Map();
+          for (let i = 0; i < songsNotInDb.length; i++) {
+            const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
+            let song = mergedAlbums.get(normalizedName);
+            if (!song?.name) {
+              mergedAlbums.set(normalizedName, JSON.parse(JSON.stringify(songsNotInDb[i])));
+            } else {
+              song?.songs.push(songsNotInDb[i].songs[0]);
+            }
+          }
+          console.log("merged albums:", mergedAlbums);
 
-      // now that albums are merged into a similar sort of grouping, we can insert into the database.
-      var inserts: Promise<void>[] = [];
-      return new Promise((resolve, reject) => {
-        /* var mergedAlbumsKeys = Array.from(mergedAlbums.keys());
+          // now that albums are merged into a similar sort of grouping, we can insert into the database.
+          var inserts: Promise<void>[] = [];
+          return new Promise<Album[]>((resolve, reject) => {
+            /* var mergedAlbumsKeys = Array.from(mergedAlbums.keys());
 
-        for (var i = 0; i < mergedAlbumsKeys.length; i++) {
-          inserts.push(insertIntoDb(app, mergedAlbums.get(mergedAlbumsKeys[i]) as Album));
-        } */
-        insertAllIntoDb(app, mergedAlbums).then(() => {
-          console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
-          resolve(songList.flat());
-        });
-        //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
-      });
+          for (var i = 0; i < mergedAlbumsKeys.length; i++) {
+            inserts.push(insertIntoDb(app, mergedAlbums.get(mergedAlbumsKeys[i]) as Album));
+          } */
+            insertAllIntoDb(db, mergedAlbums).then(() => {
+              console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
+              resolve(songList.flat());
+            });
+            //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
+          });
+        })
+        .then((songList: Album[]) => {
+          resolve(songList);
+        })
+        .catch((err) => {
+          reject(err);
+        })
+        .finally(() => release());
     });
+  });
 }
 
 function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
@@ -228,8 +245,7 @@ function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
   return uniqueFromObj;
 }
 
-function insertAllIntoDb(app: express.Application, albumList: Map<string, Album>): Promise<void> {
-  const db: NodePgDatabase = app.locals.db;
+function insertAllIntoDb(db: NodePgDatabase, albumList: Map<string, Album>): Promise<void> {
   const artistLookUps = Array.from(albumList.values()).flatMap((album) =>
     album.artists.map((artist) =>
       db.select().from(artists).where(eq(artists.name, artist)).execute()

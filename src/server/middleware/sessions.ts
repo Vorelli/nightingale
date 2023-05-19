@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express";
 
 import session from "express-session/index.js";
 import pgSession2 from "connect-pg-simple/index.js";
+import pg from "pg";
+const { Pool } = pg;
 
 export const sessionsMiddleware = (
   req: Request,
@@ -9,8 +11,11 @@ export const sessionsMiddleware = (
   next: NextFunction
 ) => {
   let pgSession = pgSession2(session);
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
   const options = {
-    store: new pgSession({ pool: res.locals.pool }),
+    store: new pgSession({ pool }),
     secret: process.env.COOKIE_SECRET ?? "hiellafikdalsjdf",
     resave: false,
     saveUninitialized: true,

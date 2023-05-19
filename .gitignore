@@ -4,6 +4,7 @@ dist/
 keyAndCert
 keyAndCert/
 .env
+.env.linux
 migrations-folder/
 music/
 **/streaming/*.*
