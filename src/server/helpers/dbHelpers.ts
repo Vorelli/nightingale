@@ -1,4 +1,4 @@
-import { Song, Album } from "../types/types";
+import { Song, Album } from "../types/types.js";
 import {
   NewSongs,
   NewArtists,

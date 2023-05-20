@@ -1,4 +1,4 @@
-import { appWithExtras } from "../types/types";
+import { appWithExtras } from "../types/types.js";
 import sqlite3 from "sqlite3";
 //const smDb = new sqlite3.Database("../persist.db", sqlite3.OPEN_READWRITE);
 

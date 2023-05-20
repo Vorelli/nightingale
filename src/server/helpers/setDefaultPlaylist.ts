@@ -1,6 +1,6 @@
-import { drizzle } from "drizzle-orm/node-postgres/driver.js";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { PlaylistSongs, Playlists, playlistSongs, playlists } from "../db/schema.js";
-import { appWithExtras } from "../types/types";
+import { appWithExtras } from "../types/types.js";
 import { eq } from "drizzle-orm";
 import pg from "pg";
 const { Pool } = pg;

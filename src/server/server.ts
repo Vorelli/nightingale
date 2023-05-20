@@ -14,7 +14,7 @@ import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
 import { loadSongs } from "./helpers/loadSongs.js";
 import apiHandler from "./handlers/apiHandler.js";
 import { initializeQueue, advanceTime } from "./helpers/queue.js";
-import { Song, appWithExtras } from "./types/types.js";
+import { Album, Song, appWithExtras } from "./types/types.js";
 import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 import { IncomingMessage, Server, ServerResponse } from "http";
 
@@ -52,7 +52,7 @@ async function firstRun(): Promise<
   app.locals.wait = new Promise<void>((resolve, reject) => {
     loadSongs(app)
       .then(async (albums) => {
-        const md5s = albums.flatMap((album) => album.songs.map((s) => s.md5));
+        const md5s = albums.flatMap((album: Album) => album.songs.map((s: Song) => s.md5));
         const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
           album.songs.forEach((song) => {
             acc[song.md5] = song;

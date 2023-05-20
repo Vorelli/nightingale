@@ -1,6 +1,6 @@
 import express, { Response, Request } from "express";
 import { playlistSongs, playlists } from "../db/schema.js";
-import { drizzle } from "drizzle-orm/node-postgres/index.js";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
 import { appWithExtras } from "../types/types.js";
 import { nextSong, previousSong, sendSync } from "../helpers/queue.js";

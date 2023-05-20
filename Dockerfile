@@ -11,20 +11,21 @@ RUN pnpm i -r --offline
 COPY . .
 RUN pnpm build
 RUN pnpm build:back
+RUN pnpm migrate_db
 
 FROM node:16-alpine AS release
 RUN apk add  --no-cache ffmpeg
 WORKDIR /app
 RUN mkdir /app/public
 RUN mkdir /app/public/streaming
-COPY --from=build /app/package*.json /app/pnpm-lock.yaml ./
+COPY package*.json pnpm-lock.yaml ./
 RUN npm install -g pnpm
 RUN pnpm fetch --prod
 RUN pnpm i -r --offline --prod
-RUN pnpm migrate_db
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public
+COPY --from=build /app/migrations-folder ./migrations-folder
 
 EXPOSE 3000
 EXPOSE 4000

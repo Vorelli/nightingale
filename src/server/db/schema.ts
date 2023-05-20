@@ -10,12 +10,12 @@ import {
   uniqueIndex,
   uuid,
   varchar,
-} from "drizzle-orm/pg-core/index.js";
-import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres/index.js";
+} from "drizzle-orm/pg-core";
+import { NodePgDatabase, drizzle } from "drizzle-orm/node-postgres";
 import { InferModel } from "drizzle-orm";
 import pg from "pg";
 const { Pool } = pg;
-import { migrate } from "drizzle-orm/node-postgres/migrator.js";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

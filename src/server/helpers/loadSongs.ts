@@ -26,13 +26,13 @@ import { importMusicMetadata } from "./audioMetadata.js";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg/index.js";
 import { ICommonTagsResult } from "music-metadata";
-import { AnyPgTable } from "drizzle-orm/pg-core/index.js";
-import { NodePgDatabase } from "drizzle-orm/node-postgres/index";
+import { AnyPgTable } from "drizzle-orm/pg-core";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 const { Pool } = pg;
 import { Album } from "../types/types.js";
 import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
-import { drizzle } from "drizzle-orm/node-postgres/index.js";
+import { drizzle } from "drizzle-orm/node-postgres";
 
 interface innerJoinReturn {
   songs: Songs;
@@ -246,8 +246,8 @@ function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
 }
 
 function insertAllIntoDb(db: NodePgDatabase, albumList: Map<string, Album>): Promise<void> {
-  const artistLookUps = Array.from(albumList.values()).flatMap((album) =>
-    album.artists.map((artist) =>
+  const artistLookUps = Array.from(albumList.values()).flatMap((album: Album) =>
+    album.artists.map((artist: string) =>
       db.select().from(artists).where(eq(artists.name, artist)).execute()
     )
   );

@@ -4,7 +4,7 @@ import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
 import { AppDispatch } from "../redux/store";
-import { ActionCreatorWithPayload } from "@reduxjs/toolkit";
+import { ActionCreatorWithPayload } from "@reduxjs/toolkit/dist";
 
 interface Position {
   x: number;
