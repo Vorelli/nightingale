@@ -130,7 +130,7 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
         if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
           dispatch(currentSongRequestSuccess(syncData.currentSong));
           const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
-          dispatch(setStartTime(parseInt(syncData.currentTime) + ping / 2));
+          dispatch(setStartTime(parseInt(syncData.currentTime) - Math.floor(ping / 2)));
           dispatch(setStatus(syncData.status));
         }
       })
