@@ -1,20 +1,28 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-interface Window {
+export interface Window {
   hidden: boolean;
   onTop: boolean;
 }
 
-interface InitialState {
+export interface State {
   [key: string]: Window;
 }
+const windowNames = [
+  'music',
+  'files',
+  'info',
+  'projects',
+  'resume'
+];
 
-const initialState: InitialState = {
-  main: {
-    hidden: false,
-    onTop: false,
-  },
-};
+const initialState: State = windowNames.reduce((acc: State, name: string) => {
+    acc[name] = ({
+      hidden: true,
+      onTop: true
+    }) as Window
+    return acc;
+  }, {} as State)
 
 export const windowReducer = createSlice({
   name: "windows",

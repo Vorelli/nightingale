@@ -174,18 +174,22 @@ export type ReturningGenres = InferModel<typeof genres, "select">;
 export type ReturningPlaylists = InferModel<typeof playlists, "select">;
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, "select">;
 
-async function dbMigrate(): Promise<void> {
+async function dbMigrate(): Promise<[NodePgDatabase, pg.Pool]> {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    idleTimeoutMillis: 50 * 1000,
+    max: 50,
   });
-  pool.connect(async (error, client, release) => {
-    if (error) throw error;
-    const db = drizzle(client);
-    await migrate(db, {
-      migrationsFolder: path.resolve(__dirname, "../../migrations-folder"),
-    });
-    release();
+  pool.on("error", (err, client) => {
+    console.log("server encountered error with pg database:", err);
+    console.log("hopefully it will keep running...");
+    client.release();
   });
+  const db = drizzle(pool);
+  await migrate(db, {
+    migrationsFolder: path.resolve(__dirname, "../../migrations-folder"),
+  });
+  return [db, pool];
 }
 
 export { dbMigrate };

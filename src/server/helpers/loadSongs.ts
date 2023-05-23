@@ -47,10 +47,10 @@ async function useParseFile(filePath: string) {
   return (await importMusicMetadata())(filePath);
 }
 
-export const loadSongs = (app: express.Application): Promise<Album[]> => {
+export const loadSongs = (app: express.Application, db: NodePgDatabase): Promise<Album[]> => {
   const musicDir = process.env.MUSIC_DIRECTORY as string;
   return processPaths([path.resolve(musicDir)]).then((filePromises) => {
-    return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s));
+    return Promise.all(filePromises).then((md5s) => processMd5s(app, md5s, db));
   });
 
   function processPaths(
@@ -136,40 +136,63 @@ function findArtistName(artistList: innerJoinReturn[], artistId: string): string
 
 function processMd5s(
   app: express.Application,
-  md5s: { md5: string; filePath: string }[]
+  md5s: { md5: string; filePath: string }[],
+  db: NodePgDatabase
 ): Promise<Album[]> {
   console.log("these are the md5s received", md5s);
   console.log("FILES WITH MD5s NOT IN DB:");
 
-  let pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
-  return new Promise((resolve, reject) => {
-    pool.connect((err, client, release) => {
-      if (err) return console.error(err);
-      let db = drizzle(client);
-      Promise.all(
-        md5s.map(async ({ md5, filePath }) => {
-          return new Promise<boolean | Album>((resolve, reject) => {
-            db.select()
-              .from(songs)
-              .innerJoin(albums, eq(songs.albumId, albums.id))
-              .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
-              .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
-              .innerJoin(genres, eq(albumGenres.genreId, genres.id))
-              .innerJoin(artists, eq(albumArtists.artistId, artists.id))
-              .where(eq(songs.md5, md5))
-              .then((rows: innerJoinReturn[]) => {
-                if (rows.length === 0) {
-                  resolve(getSongInfo(app, filePath, md5));
+  return Promise.all(
+    md5s.map(async ({ md5, filePath }) => {
+      return new Promise<Album>((resolve, reject) => {
+        return new Promise<boolean | Album>((resolve, reject) => {
+          db.select()
+            .from(songs)
+            .innerJoin(albums, eq(songs.albumId, albums.id))
+            .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+            .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
+            .innerJoin(genres, eq(albumGenres.genreId, genres.id))
+            .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+            .where(eq(songs.md5, md5))
+            .then((rows: innerJoinReturn[]) => {
+              if (rows.length === 0) {
+                resolve(getSongInfo(app, filePath, md5));
 
-                  // TODO: use a .then on the getSongInfo to insert it into the database
-                  // And once it's in the database, then we don't have to worry about it
-                  // And we can just return that 'Albums object'
-                } else {
-                  const ret = getAlbumFromRows(app, rows);
-                  resolve(ret === undefined ? false : ret);
-                  /*
+                // TODO: use a .then on the getSongInfo to insert it into the database
+                // And once it's in the database, then we don't have to worry about it
+                // And we can just return that 'Albums object'
+              } else {
+                const ret = getAlbumFromRows(app, rows);
+                resolve(ret === undefined ? false : ret);
+              }
+            })
+        })
+      });
+    })
+  ).then((ret: (Album | boolean)[]) => ret.filter((a: Album | boolean) => typeof a !== 'boolean') as Album[])
+    .then((songList: Album[]): Promise<Album[]> => {
+      // songList is an array of Albums or booleans
+      // could be in the database or could need to be added.
+      // Does it matter if I just spam insert a bunch of data that already exists?
+      const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
+      const mergedAlbums: Map<string, Album> = new Map();
+      for (let i = 0; i < songsNotInDb.length; i++) {
+        const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
+        let song = mergedAlbums.get(normalizedName);
+        if (!song?.name) {
+          mergedAlbums.set(normalizedName, JSON.parse(JSON.stringify(songsNotInDb[i])));
+        } else {
+          song?.songs.push(songsNotInDb[i].songs[0]);
+        }
+      }
+      console.log("merged albums:", mergedAlbums);
+
+      // now that albums are merged into a similar sort of grouping, we can insert into the database.
+      // var inserts: Promise<void>[] = [];
+      return new Promise<Album[]>((resolve, reject) => {
+        insertAllIntoDb(db, mergedAlbums)
+          .then(() => {
+            /*
                 name: rows[0].albums.name ?? "Unknown Album Name",
                   yearReleased: rows[0].albums.year || 1970,
                   albumArtist:
@@ -180,57 +203,20 @@ function processMd5s(
                   songs: [rows[0].songs],
                   inDb: true,
                 */
-                }
-              })
-              .catch((error: any) => {
-                console.log("encountered error when trying to lookup songs", error);
-                return reject(error);
-              });
+            console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
+            // resolve(songList.flat() as Album[]);
+            resolve(songList as Album[]);
+          })
+          .catch((err) => {
+            reject(err);
           });
-        })
-      )
-        .then((songList) => songList.filter((song) => typeof song !== "boolean") as Album[])
-        .then((songList: Album[]) => {
-          // songList is an array of Albums or booleans
-          // could be in the database or could need to be added.
-          // Does it matter if I just spam insert a bunch of data that already exists?
-          const songsNotInDb: Album[] = songList.filter((song) => !song.inDb);
-          const mergedAlbums: Map<string, Album> = new Map();
-          for (let i = 0; i < songsNotInDb.length; i++) {
-            const normalizedName = songsNotInDb[i].name.toLocaleLowerCase().trim().normalize();
-            let song = mergedAlbums.get(normalizedName);
-            if (!song?.name) {
-              mergedAlbums.set(normalizedName, JSON.parse(JSON.stringify(songsNotInDb[i])));
-            } else {
-              song?.songs.push(songsNotInDb[i].songs[0]);
-            }
-          }
-          console.log("merged albums:", mergedAlbums);
-
-          // now that albums are merged into a similar sort of grouping, we can insert into the database.
-          var inserts: Promise<void>[] = [];
-          return new Promise<Album[]>((resolve, reject) => {
-            /* var mergedAlbumsKeys = Array.from(mergedAlbums.keys());
-
-          for (var i = 0; i < mergedAlbumsKeys.length; i++) {
-            inserts.push(insertIntoDb(app, mergedAlbums.get(mergedAlbumsKeys[i]) as Album));
-          } */
-            insertAllIntoDb(db, mergedAlbums).then(() => {
-              console.table(songList.map((album) => album.songs.map((s) => s.md5)).flat());
-              resolve(songList.flat());
-            });
-            //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
-          });
-        })
-        .then((songList: Album[]) => {
-          resolve(songList);
-        })
-        .catch((err) => {
-          reject(err);
-        })
-        .finally(() => release());
+        //eventually this is what I want: but need to finish inserts first. resolve(songList.map((album) => album.songs[0].md5));
+      });
+    })
+    .catch((err) => {
+      console.log("error occurred when trying to instert the songList into the database:", err);
+      return err;
     });
-  });
 }
 
 function uniqueFromObject(objs: Map<string, any>, key: string, seen: string[]) {
@@ -396,11 +382,13 @@ async function getSongInfo(
         const isThisAudio = isAudio(data);
         console.log("isAudio", isThisAudio, "for:", filePath);
         if (!isThisAudio) return resolve(false);
+        console.log('after isThisAudio return');
 
         let duration = getAudioDurationInSeconds(filePath).then(
           (durationInSeconds) => durationInSeconds * 1000
         );
         let tags = await useParseFile(filePath).then((tags) => tags.common);
+        console.log('duration and tags:', duration, tags);
 
         let imageChecking = checkIfFileExists(getPath(app, md5, "jpg")).catch(async () => {
           if (tags.picture && tags.picture.length > 0) {
@@ -434,6 +422,7 @@ async function getSongInfo(
           });
         });
 
+        console.log('duration, tags, imageChecking, audioFileChecking',[duration, tags, imageChecking, audioFileChecking]);
         Promise.all([duration, tags, imageChecking, audioFileChecking])
           .then(async ([duration, tags, imageProcessedAndSaved, audioFileOptimized]) => {
             const albumObj: Album = craftAlbumObj(tags, md5, app, filePath, duration);

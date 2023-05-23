@@ -21,7 +21,7 @@ import { IncomingMessage, Server, ServerResponse } from "http";
 async function firstRun(): Promise<
   [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null]
 > {
-  await dbMigrate();
+  const [db, pool] = await dbMigrate();
   let httpsServer: null | https.Server = null;
   var appStart: express.Application = express();
   var { app, getWss }: express_ws.Instance = express_ws(appStart);
@@ -50,7 +50,7 @@ async function firstRun(): Promise<
   app.locals.__dirname = __dirname;
   app.locals.shuffleBy = "random";
   app.locals.wait = new Promise<void>((resolve, reject) => {
-    loadSongs(app)
+    loadSongs(app, db)
       .then(async (albums) => {
         const md5s = albums.flatMap((album: Album) => album.songs.map((s: Song) => s.md5));
         const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
