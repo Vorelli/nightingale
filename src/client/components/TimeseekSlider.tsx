@@ -40,6 +40,7 @@ const TimeseekSliderInner = React.memo(function TimeseekSlider({
   }, [localVolume, audioRef, startingTime, currentSong]);
 
   function handleSeek(_: any) {
+    console.log("sending to Server:", currentT);
     fetch(URL + "/api/time" + "?newTime=" + (currentT || 1) * Math.pow(10, 9), {
       method: "PUT",
     });

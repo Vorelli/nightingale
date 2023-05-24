@@ -122,10 +122,10 @@ router.get("/sync", (req, res) => {
 
 router.put("/playpause", (req, res) => {
   const app = req.app as appWithExtras;
-  console.log("got request!");
   app.locals.status = app.locals.status === "PLAYING" ? "PAUSED" : "PLAYING";
   app.locals.getWss().clients.forEach((client: WebSocket) => {
     client.send(app.locals.status);
+    if (app.locals.status === "PAUSED") client.send("sync");
   });
   res.sendStatus(200);
 });

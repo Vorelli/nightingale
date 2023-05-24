@@ -153,7 +153,7 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
         if (syncData.currentSong && syncData.currentTime >= 0) {
           dispatch(currentSongRequestSuccess(syncData.currentSong));
           const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
-          dispatch(setStartTime(Math.floor(parseInt(syncData.currentTime) / 1000 - ping / 2)));
+          dispatch(setStartTime(Math.floor(parseInt(syncData.currentTime) / 1000 - ping / 2000)));
           dispatch(setStatus(syncData.status));
         }
       })
@@ -191,16 +191,9 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
       {children}
       {audioRef.current && (
         <audio
-          onTimeUpdate={(ev) => {
-            console.log("event", ev);
-            handleTimeUpdate(ev);
-          }}
-          onPlay={(ev) => {
-            (ev.currentTarget as HTMLAudioElement).play();
-          }}
-          onPause={(ev) => {
-            (ev.currentTarget as HTMLAudioElement).pause();
-          }}
+          onTimeUpdate={(ev) => handleTimeUpdate(ev)}
+          onPlay={(ev) => (ev.currentTarget as HTMLAudioElement).play()}
+          onPause={(ev) => (ev.currentTarget as HTMLAudioElement).pause()}
           controls={false}
           ref={audioRef}
         />

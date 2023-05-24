@@ -47,12 +47,14 @@ const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
         dispatch(setStatus("PAUSED"));
       } else if (data.data.indexOf("setTime ") === 0) {
         const parsedTime = parseFloat(data.data.slice(8));
+        console.log("setting to:", Math.floor(parsedTime / 1000));
         if (!isNaN(parsedTime)) {
-          console.log("parsedTime:", parsedTime);
           dispatch(setStartTime(Math.floor(parsedTime / 1000)));
         } else {
           console.log("received unexpected data", data);
         }
+      } else {
+        console.log("received unexpected data", data);
       }
     };
 

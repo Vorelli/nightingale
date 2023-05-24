@@ -8,7 +8,7 @@
     "build:dev": "tsc --watch --preserveWatchOutput",
     "start:dev": "nodemon dist/index.js --watch dist",
     "dev": "webpack serve",
-    "b": "webpack -w",
+    "b": "webpack -w --mode production",
     "build": "webpack --mode production",
     "build:back": "tsc",
     "start": "node dist/index.js",

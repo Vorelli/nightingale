@@ -17,6 +17,7 @@ import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { Album, Song, appWithExtras } from "./types/types.js";
 import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 import { IncomingMessage, Server, ServerResponse } from "http";
+import morgan from "morgan";
 
 async function firstRun(): Promise<
   [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null]
@@ -35,6 +36,7 @@ async function firstRun(): Promise<
     ({ getWss } = express_ws(app, httpsServer));
   }
 
+  if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
   app.use(compression());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
