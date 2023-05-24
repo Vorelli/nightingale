@@ -8,21 +8,15 @@ export interface Window {
 export interface State {
   [key: string]: Window;
 }
-const windowNames = [
-  'music',
-  'files',
-  'info',
-  'projects',
-  'resume'
-];
+const windowNames = ["main", "files", "info", "projects", "resume"];
 
 const initialState: State = windowNames.reduce((acc: State, name: string) => {
-    acc[name] = ({
-      hidden: true,
-      onTop: true
-    }) as Window
-    return acc;
-  }, {} as State)
+  acc[name] = {
+    hidden: name === "main" ? false : true,
+    onTop: false,
+  } as Window;
+  return acc;
+}, {} as State);
 
 export const windowReducer = createSlice({
   name: "windows",

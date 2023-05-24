@@ -49,6 +49,8 @@ async function firstRun(): Promise<
   };
   app.locals.__dirname = __dirname;
   app.locals.shuffleBy = "random";
+  app.locals.pool = pool;
+  app.locals.db = db;
   app.locals.wait = new Promise<void>((resolve, reject) => {
     loadSongs(app, db)
       .then(async (albums) => {

@@ -1,6 +1,7 @@
 import { NodePgClient, NodePgDatabase } from "drizzle-orm/node-postgres";
 import express from "express";
 import { WithWebsocketMethod } from "express-ws";
+import { Pool } from "pg";
 
 export interface Song {
   md5: string;
@@ -33,5 +34,7 @@ export interface appWithExtras extends express.Application, WithWebsocketMethod 
     md5ToSong: { [key: string]: Song };
     status: "PLAYING" | "PAUSED";
     getWss: Function;
+    pool: Pool;
+    db: NodePgDatabase;
   };
 }

@@ -1,9 +1,6 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { PlaylistSongs, Playlists, playlistSongs, playlists } from "../db/schema.js";
+import { PlaylistSongs, playlistSongs, playlists } from "../db/schema.js";
 import { appWithExtras } from "../types/types.js";
 import { eq } from "drizzle-orm";
-import pg from "pg";
-const { Pool } = pg;
 
 export function playlistFromQueue(queue: string[], playlistId: string): PlaylistSongs[] {
   const songs = new Array<PlaylistSongs>();
@@ -19,14 +16,9 @@ export function playlistFromQueue(queue: string[], playlistId: string): Playlist
 
 export default async function setDefaultPlaylist(app: appWithExtras) {
   const defaultQueue = app.locals.queues[app.locals.queueIndex];
-
-  let pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
-  return new Promise<void>((resolve, reject) => {
-    pool.connect(async (err, client, release) => {
-      if (err) return reject(err);
-      let db = drizzle(client);
+  const { db } = app.locals;
+  return new Promise<void>(async (resolve, reject) => {
+    try {
       const currentDefaultPlaylist = await db
         .select()
         .from(playlists)
@@ -45,7 +37,9 @@ export default async function setDefaultPlaylist(app: appWithExtras) {
       const pSongs = playlistFromQueue(defaultQueue, defaultPlaylist[0].id);
       await db.insert(playlistSongs).values(pSongs);
       resolve();
-      release();
-    });
+    } catch (err) {
+      console.log("error occurred when trying to set the default playlist");
+      reject(err);
+    }
   });
 }

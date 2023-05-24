@@ -99,8 +99,8 @@ const DesktopWindow = (props: {
         style={{ width, height }}
         id={props.id}
         className={
+          (onTop ? "opacity-0 " : "opacity-100 ") +
           (hidden ? "small text-sm" : "big text-md") +
-          //+" bg-gradient-to-r from-primary via-secondary to-primary hover:before:bg-transparent !text-base-content transition-all before:transition-all before:rounded-full !relative hover:!bg-primary !z-10 before:z-[-10] !border-solid !border-[1px] !border-transparent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 !rounded-full !p-0"
           " relative desktopWindow bg-gradient-to-r before:z-[-5] from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid" // drop-shadow-md shadow drop-shadow-accent shadow-accent"
         }
         ref={container}

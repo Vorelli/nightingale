@@ -4,8 +4,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
 import { appWithExtras } from "../types/types.js";
 import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
-import pg from "pg";
-const { Pool } = pg;
 const router = express.Router();
 
 router.get("/songs", (req, res) => {
@@ -63,11 +61,8 @@ FROM
 `;
 
   return new Promise((resolve, reject) => {
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-    pool.connect((err, client, release) => {
-      if (err) return reject(res.json(err));
+    (req.app as appWithExtras).locals.pool.connect((err, client, release) => {
+      if (err) reject(err);
       client.query(query, (err, result) => {
         release();
         if (err) return reject(res.json(err));
@@ -87,29 +82,22 @@ FROM
 });
 
 router.get("/playlists", (req, res) => {
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
-  pool.connect((err, client, release) => {
-    if (err) return res.json(err);
-    return drizzle(client)
-      .select()
-      .from(playlists)
-      .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
-      .then((result) => {
-        const data = result.reduce((acc, val) => {
-          acc[val.playlists.id] = acc[val.playlists.id] || {};
-          acc[val.playlists.id].songs = acc[val.playlists.id].songs || [];
-          acc[val.playlists.id].songs[val.playlistSongs.order || 0] =
-            val.playlistSongs.songMd5 || "missingMd5";
-          acc[val.playlists.id].id = val.playlists.id;
-          acc[val.playlists.id].name = val.playlists.name;
-          return acc;
-        }, {} as { [key: string]: { [key: string]: any } });
-        res.json(data);
-      })
-      .finally(() => release());
-  });
+  return (req.app as appWithExtras).locals.db
+    .select()
+    .from(playlists)
+    .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
+    .then((result) => {
+      const data = result.reduce((acc, val) => {
+        acc[val.playlists.id] = acc[val.playlists.id] || {};
+        acc[val.playlists.id].songs = acc[val.playlists.id].songs || [];
+        acc[val.playlists.id].songs[val.playlistSongs.order || 0] =
+          val.playlistSongs.songMd5 || "missingMd5";
+        acc[val.playlists.id].id = val.playlists.id;
+        acc[val.playlists.id].name = val.playlists.name;
+        return acc;
+      }, {} as { [key: string]: { [key: string]: any } });
+      res.json(data);
+    });
 });
 
 function toObject(toBeJson: any) {

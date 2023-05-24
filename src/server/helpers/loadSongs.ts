@@ -28,11 +28,8 @@ import ffmpeg from "fluent-ffmpeg/index.js";
 import { ICommonTagsResult } from "music-metadata";
 import { AnyPgTable } from "drizzle-orm/pg-core";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import pg from "pg";
-const { Pool } = pg;
 import { Album } from "../types/types.js";
 import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
-import { drizzle } from "drizzle-orm/node-postgres";
 
 interface innerJoinReturn {
   songs: Songs;
@@ -139,37 +136,39 @@ function processMd5s(
   md5s: { md5: string; filePath: string }[],
   db: NodePgDatabase
 ): Promise<Album[]> {
-  console.log("these are the md5s received", md5s);
+  //console.log("these are the md5s received", md5s);
   console.log("FILES WITH MD5s NOT IN DB:");
 
   return Promise.all(
     md5s.map(async ({ md5, filePath }) => {
-      return new Promise<Album>((resolve, reject) => {
-        return new Promise<boolean | Album>((resolve, reject) => {
-          db.select()
-            .from(songs)
-            .innerJoin(albums, eq(songs.albumId, albums.id))
-            .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
-            .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
-            .innerJoin(genres, eq(albumGenres.genreId, genres.id))
-            .innerJoin(artists, eq(albumArtists.artistId, artists.id))
-            .where(eq(songs.md5, md5))
-            .then((rows: innerJoinReturn[]) => {
-              if (rows.length === 0) {
-                resolve(getSongInfo(app, filePath, md5));
+      return new Promise<boolean | Album>((resolve, reject) => {
+        db.select()
+          .from(songs)
+          .innerJoin(albums, eq(songs.albumId, albums.id))
+          .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+          .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
+          .innerJoin(genres, eq(albumGenres.genreId, genres.id))
+          .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+          .where(eq(songs.md5, md5))
+          .then((rows: innerJoinReturn[]) => {
+            if (rows.length === 0) {
+              resolve(getSongInfo(app, filePath, md5));
 
-                // TODO: use a .then on the getSongInfo to insert it into the database
-                // And once it's in the database, then we don't have to worry about it
-                // And we can just return that 'Albums object'
-              } else {
-                const ret = getAlbumFromRows(app, rows);
-                resolve(ret === undefined ? false : ret);
-              }
-            })
-        })
+              // TODO: use a .then on the getSongInfo to insert it into the database
+              // And once it's in the database, then we don't have to worry about it
+              // And we can just return that 'Albums object'
+            } else {
+              const ret = getAlbumFromRows(app, rows);
+              resolve(ret === undefined ? false : ret);
+            }
+          });
       });
     })
-  ).then((ret: (Album | boolean)[]) => ret.filter((a: Album | boolean) => typeof a !== 'boolean') as Album[])
+  )
+    .then(
+      (ret: (Album | boolean)[]) =>
+        ret.filter((a: Album | boolean) => typeof a !== "boolean") as Album[]
+    )
     .then((songList: Album[]): Promise<Album[]> => {
       // songList is an array of Albums or booleans
       // could be in the database or could need to be added.
@@ -382,13 +381,11 @@ async function getSongInfo(
         const isThisAudio = isAudio(data);
         console.log("isAudio", isThisAudio, "for:", filePath);
         if (!isThisAudio) return resolve(false);
-        console.log('after isThisAudio return');
 
         let duration = getAudioDurationInSeconds(filePath).then(
           (durationInSeconds) => durationInSeconds * 1000
         );
         let tags = await useParseFile(filePath).then((tags) => tags.common);
-        console.log('duration and tags:', duration, tags);
 
         let imageChecking = checkIfFileExists(getPath(app, md5, "jpg")).catch(async () => {
           if (tags.picture && tags.picture.length > 0) {
@@ -422,7 +419,6 @@ async function getSongInfo(
           });
         });
 
-        console.log('duration, tags, imageChecking, audioFileChecking',[duration, tags, imageChecking, audioFileChecking]);
         Promise.all([duration, tags, imageChecking, audioFileChecking])
           .then(async ([duration, tags, imageProcessedAndSaved, audioFileOptimized]) => {
             const albumObj: Album = craftAlbumObj(tags, md5, app, filePath, duration);
