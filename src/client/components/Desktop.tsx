@@ -48,7 +48,8 @@ const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
       } else if (data.data.indexOf("setTime ") === 0) {
         const parsedTime = parseFloat(data.data.slice(8));
         if (!isNaN(parsedTime)) {
-          dispatch(setStartTime(parsedTime));
+          console.log("parsedTime:", parsedTime);
+          dispatch(setStartTime(Math.floor(parsedTime / 1000)));
         } else {
           console.log("received unexpected data", data);
         }
@@ -107,7 +108,10 @@ const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
   }
 
   return (
-    <div onContextMenu={handleClick} className="desktop h-full w-full bg-transparent">
+    <div
+      onContextMenu={handleClick}
+      className="desktop h-full w-full bg-transparent pointer-events-none z-[-20]"
+    >
       <WindowManager />
       <Background />
     </div>

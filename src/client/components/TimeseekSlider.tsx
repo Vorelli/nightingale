@@ -37,23 +37,7 @@ const TimeseekSliderInner = React.memo(function TimeseekSlider({
     if (!!audioRef && audioRef.current && !movingTime) {
       (audioRef.current as HTMLAudioElement).volume = localVolume / 100;
     }
-  }, [localVolume, audioRef]);
-
-  useEffect(() => {
-    if (currentSong && !!audioRef && audioRef.current) {
-      const audio = audioRef.current as HTMLAudioElement;
-      const currentSrc = audio.src;
-      const indexOfStreaming = currentSrc.indexOf("/streaming/");
-      if (indexOfStreaming === -1 || currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)) {
-        const newSrc = URL + "/streaming/" + currentSong + ".mp4";
-        audio.crossOrigin = "anonymous";
-        audio.src = newSrc;
-        audio.load();
-      }
-      audio.currentTime = startingTime / 1000;
-      audio.volume = localVolume / 100;
-    }
-  }, [startingTime, currentSong]);
+  }, [localVolume, audioRef, startingTime, currentSong]);
 
   function handleSeek(_: any) {
     fetch(URL + "/api/time" + "?newTime=" + (currentT || 1) * Math.pow(10, 9), {
@@ -65,8 +49,8 @@ const TimeseekSliderInner = React.memo(function TimeseekSlider({
   function handleTimeChange(ev: Event, value: number | number[]) {
     setMovingTime && setMovingTime(true);
     typeof value === "number"
-      ? setCurrentT && setCurrentT(value)
-      : setCurrentT && setCurrentT(value[0]);
+      ? setCurrentT && setCurrentT(value, "handleTimeChange type number")
+      : setCurrentT && setCurrentT(value[0], "handleTimeChange type array");
   }
 
   return (
@@ -104,7 +88,7 @@ function TimeseekSlider({ localVolume }: OriginalProps) {
 
   const actuallySetCurrentT = React.useMemo(() => {
     return (num: number) => {
-      setCurrentT && setCurrentT(num);
+      setCurrentT && setCurrentT(num, "from actuallySetCurrentT react memo");
     };
   }, []);
 

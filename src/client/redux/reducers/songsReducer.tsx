@@ -21,7 +21,6 @@ interface InitialState {
   currentSong: string | undefined;
   currentSongLoading: boolean;
   startingTime: number;
-  currentTime: number;
   volume: number;
 }
 
@@ -31,7 +30,6 @@ const initialState: InitialState = {
   currentSong: undefined,
   currentSongLoading: false,
   startingTime: 0,
-  currentTime: 0,
   volume: 0.05,
 };
 
@@ -56,9 +54,6 @@ export const songsReducer = createSlice({
     setStartTime: (s, action) => {
       s.startingTime = action.payload;
     },
-    setCurrentTime: (s, action) => {
-      s.currentTime = action.payload;
-    },
     setVolume: (s, action) => {
       s.volume = action.payload;
     },
@@ -71,7 +66,6 @@ export const {
   setStartTime,
   currentSongRequest,
   currentSongRequestSuccess,
-  setCurrentTime,
   setVolume,
 } = songsReducer.actions;
 export type { ClientSong };

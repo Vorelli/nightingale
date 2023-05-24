@@ -111,5 +111,4 @@ function MusicPlayer() {
   return <MusicPlayerInner audioRef={audioContext?.audioRef} />;
 }
 
-MusicPlayer.whyDidYouRender = false;
 export default MusicPlayer;

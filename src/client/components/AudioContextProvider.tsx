@@ -49,6 +49,7 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
   const [firstTime, setFirstTime] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { numBars } = useSelector((s: RootState) => s.audio);
+  const { currentSong } = useSelector((s: RootState) => s.songs);
   const dispatch = useDispatch();
   const { URL } = useSelector((s: RootState) => s.global);
 
@@ -75,16 +76,13 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
     }
   }
 
-  useEffect(() => {
-    if (!firstTime && audioRef && audioRef.current && !currentSongLoading) {
-      dispatch(setReloadSong(true));
-      tryToPlay(audioRef.current);
-    }
-  }, [firstTime, startingTime, currentSongLoading, status]);
-
-  function handleTimeUpdate(ev: React.SyntheticEvent<HTMLAudioElement, Event>) {
-    if (ev.currentTarget && !movingTime) {
-      setCurrentT && setCurrentT((ev.currentTarget as HTMLAudioElement).currentTime);
+  function handleTimeUpdate(_ev: React.SyntheticEvent<HTMLAudioElement, Event>) {
+    if (audioSource && !movingTime) {
+      setCurrentT &&
+        setCurrentT(
+          audioSource.mediaElement.currentTime,
+          "handleTimeUpdate in audioContextProvider"
+        );
     }
   }
 
@@ -111,6 +109,31 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
   }, []);
 
   useEffect(() => {
+    if (currentSong && !!audioRef && audioRef.current) {
+      const audio = audioRef.current as HTMLAudioElement;
+      const currentSrc = audio.src;
+      const indexOfStreaming = currentSrc.indexOf("/streaming/");
+      if (indexOfStreaming === -1 || currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)) {
+        const newSrc = URL + "/streaming/" + currentSong + ".mp4";
+        audio.crossOrigin = "anonymous";
+        audio.src = newSrc;
+        audio.load();
+      }
+      if (!firstTime && audioRef && audioRef.current && !currentSongLoading) {
+        dispatch(setReloadSong(true));
+        tryToPlay(audioRef.current);
+      }
+    }
+  }, [startingTime, currentSong, firstTime, currentSongLoading, status]);
+
+  useEffect(() => {
+    if (!audioRef || !audioRef.current) {
+      return;
+    }
+    audioRef.current.currentTime = startingTime;
+  }, [startingTime, audioRef]);
+
+  useEffect(() => {
     if (audioContext !== null && audioRef !== undefined && audioRef.current !== null) {
       if (audioSource === null && audioContext !== null && analyzerNode !== null) {
         const audioSource = audioContext.createMediaElementSource(audioRef.current);
@@ -127,10 +150,10 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
     fetch(URL + "/api/sync")
       .then((data) => data.json())
       .then((syncData) => {
-        if (syncData.currentSong && (syncData.currentTime === 0 || syncData.currentTime)) {
+        if (syncData.currentSong && syncData.currentTime >= 0) {
           dispatch(currentSongRequestSuccess(syncData.currentSong));
           const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
-          dispatch(setStartTime(parseInt(syncData.currentTime) - Math.floor(ping / 2)));
+          dispatch(setStartTime(Math.floor(parseInt(syncData.currentTime) / 1000 - ping / 2)));
           dispatch(setStatus(syncData.status));
         }
       })
@@ -169,6 +192,7 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
       {audioRef.current && (
         <audio
           onTimeUpdate={(ev) => {
+            console.log("event", ev);
             handleTimeUpdate(ev);
           }}
           onPlay={(ev) => {

@@ -34,12 +34,32 @@ const DesktopWindow = (props: {
   const dispatch: AppDispatch = useDispatch();
   const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
   const [fixedPos, setFixedPos] = useState<undefined | Position>({ x: 50, y: 50 });
+  // const [heldPos, setHeldPos] = useState<Position>({ x: 50, y: 50 });
 
   useEffect(() => {
     const dims = getWidthAndHeight();
     setHeight(dims.h);
     setWidth(dims.w);
   }, [hidden]);
+
+  // useEffect(() => {
+  //   console.log("switching to onTop:", onTop, "fixed:", fixedPos, "held:", heldPos);
+  //   if (onTop) {
+  //     if (fixedPos !== undefined) {
+  //       setHeldPos(fixedPos);
+  //     }
+  //     const dims = getWidthAndHeight();
+  //     console.log(dims);
+  //     setFixedPos((fp) => {
+  //       console.log("current fp:", fp);
+  //       const newPos = { x: 0 - dims.w, y: 0 - dims.h };
+  //       console.log("newPos:", newPos);
+  //       return newPos;
+  //     });
+  //   } else if (!onTop) {
+  //     setFixedPos(heldPos);
+  //   }
+  // }, [onTop]);
 
   useEffect(() => {
     setFixedPos((pos: Position | undefined): Position | undefined => {
@@ -72,72 +92,74 @@ const DesktopWindow = (props: {
   }
 
   return (
-    <Draggable
-      bounds={{
-        left: 10,
-        top: 10,
-        right: windowWidth - width - 10,
-        bottom: windowHeight - height - 10,
-      }}
-      position={fixedPos}
-      onDrag={(ev: DraggableEvent) => {
-        if (ev.target instanceof Element) {
-        }
-      }}
-      onStart={(_ev: DraggableEvent) => {
-        setFixedPos(undefined);
-      }}
-      onStop={(_ev: DraggableEvent, data: DraggableData) => {
-        const newX = Math.round(data.x / 10) * 10;
-        const newY = Math.round(data.y / 10) * 10;
-        setFixedPos({ x: newX, y: newY });
-      }}
-      key="main"
-      handle=".header"
-    >
-      <section
-        style={{ width, height }}
-        id={props.id}
-        className={
-          (onTop ? "opacity-0 " : "opacity-100 ") +
-          (hidden ? "small text-sm" : "big text-md") +
-          " relative desktopWindow bg-gradient-to-r before:z-[-5] from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid" // drop-shadow-md shadow drop-shadow-accent shadow-accent"
-        }
-        ref={container}
-      >
-        <header
-          className={
-            (hidden ? "space-x-0.5 " : "space-x-2 ") +
-            "w-full h-12 flex justify-between box-border items-center select-none col-span-2"
+    (!onTop && (
+      <Draggable
+        bounds={{
+          left: 10,
+          top: 10,
+          right: windowWidth - width - 10,
+          bottom: windowHeight - height - 10,
+        }}
+        position={fixedPos}
+        onDrag={(ev: DraggableEvent) => {
+          if (ev.target instanceof Element) {
           }
+        }}
+        onStart={(_ev: DraggableEvent) => {
+          setFixedPos(undefined);
+        }}
+        onStop={(_ev: DraggableEvent, data: DraggableData) => {
+          const newX = Math.round(data.x / 10) * 10;
+          const newY = Math.round(data.y / 10) * 10;
+          setFixedPos({ x: newX, y: newY });
+        }}
+        key="main"
+        handle=".header"
+      >
+        <section
+          style={{ width, height }}
+          id={props.id}
+          className={
+            // (onTop ? "opacity-0 pointer-events-none " : "pointer-events-auto opacity-100 ") +
+            (hidden ? "small text-sm" : "big text-md") +
+            " pointer-events-auto relative desktopWindow bg-gradient-to-r before:z-[-5] from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid" // drop-shadow-md shadow drop-shadow-accent shadow-accent"
+          }
+          ref={container}
         >
-          <div
+          <header
             className={
-              "flex-1 flex justify-start items-center mt-2 h-10 header hover:cursor-move" +
-              (hidden ? " space-x-2 text-sm" : " space-x-4 ")
+              (hidden ? "space-x-0.5 " : "space-x-2 ") +
+              "w-full h-12 flex justify-between box-border items-center select-none col-span-2"
             }
           >
-            <div className="min-w-[40px] max-w-[40px] bg-base-200 mask mask-circle h-full">
-              <img
-                alt="Nightingale Logo"
-                draggable={false}
-                className="w-8 h-8 relative left-1 top-1"
-                src={props.icon}
-              />
+            <div
+              className={
+                "flex-1 flex justify-start items-center mt-2 h-10 header hover:cursor-move" +
+                (hidden ? " space-x-2 text-sm" : " space-x-4 ")
+              }
+            >
+              <div className="min-w-[40px] max-w-[40px] bg-base-200 mask mask-circle h-full">
+                <img
+                  alt="Nightingale Logo"
+                  draggable={false}
+                  className="w-8 h-8 relative left-1 top-1"
+                  src={props.icon}
+                />
+              </div>
+              <h1 className="justify-start h-full overflow-y-auto">
+                {props.title || "Default Title"}
+              </h1>
             </div>
-            <h1 className="justify-start h-full overflow-y-auto">
-              {props.title || "Default Title"}
-            </h1>
-          </div>
-          <HeaderBar
-            storeName={props.storeName}
-            onShowHideClick={() => dispatch(props.toggleHidden({ name: props.storeName }))}
-            onMoveToTopClick={() => dispatch(props.toggleOnTop({ name: props.storeName }))}
-          />
-        </header>
-        {props.children}
-      </section>
-    </Draggable>
+            <HeaderBar
+              storeName={props.storeName}
+              onShowHideClick={() => dispatch(props.toggleHidden({ name: props.storeName }))}
+              onMoveToTopClick={() => dispatch(props.toggleOnTop({ name: props.storeName }))}
+            />
+          </header>
+          {props.children}
+        </section>
+      </Draggable>
+    )) || <></>
   );
 };
 

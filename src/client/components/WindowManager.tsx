@@ -17,7 +17,7 @@ function WindowManager({}: Props) {
 
   useEffect(() => {
     setWindowComponents({
-      main: <MainPlayer />,
+      main: <MainPlayer key={"main"} />,
       //  'files': < />,
       //  'info': < />,
       //  'projects': < />,
@@ -45,15 +45,14 @@ function WindowManager({}: Props) {
   }
 
   return (
-    <div className="windowDockManager">
-      <div className="activeWindows">
+    <div className="windowDockManager h-full w-full z-[-10]">
+      <div className="absolute activeWindows w-0 h-0">
         {windowComponents &&
           windowKeys
             .filter((key) => windowComponents[key])
             .map((key: string) => windowComponents[key])}
       </div>
-      ,
-      <AppDock handleClick={handleIconClick} windows={hidden} />,
+      <AppDock handleClick={handleIconClick} windows={hidden} />
     </div>
   );
 }
