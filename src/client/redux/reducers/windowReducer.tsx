@@ -42,22 +42,13 @@ export const windowReducer = createSlice({
     toggleOnTop: (state, action) => {
       const current = state.windows[action.payload.name].onTop;
       state.windows[action.payload.name].onTop = !current;
-      console.log("currentOnTop:", current);
       if (current) {
         state.windowOrder = [action.payload.name, ...state.windowOrder];
       } else {
-        let index = -1;
-        for (let i = 0; i < state.windowOrder.length; i++) {
-          if (state.windowOrder[i] === action.payload.name) {
-            index = i;
-            break;
-          }
-        }
+        let index = state.windowOrder.indexOf(action.payload.name);
         if (index === -1) return state;
-        console.log("found:", action.payload.name);
-        state.windowOrder = state.windowOrder
-          .slice(0, index)
-          .concat(state.windowOrder.slice(index + 1));
+        state.windowOrder.splice(index, 1);
+        return state;
       }
     },
     handleDragStart: (state, action) => {

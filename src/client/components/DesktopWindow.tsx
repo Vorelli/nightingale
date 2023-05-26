@@ -36,10 +36,8 @@ const DesktopWindow = (props: {
   const { onTop, hidden } = useSelector(
     (s: RootState) => s.windows.windows[props.storeName]
   );
-  const order = useSelector((s: RootState) =>
-    s.windows.windowOrder.indexOf(props.storeName)
-  );
-  console.log("order:", order);
+  const { windowOrder } = useSelector((s: RootState) => s.windows);
+  const order = windowOrder.length - windowOrder.indexOf(props.storeName);
   const [fixedPos, setFixedPos] = useState<undefined | Position>({
     x: windowWidth - width - minBound,
     y: windowHeight - height - minBound,
@@ -114,14 +112,12 @@ const DesktopWindow = (props: {
         handle=".header"
       >
         <section
-          style={{ width, height }}
+          style={{ width, height, zIndex: 1 + order }}
           id={props.id}
           className={
-            // (onTop ? "opacity-0 pointer-events-none " : "pointer-events-auto opacity-100 ") +
             (hidden ? "small text-sm" : "big text-md") +
-            " pointer-events-auto absolute desktopWindow bg-gradient-to-r before:z-[-1] z-[" +
-            (1 + order) +
-            "] from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid" // drop-shadow-md shadow drop-shadow-accent shadow-accent"
+            " pointer-events-auto absolute desktopWindow bg-gradient-to-r before:z-[-1] " +
+            "from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid"
           }
           ref={container}
         >
