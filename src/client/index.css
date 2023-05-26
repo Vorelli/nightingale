@@ -184,6 +184,18 @@ body,
   grid-template: 1fr 1fr/50px 1fr
 }
 
+#files-player.small {
+  width: 100%;
+  height: 100%;
+  grid-template: 1fr/1fr;
+}
+
+#files-player {
+  width: 100%;
+  height: 100%;
+  grid-template: 10% 10% 80%/1fr;
+}
+
 @keyframes moveBack {
   0% {
     background-position: 0% center;

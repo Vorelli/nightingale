@@ -11,7 +11,7 @@ type Props = {
 };
 
 function MyIconButton({ onClick, children, width, name }: Props) {
-  const windowHidden = useSelector((s: RootState) => s.windows["main"].hidden);
+  const windowHidden = useSelector((s: RootState) => s.windows.windows["main"].hidden);
   return (
     <IconButton
       className={

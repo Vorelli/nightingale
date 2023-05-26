@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 import daisyui from "daisyui";
+import tailwindcssAnimate from "tailwindcss-animate";
 export default {
   //purge: ["./src/**/*.html", "./src/**/*.tsx"], // Adjust this to match your actual file extensions and paths
   content: ["./src/client/**/*.{js,jsx,tsx}"],
@@ -12,5 +13,5 @@ export default {
     },
     extend: {},
   },
-  plugins: [daisyui],
+  plugins: [daisyui, tailwindcssAnimate],
 };

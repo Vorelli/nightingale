@@ -7,7 +7,7 @@ const HeaderBar = (props: {
   onMoveToTopClick: Function;
   storeName: string;
 }) => {
-  const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
+  const {  hidden } = useSelector((s: RootState) => s.windows.windows[props.storeName]);
 
   return (
     <div className="flex justify-end pt-2 space-x-1">

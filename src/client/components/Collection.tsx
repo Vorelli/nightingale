@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { ClientSong } from "../redux/reducers/songsReducer";
 import TreeView from "@mui/lab/TreeView";
-import { TreeItem, TreeItemProps, treeItemClasses } from "@mui/lab";
+import { TreeItem, TreeItemProps, } from "@mui/lab";
 import AlbumIcon from "@mui/icons-material/Album";
 import AlbumTwoToneIcon from "@mui/icons-material/AlbumTwoTone";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
@@ -35,6 +35,7 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs 
   const [groupedSongs, setGroupedSongs] = useState({} as GroupedSongs | SuperGroupedSongs);
   const [icons, setIcons] = useState([] as JSX.Element[][]);
   const collectionList = useRef(null);
+  sortBy.length// need to implement sortBy
 
   // all groupBy is going to be doing is:
   //  - take the passed in key
@@ -147,11 +148,11 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs 
 
   const StyledTreeItem = styled((props: TreeItemProps) => (
     <TreeItem {...props} TransitionComponent={TransitionComponent} />
-  ))(({ theme }) => commonStyles());
+    ))((/*{ theme }*/) => commonStyles());
 
   const StyledTreeItemSong = styled((props: TreeItemProps) => (
     <TreeItem {...props} TransitionComponent={TransitionComponent} />
-  ))(({ theme }) => ({
+    ))((/*{ theme }*/) => ({
     ...commonStyles(),
     "& .MuiTreeItem-iconContainer": {
       display: "none",
@@ -222,7 +223,7 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs 
     icons: JSX.Element[][];
   }) {
     const [nodes, setNodes] = useState(new Array<string>());
-    const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+    const { hidden } = useSelector((s: RootState) => s.windows.windows["main"]);
 
     useEffect(() => {
       if (!hidden) {
@@ -239,7 +240,7 @@ const InnerCollection = React.memo(function Collection({ groupBy, sortBy, songs 
         <TreeView
           disableSelection={true}
           expanded={nodes}
-          onNodeToggle={(ev, nodeIds) => {
+          onNodeToggle={(_ev, nodeIds) => {
             localStorage.setItem("nodes", JSON.stringify(nodeIds));
             setNodes(nodeIds);
           }}

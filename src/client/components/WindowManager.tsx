@@ -3,7 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import AppDock from "./AppDock";
 import React, { useEffect, useState } from "react";
-import { State, toggleOnTop } from "../redux/reducers/windowReducer";
+import { toggleOnTop, Windows } from "../redux/reducers/windowReducer";
+import Files from "./Files";
+import Info from './Info';
+import Projects from "./Projects";
+import Resume from "./Resume";
 
 type Props = {};
 interface WindowComponents {
@@ -12,20 +16,19 @@ interface WindowComponents {
 
 function WindowManager({}: Props) {
   const [windowComponents, setWindowComponents] = useState<WindowComponents>({});
-  const windows = useSelector((s: RootState) => s.windows);
+  const windows = useSelector((s: RootState) => s.windows.windows);
   const dispatch = useDispatch();
 
   useEffect(() => {
     setWindowComponents({
       main: <MainPlayer key={"main"} />,
-      //  'files': < />,
-      //  'info': < />,
-      //  'projects': < />,
-      //  'resume': < />
+      files: <Files key='files' />,
+      info: <Info key='info' />,
+      projects: <Projects key='projects' />,
+      resume: <Resume key='resume' />
     });
   }, []);
 
-  const activeWindows = new Array<string>();
   const hiddenWindows = new Array<string>();
   const windowKeys = Object.keys(windows);
   for (let i = 0; i < windowKeys.length; i++) {
@@ -35,12 +38,12 @@ function WindowManager({}: Props) {
     }
   }
 
-  const hidden = hiddenWindows.reduce<State>((acc: State, key: string) => {
+  const hidden = hiddenWindows.reduce<Windows>((acc: Windows, key: string) => {
     acc[key] = windows[key];
     return acc;
-  }, {} as State);
+  }, {} as Windows);
 
-  function handleIconClick(ev: React.MouseEvent, windowName: string) {
+  function handleIconClick(_ev: React.MouseEvent, windowName: string) {
     dispatch(toggleOnTop({ name: windowName }));
   }
 

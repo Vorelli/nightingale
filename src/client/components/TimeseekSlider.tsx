@@ -1,15 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { Box } from "@mui/material";
 import StyledSlider from "./StyledSlider";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { AudioContextState, useAudioContext } from "./AudioContextProvider";
+import { useAudioContext } from "./AudioContextProvider";
 import { secondsToTime } from "../helpers/time";
-import { TimeseekContextState, useTimeseekContext } from "./TimeseekContextProvider";
+import { useTimeseekContext } from "./TimeseekContextProvider";
 
-type OriginalProps = { localVolume: number };
 type Props = {
-  localVolume: number;
   audioRef: React.MutableRefObject<HTMLAudioElement | null> | undefined;
   movingTime: boolean | undefined;
   currentT: number | undefined;
@@ -18,26 +16,17 @@ type Props = {
 };
 
 const TimeseekSliderInner = React.memo(function TimeseekSlider({
-  localVolume,
-  movingTime,
-  audioRef,
   currentT,
   setMovingTime,
   setCurrentT,
 }: Props) {
   const state = useSelector((s: RootState) => s.songs);
-  const { currentSong, startingTime, songs } = state;
+  const { currentSong, songs } = state;
   const song = songs[currentSong || 0];
   const { URL } = useSelector((s: RootState) => s.global);
   const [sharedSliderClass, _setSharedSliderClass] = useState(
     "bg-gradient-to-r from-secondary via-accent to-secondary"
   );
-
-  useEffect(() => {
-    if (!!audioRef && audioRef.current && !movingTime) {
-      (audioRef.current as HTMLAudioElement).volume = localVolume / 100;
-    }
-  }, [localVolume, audioRef, startingTime, currentSong]);
 
   function handleSeek(_: any) {
     console.log("sending to Server:", currentT);
@@ -47,7 +36,7 @@ const TimeseekSliderInner = React.memo(function TimeseekSlider({
     setMovingTime && setMovingTime(false);
   }
 
-  function handleTimeChange(ev: Event, value: number | number[]) {
+  function handleTimeChange(_ev: Event, value: number | number[]) {
     setMovingTime && setMovingTime(true);
     typeof value === "number"
       ? setCurrentT && setCurrentT(value, "handleTimeChange type number")
@@ -81,7 +70,7 @@ const TimeseekSliderInner = React.memo(function TimeseekSlider({
   );
 });
 
-function TimeseekSlider({ localVolume }: OriginalProps) {
+function TimeseekSlider() {
   const timeseekContext = useTimeseekContext();
   const audioContext = useAudioContext();
   const setCurrentT = timeseekContext?.setCurrentT;
@@ -101,7 +90,6 @@ function TimeseekSlider({ localVolume }: OriginalProps) {
 
   return (
     <TimeseekSliderInner
-      localVolume={localVolume}
       audioRef={audioContext?.audioRef}
       currentT={timeseekContext?.currentT}
       movingTime={timeseekContext?.movingTime}

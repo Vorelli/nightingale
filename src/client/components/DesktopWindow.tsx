@@ -4,7 +4,11 @@ import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../redux/store";
 import { AppDispatch } from "../redux/store";
-import { ActionCreatorWithPayload } from "@reduxjs/toolkit/dist";
+import {
+  handleDragStart,
+  toggleHidden,
+  toggleOnTop,
+} from "../redux/reducers/windowReducer";
 
 interface Position {
   x: number;
@@ -21,10 +25,7 @@ const DesktopWindow = (props: {
   title?: string;
   id?: string;
   children: React.ReactElement[];
-  icon: string;
   storeName: string;
-  toggleHidden: ActionCreatorWithPayload<any, "windows/toggleHidden">;
-  toggleOnTop: ActionCreatorWithPayload<any, "windows/toggleOnTop">;
 }) => {
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
@@ -32,9 +33,17 @@ const DesktopWindow = (props: {
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const container = useRef(null);
   const dispatch: AppDispatch = useDispatch();
-  const { onTop, hidden } = useSelector((s: RootState) => s.windows[props.storeName]);
-  const [fixedPos, setFixedPos] = useState<undefined | Position>({ x: 50, y: 50 });
-  // const [heldPos, setHeldPos] = useState<Position>({ x: 50, y: 50 });
+  const { onTop, hidden } = useSelector(
+    (s: RootState) => s.windows.windows[props.storeName]
+  );
+  const order = useSelector((s: RootState) =>
+    s.windows.windowOrder.indexOf(props.storeName)
+  );
+  console.log("order:", order);
+  const [fixedPos, setFixedPos] = useState<undefined | Position>({
+    x: windowWidth - width - minBound,
+    y: windowHeight - height - minBound,
+  });
 
   useEffect(() => {
     const dims = getWidthAndHeight();
@@ -42,33 +51,20 @@ const DesktopWindow = (props: {
     setWidth(dims.w);
   }, [hidden]);
 
-  // useEffect(() => {
-  //   console.log("switching to onTop:", onTop, "fixed:", fixedPos, "held:", heldPos);
-  //   if (onTop) {
-  //     if (fixedPos !== undefined) {
-  //       setHeldPos(fixedPos);
-  //     }
-  //     const dims = getWidthAndHeight();
-  //     console.log(dims);
-  //     setFixedPos((fp) => {
-  //       console.log("current fp:", fp);
-  //       const newPos = { x: 0 - dims.w, y: 0 - dims.h };
-  //       console.log("newPos:", newPos);
-  //       return newPos;
-  //     });
-  //   } else if (!onTop) {
-  //     setFixedPos(heldPos);
-  //   }
-  // }, [onTop]);
-
   useEffect(() => {
     setFixedPos((pos: Position | undefined): Position | undefined => {
       if (pos === undefined) return undefined;
       const dims = getWidthAndHeight();
       const tempX = Math.max(10, windowWidth - dims.w - minBound);
-      const x = pos.x + dims.w < windowWidth - minBound * 2 && pos.x >= minBound ? pos.x : tempX;
+      const x =
+        pos.x + dims.w < windowWidth - minBound * 2 && pos.x >= minBound
+          ? pos.x
+          : tempX;
       const tempY = Math.max(10, windowHeight - dims.h - minBound);
-      const y = pos.y + dims.h < windowHeight - minBound * 2 && pos.y >= minBound ? pos.y : tempY;
+      const y =
+        pos.y + dims.h < windowHeight - minBound * 2 && pos.y >= minBound
+          ? pos.y
+          : tempY;
       return x === pos.x && y === pos.y ? pos : { x, y };
     });
   }, [fixedPos, width, height, windowHeight, windowWidth]);
@@ -107,6 +103,7 @@ const DesktopWindow = (props: {
         }}
         onStart={(_ev: DraggableEvent) => {
           setFixedPos(undefined);
+          dispatch(handleDragStart({ name: props.storeName }));
         }}
         onStop={(_ev: DraggableEvent, data: DraggableData) => {
           const newX = Math.round(data.x / 10) * 10;
@@ -122,7 +119,9 @@ const DesktopWindow = (props: {
           className={
             // (onTop ? "opacity-0 pointer-events-none " : "pointer-events-auto opacity-100 ") +
             (hidden ? "small text-sm" : "big text-md") +
-            " pointer-events-auto relative desktopWindow bg-gradient-to-r before:z-[-5] from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid" // drop-shadow-md shadow drop-shadow-accent shadow-accent"
+            " pointer-events-auto absolute desktopWindow bg-gradient-to-r before:z-[-1] z-[" +
+            (1 + order) +
+            "] from-primary via-secondary to-primary transition-[height] border-transparent border-2 border-solid border-accent before:w-full before:bg-base-100 before:absolute before:h-full before:left-0 box-border p-2 pt-0 grid" // drop-shadow-md shadow drop-shadow-accent shadow-accent"
           }
           ref={container}
         >
@@ -143,7 +142,7 @@ const DesktopWindow = (props: {
                   alt="Nightingale Logo"
                   draggable={false}
                   className="w-8 h-8 relative left-1 top-1"
-                  src={props.icon}
+                  src={"/icons/" + props.storeName + ".png"}
                 />
               </div>
               <h1 className="justify-start h-full overflow-y-auto">
@@ -152,8 +151,12 @@ const DesktopWindow = (props: {
             </div>
             <HeaderBar
               storeName={props.storeName}
-              onShowHideClick={() => dispatch(props.toggleHidden({ name: props.storeName }))}
-              onMoveToTopClick={() => dispatch(props.toggleOnTop({ name: props.storeName }))}
+              onShowHideClick={() =>
+                dispatch(toggleHidden({ name: props.storeName }))
+              }
+              onMoveToTopClick={() =>
+                dispatch(toggleOnTop({ name: props.storeName }))
+              }
             />
           </header>
           {props.children}

@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import MyIconButton from "./MyIconButton";
@@ -17,8 +17,8 @@ type Props = {
 };
 
 const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
-  const [localVolume, setLocalVolume] = useState(5);
-  const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+  const [localVolume, actuallySetLocalVolume] = useState(loadVolume());
+  const { hidden } = useSelector((s: RootState) => s.windows.windows["main"]);
   const [iconSx, setIconSx] = useState({ width: "24px", height: "24px" });
   const { URL } = useSelector((s: RootState) => s.global);
   const [lastVolume, setLastVolume] = useState(0);
@@ -31,13 +31,37 @@ const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
     fetch(URL + "/api/next", { method: "PUT" });
   }
 
-  useEffect(() => {
+  function setLocalVolume(num: number) {
+    actuallySetLocalVolume(num);
+    localStorage.setItem("volume", num + "");
     if (audioRef && audioRef.current) {
-      audioRef.current.volume = localVolume / 100;
+      audioRef.current.volume = num / 100;
     }
-  }, [localVolume]);
+  }
+
+  useEffect(() => {
+    if (!!audioRef && audioRef.current) {
+      (audioRef.current as HTMLAudioElement).volume = localVolume / 100;
+    }
+  }, [localVolume, audioRef]);
+
+  function loadVolume(): number {
+    let loaded = localStorage.getItem("volume");
+    if (loaded === null) loaded = "5";
+    const parsed = parseInt(loaded);
+    if (Number.isNaN(parsed)) {
+      return 5;
+    } else if (parsed < 0) {
+      return 0;
+    } else if (parsed > 100) {
+      return 100;
+    } else {
+      return parsed;
+    }
+  }
 
   function handleVolumeChange(_ev: Event, value: number | number[]) {
+    console.log("volumeChangedTo:", value);
     if (typeof value === "number") {
       setLocalVolume(value);
     }
@@ -62,7 +86,11 @@ const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
 
   const [audioSx, _] = React.useState({ width: "16px", height: "16px" });
   const audioIcon =
-    localVolume === 0 ? <HeadsetOffIcon sx={audioSx} /> : <HeadphonesIcon sx={audioSx} />;
+    localVolume === 0 ? (
+      <HeadsetOffIcon sx={audioSx} />
+    ) : (
+      <HeadphonesIcon sx={audioSx} />
+    );
 
   return (
     <>
@@ -80,7 +108,7 @@ const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
         <MyIconButton name="Previous" onClick={handleNextClick}>
           <SkipNextIcon sx={iconSx} />
         </MyIconButton>
-        <TimeseekSlider localVolume={localVolume} />
+        <TimeseekSlider />
         <Box className="flex w-[100px] items-center">
           <MyIconButton
             name={localVolume === 0 ? "Unmute" : "Mute"}

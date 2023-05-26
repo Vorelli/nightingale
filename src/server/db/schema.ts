@@ -180,10 +180,9 @@ async function dbMigrate(): Promise<[NodePgDatabase, pg.Pool]> {
     idleTimeoutMillis: 50 * 1000,
     max: 50,
   });
-  pool.on("error", (err, client) => {
+  pool.on("error", (err, _client) => {
     console.log("server encountered error with pg database:", err);
     console.log("hopefully it will keep running...");
-    client.release();
   });
   const db = drizzle(pool);
   await migrate(db, {

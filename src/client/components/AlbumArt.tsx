@@ -6,7 +6,7 @@ type Props = {};
 
 function AlbumArt({}: Props) {
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
-  const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+  const { hidden } = useSelector((s: RootState) => s.windows.windows["main"]);
   const song = songs[currentSong || ""];
   const { URL } = useSelector((s: RootState) => s.global);
 

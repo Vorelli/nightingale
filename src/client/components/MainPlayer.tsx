@@ -1,8 +1,7 @@
 import React from "react";
 import DesktopWindow from "./DesktopWindow";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { toggleHidden, toggleOnTop } from "../redux/reducers/windowReducer";
 import PlaylistContainer from "./PlaylistContainer";
 import Collection from "./Collection";
 import FilterBar from "./FilterBar";
@@ -12,7 +11,7 @@ import FirstTimeButton from "./FirstTimeButton";
 
 const MainPlayer = function MainPlayer() {
   const windowName = "main";
-  const { hidden } = useSelector((s: RootState) => s.windows[windowName]);
+  const { hidden } = useSelector((s: RootState) => s.windows.windows[windowName]);
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
   const { status } = useSelector((s: RootState) => s.settings);
   const { audioPlayable } = useSelector((s: RootState) => s.global);
@@ -20,20 +19,15 @@ const MainPlayer = function MainPlayer() {
 
   return (
     <DesktopWindow
-      icon={"/icon.png"}
       title={
         "Nightingale " +
           status +
-          //" " +
-          //<TitleAnimation /> +
           " " +
           (song &&
             song.albumArtist &&
             song.albumArtist + " - " + song.albumName + " - " + song.name) || "Loading..."
       }
       storeName={windowName}
-      toggleHidden={toggleHidden}
-      toggleOnTop={toggleOnTop}
       id="main-player"
     >
       {(!audioPlayable && <FirstTimeButton />) || <></>}

@@ -10,7 +10,7 @@ type Props = {};
 function PlayPauseButton({}: Props) {
   const { status } = useSelector((s: RootState) => s.settings);
   const { URL } = useSelector((s: RootState) => s.global);
-  const { hidden } = useSelector((s: RootState) => s.windows["main"]);
+  const { hidden } = useSelector((s: RootState) => s.windows.windows["main"]);
   function handlePlayPause() {
     fetch(URL + "/api/playpause/", { method: "PUT" });
   }
