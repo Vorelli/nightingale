@@ -9,9 +9,9 @@ migrations-folder/
 music/
 **/streaming/*.*
 compose.yaml
-public/bundle.js
-public/bundle.js.LICENSE.txt
-public/main.css
+public/*.js
+public/*.js.LICENSE.txt
+public/*.css
 public/index.html
 .pnpm-debug.log
 pnpm-lock.yaml
