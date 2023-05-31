@@ -22,7 +22,9 @@ export interface Album {
   inDb: boolean;
 }
 
-export interface appWithExtras extends express.Application, WithWebsocketMethod {
+export interface appWithExtras
+  extends express.Application,
+    WithWebsocketMethod {
   locals: {
     md5s: string[];
     __dirname: string;
@@ -32,6 +34,7 @@ export interface appWithExtras extends express.Application, WithWebsocketMethod 
     lastTimestamp: bigint;
     shuffleBy: string;
     md5ToSong: { [key: string]: Song };
+    infoDir: string;
     status: "PLAYING" | "PAUSED";
     getWss: Function;
     pool: Pool;

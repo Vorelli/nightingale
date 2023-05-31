@@ -53,16 +53,23 @@ async function firstRun(): Promise<
   app.locals.shuffleBy = "random";
   app.locals.pool = pool;
   app.locals.db = db;
+  const infoDir = path.resolve(__dirname, "../public/info");
+  app.locals.infoDir = infoDir;
   app.locals.wait = new Promise<void>((resolve, reject) => {
     loadSongs(app, db)
       .then(async (albums) => {
-        const md5s = albums.flatMap((album: Album) => album.songs.map((s: Song) => s.md5));
-        const md5ToSong = albums.reduce((acc: { [key: string]: Song }, album) => {
-          album.songs.forEach((song) => {
-            acc[song.md5] = song;
-          });
-          return acc;
-        }, {});
+        const md5s = albums.flatMap((album: Album) =>
+          album.songs.map((s: Song) => s.md5)
+        );
+        const md5ToSong = albums.reduce(
+          (acc: { [key: string]: Song }, album) => {
+            album.songs.forEach((song) => {
+              acc[song.md5] = song;
+            });
+            return acc;
+          },
+          {}
+        );
         app.locals.md5s = md5s;
         app.locals.md5ToSong = md5ToSong;
         initializeQueue(app as appWithExtras);

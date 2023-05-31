@@ -24,8 +24,9 @@ const minBound = 10;
 const DesktopWindow = (props: {
   title?: string;
   id?: string;
-  children: React.ReactElement[];
+  children: React.ReactElement[] | React.ReactElement;
   storeName: string;
+  cutoutIcon?: boolean;
 }) => {
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
@@ -137,7 +138,11 @@ const DesktopWindow = (props: {
                 <img
                   alt="Nightingale Logo"
                   draggable={false}
-                  className="w-8 h-8 relative left-1 top-1"
+                  className={
+                    props.cutoutIcon
+                      ? "w-10 h-10"
+                      : "w-8 h-8 relative left-1 top-1"
+                  }
                   src={"/icons/" + props.storeName + ".png"}
                 />
               </div>

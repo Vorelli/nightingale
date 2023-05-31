@@ -82,21 +82,59 @@ FROM
   });
 });
 
-router.get("/info", (_req, res) => {
-  readFile(
-    path.resolve(process.env.INFO_DIRECTORY || "", "info.txt"),
-    {},
-    (err, data) => {
-      if (err) {
-        console.error("failed to find or read the info.txt file:", err);
-        return res.sendStatus(500);
-      }
-      const dataString = new String(data);
-      console.log(data);
-      console.log(dataString);
-      res.json({ info: dataString });
+router.get("/resume", (req, res) => {
+  let resumeD: undefined | Buffer;
+  let personalD: undefined | string;
+
+  function sendData() {
+    res.json({
+      personal: {
+        name: process.env.NAME,
+        data: personalD,
+      },
+      resume: resumeD,
+    });
+  }
+
+  function handleResumeRead(err: NodeJS.ErrnoException | null, data: Buffer) {
+    if (err) {
+      console.error("Error occurred when trying to load the resume.pdf:", err);
+      res.sendStatus(500);
     }
-  );
+    resumeD = data;
+    if (personalD !== undefined) {
+      sendData();
+    }
+  }
+
+  function handleInfoRead(err: NodeJS.ErrnoException | null, data: Buffer) {
+    if (err) {
+      console.error("Error occurred when trying to load the resume.pdf:", err);
+      res.sendStatus(500);
+    }
+    personalD = new String(data) as string;
+    if (resumeD !== undefined) {
+      sendData();
+    }
+  }
+
+  const infoDir = (req.app as appWithExtras).locals.infoDir;
+  readFile(path.resolve(infoDir, "resume.pdf"), {}, handleResumeRead);
+  readFile(path.resolve(infoDir, "personal.html"), {}, handleInfoRead);
+});
+
+router.get("/info", (req, res) => {
+  const infoDir = (req.app as appWithExtras).locals.infoDir;
+  readFile(path.resolve(infoDir, "info.txt"), {}, (err, data) => {
+    if (err) {
+      console.error("failed to find or read the info.txt file:", err);
+      return res.sendStatus(500);
+    }
+    const dataString = new String(data);
+    console.log(data);
+    console.log(dataString);
+    res.json({ info: dataString });
+  });
 });
 
 router.get("/playlists", (req, res) => {

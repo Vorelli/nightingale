@@ -4,6 +4,7 @@ import { AudioContextProvider } from "./AudioContextProvider";
 import { NodeContextProvider } from "./NodeContextProvider";
 import { TimeseekContextProvider } from "./TimeseekContextProvider";
 import { InfoContextProvider } from "./InfoContextProvider";
+import { ResumeContextProvider } from "./ResumeContextProvider";
 
 const App = () => {
   return (
@@ -11,7 +12,9 @@ const App = () => {
       <TimeseekContextProvider>
         <AudioContextProvider>
           <InfoContextProvider>
-            <Desktop />
+            <ResumeContextProvider>
+              <Desktop />
+            </ResumeContextProvider>
           </InfoContextProvider>
         </AudioContextProvider>
       </TimeseekContextProvider>

@@ -28,7 +28,11 @@ const AppDock = ({ windows, handleClick }: Props) => {
             style={calculatePos(i, windows)}
           >
             <img
-              className="h-8 object-cover w-8 m-1 bg-transparent relative"
+              className={
+                windowName !== "resume"
+                  ? "h-8 w-8 m-1"
+                  : "h-10 w-10" + " object-cover bg-transparent relative"
+              }
               src={"/icons/" + windowName + ".png"}
             />
           </div>

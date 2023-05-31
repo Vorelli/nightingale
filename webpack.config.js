@@ -15,7 +15,10 @@ export default {
     rules: [
       {
         test: /\.css$/i,
-        include: path.resolve(__dirname, "src/client"),
+        include: [
+          path.resolve(__dirname, "src/client"),
+          path.resolve(__dirname, "node_modules"),
+        ],
         use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
       },
       {
@@ -39,7 +42,9 @@ export default {
     path: path.resolve(__dirname, "public"),
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: path.resolve(__dirname, "src/client/index.html") }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, "src/client/index.html"),
+    }),
     new MiniCssExtractPlugin(),
     //new Dotenv({}),
   ],
