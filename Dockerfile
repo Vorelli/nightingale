@@ -14,7 +14,7 @@ RUN pnpm build:back
 RUN pnpm migrate_db
 
 FROM node:16-alpine AS release
-RUN apk add  --no-cache ffmpeg
+RUN apk add ffmpeg
 WORKDIR /app
 RUN mkdir /app/public
 RUN mkdir /app/public/streaming

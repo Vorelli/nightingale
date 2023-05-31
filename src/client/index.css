@@ -7,11 +7,15 @@ body,
 #app {
   width: 100%;
   height: 100%;
-  font-family: 'Quicksand, Times New Roman';
+  font-family: "Quicksand, Times New Roman";
+}
+
+a {
+  text-decoration: underline;
 }
 
 .playlistBar {
-  scrollbar-gutter: stable
+  scrollbar-gutter: stable;
 }
 
 .playlistBar::-webkit-scrollbar {
@@ -23,7 +27,12 @@ body,
 .playlistBar::-webkit-scrollbar-track {
   width: 1px;
   background: rgb(36, 0, 33);
-  background: linear-gradient(90deg, rgba(36, 0, 33, 1) 0%, rgba(121, 9, 117, 1) 50%, rgba(128, 0, 255, 1) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(36, 0, 33, 1) 0%,
+    rgba(121, 9, 117, 1) 50%,
+    rgba(128, 0, 255, 1) 100%
+  );
 }
 
 .playlistBar::-webkit-scrollbar-thumb {
@@ -31,11 +40,11 @@ body,
   width: 1px;
   background-color: white;
   color: white;
-  background: linear-gradient(270deg, transparent, white, transparent)
+  background: linear-gradient(270deg, transparent, white, transparent);
 }
 
 .playlistBar::-webkit-scrollbar-thumb::after {
-  content: '';
+  content: "";
   position: absolute;
   top: calc(var(--y, 0) * 1px - 50px);
   left: calc(var(--x, 0) * 1px - 50px);
@@ -45,7 +54,7 @@ body,
   opacity: 0.3;
 }
 
-.collectionList  {
+.collectionList {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
@@ -63,11 +72,11 @@ body,
   width: 1px;
   background-color: white;
   color: white;
-  background: linear-gradient(180deg, transparent, white, transparent)
+  background: linear-gradient(180deg, transparent, white, transparent);
 }
 
 .collectionList::-webkit-scrollbar-thumb::after {
-  content: '';
+  content: "";
   position: absolute;
   top: calc(var(--y, 0) * 1px - 50px);
   left: calc(var(--x, 0) * 1px - 50px);
@@ -80,7 +89,12 @@ body,
 .collectionList::-webkit-scrollbar-track {
   width: 1px;
   background: rgb(36, 0, 33);
-  background: linear-gradient(0deg, rgba(36, 0, 33, 1) 0%, rgba(121, 9, 117, 1) 50%, rgba(128, 0, 255, 1) 100%);
+  background: linear-gradient(
+    0deg,
+    rgba(36, 0, 33, 1) 0%,
+    rgba(121, 9, 117, 1) 50%,
+    rgba(128, 0, 255, 1) 100%
+  );
 }
 
 .desktopWindow {
@@ -88,100 +102,106 @@ body,
   background-size: 200%;
 }
 
-@keyframes rainbow {100%,0%{
-  background-color: rgb(255,0,0);
+@keyframes rainbow {
+  100%,
+  0% {
+    background-color: rgb(255, 0, 0);
+  }
+  8% {
+    background-color: rgb(255, 127, 0);
+  }
+  16% {
+    background-color: rgb(255, 255, 0);
+  }
+  25% {
+    background-color: rgb(127, 255, 0);
+  }
+  33% {
+    background-color: rgb(0, 255, 0);
+  }
+  41% {
+    background-color: rgb(0, 255, 127);
+  }
+  50% {
+    background-color: rgb(0, 255, 255);
+  }
+  58% {
+    background-color: rgb(0, 127, 255);
+  }
+  66% {
+    background-color: rgb(0, 0, 255);
+  }
+  75% {
+    background-color: rgb(127, 0, 255);
+  }
+  83% {
+    background-color: rgb(255, 0, 255);
+  }
+  91% {
+    background-color: rgb(255, 0, 127);
+  }
 }
-8%{
-  background-color: rgb(255,127,0);
-}
-16%{
-  background-color: rgb(255,255,0);
-}
-25%{
-  background-color: rgb(127,255,0);
-}
-33%{
-  background-color: rgb(0,255,0);
-}
-41%{
-  background-color: rgb(0,255,127);
-}
-50%{
-  background-color: rgb(0,255,255);
-}
-58%{
-  background-color: rgb(0,127,255);
-}
-66%{
-  background-color: rgb(0,0,255);
-}
-75%{
-  background-color: rgb(127,0,255);
-}
-83%{
-  background-color: rgb(255,0,255);
-}
-91%{
-  background-color: rgb(255,0,127);
-}}
 
-@keyframes rainbowPastel {100%,0%{
-  background-color: #fea3aa;
-  opacity: 1;
+@keyframes rainbowPastel {
+  100%,
+  0% {
+    background-color: #fea3aa;
+    opacity: 1;
+  }
+  8% {
+    background-color: #fea3aa;
+  }
+  16% {
+    background-color: #f8b88b;
+    opacity: 0.75;
+  }
+  25% {
+    background-color: #f8b88b;
+  }
+  33% {
+    background-color: #faf884;
+    opacity: 0.5;
+  }
+  41% {
+    background-color: #faf884;
+  }
+  50% {
+    background-color: #baed91;
+    opacity: 0.25;
+  }
+  58% {
+    background-color: #baed91;
+  }
+  66% {
+    background-color: #b2cefe;
+    opacity: 0.5;
+  }
+  75% {
+    background-color: #b2cefe;
+  }
+  83% {
+    background-color: #f2a2e8;
+    opacity: 0.75;
+  }
+  91% {
+    background-color: #f2a2e8;
+  }
 }
-8%{
-  background-color: #fea3aa;
-}
-16%{
-  background-color: #f8b88b;
-  opacity: 0.75;
-}
-25%{
-  background-color: #f8b88b;
-}
-33%{
-  background-color: #faf884;
-  opacity: 0.5;
-}
-41%{
-  background-color: #faf884;
-}
-50%{
-  background-color: #baed91;
-  opacity: 0.25;
-}
-58%{
-  background-color: #baed91;
-}
-66%{
-  background-color: #b2cefe;
-  opacity: .5;
-}
-75%{
-  background-color: #b2cefe;
-}
-83%{
-  background-color: #f2a2e8;
-  opacity: .75;
-}
-91%{
-  background-color: #f2a2e8;
-}}
 
 .rainbowBorder {
-  animation: rainbow linear 5s infinite
+  animation: rainbow linear 5s infinite;
 }
 
 #main-player.big {
   width: 100%;
   height: 100%;
-  grid-template: 10% 60% 17.5% 12.5%/30% 70%
+  grid-template: 10% 60% 17.5% 12.5%/30% 70%;
 }
 
 #main-player.small {
   width: 100%;
   height: 100%;
-  grid-template: 1fr 1fr/50px 1fr
+  grid-template: 1fr 1fr/50px 1fr;
 }
 
 #files-player.small {
@@ -199,9 +219,11 @@ body,
 @keyframes moveBack {
   0% {
     background-position: 0% center;
-  } 50% {
+  }
+  50% {
     background-position: -100% center;
-  } 100% {
+  }
+  100% {
     background-position: 0% center;
   }
 }
@@ -209,15 +231,22 @@ body,
 @keyframes moveBackground {
   0% {
     background-position: 0% center;
-  } 50% {
+  }
+  50% {
     background-position: -100% center;
-  } 100% {
+  }
+  100% {
     background-position: 0% center;
   }
 }
 
 .playlistLabel {
-  background: linear-gradient(90deg, rgba(36, 0, 33, 1) 0%, rgba(121, 9, 117, 1) 50%, rgba(36, 0, 33, 1) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(36, 0, 33, 1) 0%,
+    rgba(121, 9, 117, 1) 50%,
+    rgba(36, 0, 33, 1) 100%
+  );
   background-repeat: repeat;
   background-position: 0%;
   background-size: 200%;

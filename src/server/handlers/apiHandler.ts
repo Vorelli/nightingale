@@ -1,9 +1,10 @@
 import express, { Response, Request } from "express";
 import { playlistSongs, playlists } from "../db/schema.js";
-import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
 import { appWithExtras } from "../types/types.js";
 import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
+import { readFile } from "fs";
+import path from "path";
 const router = express.Router();
 
 router.get("/songs", (req, res) => {
@@ -81,8 +82,25 @@ FROM
   });
 });
 
+router.get("/info", (_req, res) => {
+  readFile(
+    path.resolve(process.env.INFO_DIRECTORY || "", "info.txt"),
+    {},
+    (err, data) => {
+      if (err) {
+        console.error("failed to find or read the info.txt file:", err);
+        return res.sendStatus(500);
+      }
+      const dataString = new String(data);
+      console.log(data);
+      console.log(dataString);
+      res.json({ info: dataString });
+    }
+  );
+});
+
 router.get("/playlists", (req, res) => {
-  return (req.app as appWithExtras).locals.db
+  (req.app as appWithExtras).locals.db
     .select()
     .from(playlists)
     .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
@@ -97,6 +115,13 @@ router.get("/playlists", (req, res) => {
         return acc;
       }, {} as { [key: string]: { [key: string]: any } });
       res.json(data);
+    })
+    .catch((err) => {
+      console.error(
+        "Error occurred when trying to look up playlists from database.",
+        err
+      );
+      res.sendStatus(500);
     });
 });
 
@@ -110,9 +135,11 @@ function toObject(toBeJson: any) {
 }
 
 router.get("/sync", (req, res) => {
-  const { status, currentTime, queues, queueIndex } = (req.app as appWithExtras).locals;
+  const { status, currentTime, queues, queueIndex } = (req.app as appWithExtras)
+    .locals;
   const sync = {
-    currentTime: (currentTime && (currentTime / BigInt(Math.pow(10, 6))).toString()) || 0,
+    currentTime:
+      (currentTime && (currentTime / BigInt(Math.pow(10, 6))).toString()) || 0,
     currentSong: queues[queueIndex][0],
     status: status,
   };
@@ -160,7 +187,8 @@ router.put("/prev", (req, res) => {
 });
 
 router.put("/time", (req: Request, res: Response) => {
-  const parsedNewTime = typeof req.query.newTime === "string" && parseFloat(req.query.newTime);
+  const parsedNewTime =
+    typeof req.query.newTime === "string" && parseFloat(req.query.newTime);
   if (
     req.query &&
     typeof req.query.newTime === "string" &&
@@ -170,7 +198,9 @@ router.put("/time", (req: Request, res: Response) => {
     const app = req.app as appWithExtras;
     app.locals.currentTime = BigInt(parsedNewTime);
     app.locals.getWss().clients.forEach((client: WebSocket) => {
-      client.send("setTime " + app.locals.currentTime / BigInt(Math.pow(10, 6)));
+      client.send(
+        "setTime " + app.locals.currentTime / BigInt(Math.pow(10, 6))
+      );
     });
     res.sendStatus(200);
   } else {

@@ -5,32 +5,38 @@ import AppDock from "./AppDock";
 import React, { useEffect, useState } from "react";
 import { toggleOnTop, Windows } from "../redux/reducers/windowReducer";
 import Files from "./Files";
-import Info from './Info';
+import Info from "./Info";
 import Projects from "./Projects";
 import Resume from "./Resume";
+import { useInfoContext } from "./InfoContextProvider";
 
 type Props = {};
 interface WindowComponents {
-  [key: string]: React.ReactElement;
+  [key: string]: React.ReactElement | null;
 }
 
 function WindowManager({}: Props) {
-  const [windowComponents, setWindowComponents] = useState<WindowComponents>({});
+  const [windowComponents, setWindowComponents] = useState<WindowComponents>(
+    {}
+  );
   const windows = useSelector((s: RootState) => s.windows.windows);
   const dispatch = useDispatch();
+  const infoC = useInfoContext();
 
   useEffect(() => {
     setWindowComponents({
       main: <MainPlayer key={"main"} />,
-      files: <Files key='files' />,
-      info: <Info key='info' />,
-      projects: <Projects key='projects' />,
-      resume: <Resume key='resume' />
+      files: <Files key="files" />,
+      info: infoC && infoC.info ? <Info key="info" /> : null,
+      projects: <Projects key="projects" />,
+      resume: <Resume key="resume" />,
     });
-  }, []);
+  }, [infoC]);
 
   const hiddenWindows = new Array<string>();
-  const windowKeys = Object.keys(windows);
+  const windowKeys = Object.keys(windows).filter(
+    (key) => !!windowComponents[key]
+  );
   for (let i = 0; i < windowKeys.length; i++) {
     const window = windows[windowKeys[i]];
     if (windowComponents[windowKeys[i]]) {

@@ -3,13 +3,16 @@ import Desktop from "./Desktop";
 import { AudioContextProvider } from "./AudioContextProvider";
 import { NodeContextProvider } from "./NodeContextProvider";
 import { TimeseekContextProvider } from "./TimeseekContextProvider";
+import { InfoContextProvider } from "./InfoContextProvider";
 
 const App = () => {
   return (
     <NodeContextProvider>
       <TimeseekContextProvider>
         <AudioContextProvider>
-          <Desktop />
+          <InfoContextProvider>
+            <Desktop />
+          </InfoContextProvider>
         </AudioContextProvider>
       </TimeseekContextProvider>
     </NodeContextProvider>

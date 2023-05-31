@@ -14,4 +14,7 @@ export default {
     extend: {},
   },
   plugins: [daisyui, tailwindcssAnimate],
+  daisyui: {
+    themes: ["dark"],
+  },
 };
