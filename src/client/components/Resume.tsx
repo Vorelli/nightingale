@@ -18,7 +18,6 @@ const Resume = () => {
   const { hidden } = useSelector((s: RootState) => s.windows.windows["resume"]);
   const resumeC = useResumeContext();
 
-  console.log(resumeC);
   const resume =
     resumeC && resumeC.resume ? (
       <Document
