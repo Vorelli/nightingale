@@ -39,7 +39,7 @@ export function ProjectImageContextProvider({ children }: Props) {
         zoom,
         toggleZoom: (i: number) => {
           setZoom((z) => !z);
-          !!i && setLastI(i);
+          i !== undefined && setLastI(i);
         },
         lastI,
         lastFirst,

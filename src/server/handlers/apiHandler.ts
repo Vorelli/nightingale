@@ -141,8 +141,6 @@ router.get("/info", (req, res) => {
       return res.sendStatus(500);
     }
     const dataString = new String(data);
-    console.log(data);
-    console.log(dataString);
     res.json({ info: dataString });
   });
 });

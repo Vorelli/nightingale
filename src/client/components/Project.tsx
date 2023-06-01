@@ -39,6 +39,7 @@ const Project = ({ project, handleLeft, handleRight }: Props) => {
   return imageC && imageC.zoom && imageC.image ? (
     <div className="w-full h-full">
       <img
+        className="w-full h-full object-contain"
         onClick={() => imageC.toggleZoom()}
         src={imageC.image.src}
         alt={imageC.image.alt}

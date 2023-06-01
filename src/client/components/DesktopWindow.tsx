@@ -115,6 +115,7 @@ const DesktopWindow = (props: {
         <section
           style={{ width, height, zIndex: 1 + order }}
           id={props.id}
+          onClick={() => dispatch(handleDragStart({ name: props.storeName }))}
           className={
             (hidden ? "small text-sm" : "big text-md") +
             " pointer-events-auto absolute desktopWindow bg-gradient-to-r before:z-[-1] " +

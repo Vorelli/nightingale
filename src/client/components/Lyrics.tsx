@@ -14,6 +14,7 @@ const Lyrics = () => {
       {(!hidden && (
         <div className="overflow-y-scroll flex flex-col items-center col-span-2 m-2 mr-0">
           {(currentSong &&
+            songs[currentSong] &&
             songs[currentSong].lyrics.map((line, i) => {
               line = line.trim();
               return <LyricsLine key={i} line={line === "" ? "<br>" : line} />;
