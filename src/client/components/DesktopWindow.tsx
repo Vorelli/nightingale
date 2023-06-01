@@ -27,6 +27,8 @@ const DesktopWindow = (props: {
   children: React.ReactElement[] | React.ReactElement;
   storeName: string;
   cutoutIcon?: boolean;
+  gridTemplate?: string;
+  headerElements?: React.ReactElement;
 }) => {
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);
@@ -113,7 +115,12 @@ const DesktopWindow = (props: {
         handle=".header"
       >
         <section
-          style={{ width, height, zIndex: 1 + order }}
+          style={{
+            gridTemplate: props.gridTemplate,
+            width,
+            height,
+            zIndex: 1 + order,
+          }}
           id={props.id}
           onClick={() => dispatch(handleDragStart({ name: props.storeName }))}
           className={
@@ -126,12 +133,12 @@ const DesktopWindow = (props: {
           <header
             className={
               (hidden ? "space-x-0.5 " : "space-x-2 ") +
-              "w-full h-12 flex justify-between box-border items-center select-none col-span-2"
+              "w-full h-12 flex justify-between box-border items-center select-none col-span-2 header hover:cursor-move [&>*]:pointer-events-none"
             }
           >
             <div
               className={
-                "flex-1 flex justify-start items-center mt-2 h-10 header hover:cursor-move" +
+                "flex justify-start items-center mt-2 h-10" +
                 (hidden ? " space-x-2 text-sm" : " space-x-4 ")
               }
             >
@@ -151,6 +158,7 @@ const DesktopWindow = (props: {
                 {props.title || "Default Title"}
               </h1>
             </div>
+            {!hidden && props.headerElements}
             <HeaderBar
               storeName={props.storeName}
               onShowHideClick={() =>

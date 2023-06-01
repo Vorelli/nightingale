@@ -5,11 +5,11 @@ import { Pool } from "pg";
 
 export interface Song {
   md5: string;
-  name: string | null;
-  path: string | null;
+  name?: string;
+  path?: string;
   duration: number;
-  track: number | null;
-  lyrics: string | null;
+  track?: number;
+  lyrics?: string;
 }
 
 export interface Album {
@@ -20,6 +20,7 @@ export interface Album {
   genres: string[];
   songs: Song[];
   inDb: boolean;
+  albumId?: string;
 }
 
 export interface appWithExtras

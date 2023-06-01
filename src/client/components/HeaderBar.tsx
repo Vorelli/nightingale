@@ -7,10 +7,12 @@ const HeaderBar = (props: {
   onMoveToTopClick: Function;
   storeName: string;
 }) => {
-  const {  hidden } = useSelector((s: RootState) => s.windows.windows[props.storeName]);
+  const { hidden } = useSelector(
+    (s: RootState) => s.windows.windows[props.storeName]
+  );
 
   return (
-    <div className="flex justify-end pt-2 space-x-1">
+    <div className="flex justify-end pt-2 space-x-1 [&>*]:pointer-events-auto">
       <button
         className="btn btn-sm btn-ghost rounded-none border-2 border-primary btn-square transition-colors hover:border-primary-focus hover:cursor-pointer relative"
         onClick={(ev) => props.onShowHideClick(ev)}

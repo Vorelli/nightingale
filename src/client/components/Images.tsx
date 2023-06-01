@@ -39,18 +39,31 @@ const Images = ({ images }: Props) => {
       stopAutoPlayOnHover={true}
       index={i}
       next={() => setI((i) => (i + 1) % images.length)}
-      prev={() => setI((i) => (i - 1) % images.length)}
+      prev={() => setI((i) => (images.length + (i - 1)) % images.length)}
       autoPlay={auto}
       height="100%"
+      navButtonsWrapperProps={{
+        className: "hover:[&>button]:bg-base-200",
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          pointerEvents: "none",
+        },
+      }}
       NavButton={({ next, className, style, onClick }) => {
-        className += " bg-base-100 color-primary";
+        console.log(className);
+        className +=
+          " h-fit pointer-events-auto hover:bg-base-200 bg-base-100 text-primary ";
         return (
           <IconButton
             onClick={onClick as React.MouseEventHandler}
             className={className}
             style={style}
           >
-            {(next && <East />) || <West />}
+            {(next && <East className="text-primary" />) || (
+              <West className="text-primary" />
+            )}
           </IconButton>
         );
       }}

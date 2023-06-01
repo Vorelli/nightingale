@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  UpdateDeleteAction,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -19,6 +20,10 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const defaultCascade = {
+  onDelete: "cascade" as UpdateDeleteAction,
+  onUpdate: "cascade" as UpdateDeleteAction,
+};
 
 export const artists = pgTable(
   "artists",
@@ -50,36 +55,33 @@ export const albums = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name"),
     year: integer("year"),
-    albumArtist: uuid("albumArtist"),
+    albumArtist: uuid("albumArtist").references(() => artists.id, {
+      onUpdate: "cascade",
+      onDelete: "set null",
+    }),
   },
-  (tags) => ({
-    uniqueIdxId: uniqueIndex("unique_idx_id").on(tags.id),
+  (albums) => ({
+    uniqueIdxId: uniqueIndex("unique_idx_id").on(albums.id),
   })
 );
 
-export const albumArtists = pgTable(
-  "albumArtists",
-  {
-    albumId: uuid("albumId").notNull(),
-    artistId: uuid("artistId").notNull(),
-  },
-  (albumArtists) => ({
-    albumIdFk: foreignKey({ columns: [albumArtists.albumId], foreignColumns: [albums.id] }),
-    artistIdFk: foreignKey({ columns: [albumArtists.artistId], foreignColumns: [artists.id] }),
-  })
-);
+export const albumArtists = pgTable("albumArtists", {
+  albumId: uuid("albumId")
+    .notNull()
+    .references(() => albums.id, defaultCascade),
+  artistId: uuid("artistId")
+    .notNull()
+    .references(() => artists.id, defaultCascade),
+});
 
-export const albumGenres = pgTable(
-  "albumGenres",
-  {
-    albumId: uuid("albumId").notNull(),
-    genreId: uuid("genreId").notNull(),
-  },
-  (albumGenres) => ({
-    album2IdFk: foreignKey({ columns: [albumGenres.albumId], foreignColumns: [albums.id] }),
-    genreIdFk: foreignKey({ columns: [albumGenres.genreId], foreignColumns: [genres.id] }),
-  })
-);
+export const albumGenres = pgTable("albumGenres", {
+  albumId: uuid("albumId")
+    .notNull()
+    .references(() => albums.id, defaultCascade),
+  genreId: uuid("genreId")
+    .notNull()
+    .references(() => genres.id, defaultCascade),
+});
 
 export const songs = pgTable(
   "songs",
@@ -90,10 +92,11 @@ export const songs = pgTable(
     duration: doublePrecision("duration").notNull(),
     track: integer("track"),
     lyrics: text("lyrics"),
-    albumId: uuid("albumId").notNull(),
+    albumId: uuid("albumId")
+      .notNull()
+      .references(() => albums.id, defaultCascade),
   },
   (songs) => ({
-    albumIdFk: foreignKey({ columns: [songs.albumId], foreignColumns: [albums.id] }),
     idxAlbumId: index("idx_album_id").on(songs.albumId),
     uniqueIdxMd5: uniqueIndex("unique_idx_md5").on(songs.md5),
     uniqueIdxPath: uniqueIndex("unique_idx_path").on(songs.path),
@@ -109,33 +112,23 @@ export const playlists = pgTable(
   },
   (playlists) => ({
     uniqueIdxPlaylistId: uniqueIndex("unique_idx_playlist_id").on(playlists.id),
-    uniqueIdxPlaylistName: uniqueIndex("unique_idx_playlist_name").on(playlists.name),
+    uniqueIdxPlaylistName: uniqueIndex("unique_idx_playlist_name").on(
+      playlists.name
+    ),
     idxPlaylistName: index("idx_playlist_name").on(playlists.name),
   })
 );
 
-export const playlistSongs = pgTable(
-  "playlistSongs",
-  {
-    playlistId: uuid("playlistId").notNull(),
-    order: integer("order"),
-    songMd5: varchar("songMd5", { length: 32 }),
-  },
-  (playlistSongs) => ({
-    songMd5Fk: foreignKey({
-      columns: [playlistSongs.songMd5],
-      foreignColumns: [songs.md5],
-    })
-      .onDelete("cascade")
-      .onUpdate("cascade"),
-    playlistIdFk: foreignKey({
-      columns: [playlistSongs.playlistId],
-      foreignColumns: [playlists.id],
-    })
-      .onDelete("cascade")
-      .onUpdate("cascade"),
-  })
-);
+export const playlistSongs = pgTable("playlistSongs", {
+  playlistId: uuid("playlistId")
+    .notNull()
+    .references(() => playlists.id, defaultCascade),
+  order: integer("order"),
+  songMd5: varchar("songMd5", { length: 32 }).references(
+    () => songs.md5,
+    defaultCascade
+  ),
+});
 
 export const session = pgTable(
   "session",

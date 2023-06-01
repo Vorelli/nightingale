@@ -56,7 +56,7 @@ async function firstRun(): Promise<
   const infoDir = path.resolve(__dirname, "../public/info");
   app.locals.infoDir = infoDir;
   app.locals.wait = new Promise<void>((resolve, reject) => {
-    loadSongs(app, db)
+    loadSongs(app as appWithExtras, db)
       .then(async (albums) => {
         const md5s = albums.flatMap((album: Album) =>
           album.songs.map((s: Song) => s.md5)

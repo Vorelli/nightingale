@@ -1,4 +1,4 @@
-import { Icon, IconButton } from "@mui/material";
+import { IconButton } from "@mui/material";
 import React from "react";
 import Images from "./Images";
 import TechnologyBadges from "./TechnologyBadges";
@@ -6,6 +6,8 @@ import TechnologyBadges from "./TechnologyBadges";
 import West from "@mui/icons-material/West";
 import East from "@mui/icons-material/East";
 import { useProjectImageContext } from "./ProjectImageContextProvider";
+import { RootState } from "../redux/store";
+import { useSelector } from "react-redux";
 
 export interface Image {
   src: string;
@@ -35,68 +37,62 @@ interface Props {
 
 const Project = ({ project, handleLeft, handleRight }: Props) => {
   const imageC = useProjectImageContext();
-
-  return imageC && imageC.zoom && imageC.image ? (
-    <div className="w-full h-full">
-      <img
-        className="w-full h-full object-contain"
-        onClick={() => imageC.toggleZoom()}
-        src={imageC.image.src}
-        alt={imageC.image.alt}
-      />
-    </div>
-  ) : (
-    <div
-      style={{ gridTemplate: "10% 85% 5%/1fr 1fr" }}
-      className="h-full w-full grid"
-      id="projects-inner"
-    >
-      <header className="col-span-2 relative flex flex-col items-center">
-        <p>Name: {project.name}</p>
-        <p>Role: {project.role}</p>
-        <div className="absolute right-0 top-0 flex flex-col">
-          {project.links.map((link) => (
-            <a key={link.name} className="text-lg" href={link.url}>
-              {link.name}
-            </a>
-          ))}
-        </div>
-      </header>
-      <div className="left grid p-2" style={{ gridTemplate: "50% 50%/1fr" }}>
-        <Images images={project.images} />
-        <TechnologyBadges technology={project.technology} />
+  const { hidden } = useSelector(
+    (s: RootState) => s.windows.windows["projects"]
+  );
+  return (
+    (hidden && (
+      <div className="row-start-2">
+        Expand the window with the + button in the top right to view projects
       </div>
-      <div className="right flex p-2 flex-col justify-around items-center space-y-2">
-        <h4>Description:</h4>
-        <div className="overflow-y-auto">
-          {project.description.map((p) => (
-            <p className="indent-4" key={p}>
-              {p}
-            </p>
-          ))}
-        </div>
-        <h4>Technical Challenges</h4>
-        <div className="overflow-y-auto">
-          {project.challenges.reduce((acc, challenge) => {
-            return acc.concat(
-              challenge.split("\n").map((challenge) => (
-                <p className="indent-4" key={challenge}>
-                  {challenge}
-                </p>
-              ))
-            );
-          }, new Array<React.ReactElement>())}
-        </div>
+    )) ||
+    (imageC && imageC.zoom && imageC.image ? (
+      <div className="col-span-2 row-span-3 w-full h-full">
+        <img
+          className="w-full h-full object-contain"
+          onClick={() => imageC.toggleZoom()}
+          src={imageC.image.src}
+          alt={imageC.image.alt}
+        />
       </div>
-      <div className="col-span-2 flex justify-between">
-        <IconButton onClick={handleLeft}>
-          <West />
-        </IconButton>
-        <IconButton onClick={handleRight}>
-          <East />
-        </IconButton>
-      </div>
-    </div>
+    ) : (
+      <>
+        <div className="left grid p-2" style={{ gridTemplate: "50% 50%/1fr" }}>
+          <Images images={project.images} />
+          <TechnologyBadges technology={project.technology} />
+        </div>
+        <div className="right flex p-2 flex-col justify-around items-center space-y-2">
+          <h4>Description:</h4>
+          <div className="overflow-y-auto">
+            {project.description.map((p) => (
+              <p className="indent-4" key={p}>
+                {p}
+              </p>
+            ))}
+          </div>
+          <h4>Technical Challenges</h4>
+          <div className="overflow-y-auto">
+            {project.challenges.reduce((acc, challenge) => {
+              return acc.concat(
+                challenge.split("\n").map((challenge) => (
+                  <p className="indent-4" key={challenge}>
+                    {challenge}
+                  </p>
+                ))
+              );
+            }, new Array<React.ReactElement>())}
+          </div>
+        </div>
+        <div className="col-span-2 flex justify-between">
+          <IconButton onClick={(ev) => handleLeft(ev)}>
+            <West className="text-primary" />
+          </IconButton>
+          <IconButton onClick={(ev) => handleRight(ev)}>
+            <East className="text-primary" />
+          </IconButton>
+        </div>
+      </>
+    ))
   );
 };
 
