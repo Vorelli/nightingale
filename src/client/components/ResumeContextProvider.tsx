@@ -30,6 +30,7 @@ export function ResumeContextProvider({ children }: Props) {
     fetch(URL + "/api/resume")
       .then((res) => res.json())
       .then((res) => {
+        console.log(res);
         setResume(res.resume);
         setPersonal(res.personal.data);
         setName(res.personal.name);

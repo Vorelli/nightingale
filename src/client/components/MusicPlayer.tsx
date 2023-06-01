@@ -61,7 +61,6 @@ const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
   }
 
   function handleVolumeChange(_ev: Event, value: number | number[]) {
-    console.log("volumeChangedTo:", value);
     if (typeof value === "number") {
       setLocalVolume(value);
     }

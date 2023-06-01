@@ -5,6 +5,8 @@ import { NodeContextProvider } from "./NodeContextProvider";
 import { TimeseekContextProvider } from "./TimeseekContextProvider";
 import { InfoContextProvider } from "./InfoContextProvider";
 import { ResumeContextProvider } from "./ResumeContextProvider";
+import { ProjectsContextProvider } from "./ProjectsContextProvider";
+import { ProjectImageContextProvider } from "./ProjectImageContextProvider";
 
 const App = () => {
   return (
@@ -13,7 +15,11 @@ const App = () => {
         <AudioContextProvider>
           <InfoContextProvider>
             <ResumeContextProvider>
-              <Desktop />
+              <ProjectsContextProvider>
+                <ProjectImageContextProvider>
+                  <Desktop />
+                </ProjectImageContextProvider>
+              </ProjectsContextProvider>
             </ResumeContextProvider>
           </InfoContextProvider>
         </AudioContextProvider>

@@ -82,45 +82,55 @@ FROM
   });
 });
 
-router.get("/resume", (req, res) => {
-  let resumeD: undefined | Buffer;
-  let personalD: undefined | string;
+function readFileAndThen(
+  fileName: string,
+  res: Response,
+  cb: (data: Buffer) => any
+): void {
+  const infoDir = (res.app as appWithExtras).locals.infoDir;
+  readFile(path.resolve(infoDir, fileName), {}, (err, data) => {
+    if (err) {
+      console.error("failed to find or read the info.txt file:", err);
+      return res.sendStatus(500);
+    }
+    cb(data);
+  });
+}
 
-  function sendData() {
+function readFilesAndThen(
+  fileNames: string[],
+  res: Response,
+  cb: (data: Buffer[]) => any
+): void {
+  const data = new Array<Buffer>(fileNames.length);
+  let saved = 0;
+
+  function saveToData(i: number, d: Buffer) {
+    data[i] = d;
+    saved++;
+    if (saved === fileNames.length) {
+      cb(data);
+    }
+  }
+  for (let i = 0; i < fileNames.length; i++) {
+    readFileAndThen(fileNames[i], res, saveToData.bind(null, i));
+  }
+}
+
+router.get("/resume", (req, res) => {
+  function sendData(data: Buffer[]) {
+    const resume = data[0];
+    const personal = new String(data[1]) as string;
     res.json({
       personal: {
         name: process.env.NAME,
-        data: personalD,
+        data: personal,
       },
-      resume: resumeD,
+      resume: resume,
     });
   }
 
-  function handleResumeRead(err: NodeJS.ErrnoException | null, data: Buffer) {
-    if (err) {
-      console.error("Error occurred when trying to load the resume.pdf:", err);
-      res.sendStatus(500);
-    }
-    resumeD = data;
-    if (personalD !== undefined) {
-      sendData();
-    }
-  }
-
-  function handleInfoRead(err: NodeJS.ErrnoException | null, data: Buffer) {
-    if (err) {
-      console.error("Error occurred when trying to load the resume.pdf:", err);
-      res.sendStatus(500);
-    }
-    personalD = new String(data) as string;
-    if (resumeD !== undefined) {
-      sendData();
-    }
-  }
-
-  const infoDir = (req.app as appWithExtras).locals.infoDir;
-  readFile(path.resolve(infoDir, "resume.pdf"), {}, handleResumeRead);
-  readFile(path.resolve(infoDir, "personal.html"), {}, handleInfoRead);
+  readFilesAndThen(["resume.pdf", "personal.html"], res, sendData);
 });
 
 router.get("/info", (req, res) => {
@@ -134,6 +144,12 @@ router.get("/info", (req, res) => {
     console.log(data);
     console.log(dataString);
     res.json({ info: dataString });
+  });
+});
+
+router.get("/projects", (_req, res) => {
+  readFileAndThen("projects.json", res, (data: Buffer) => {
+    res.status(200).send(data);
   });
 });
 

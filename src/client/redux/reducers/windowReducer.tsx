@@ -13,7 +13,7 @@ export interface State {
   windows: Windows;
   windowOrder: string[];
 }
-const windowNames = ["main", "files", "info", "projects", "resume"];
+const windowNames = ["main", "files", "info", "projects", "resume", "lyrics"];
 
 const initialWindowsState: Windows = windowNames.reduce(
   (acc: Windows, name: string) => {

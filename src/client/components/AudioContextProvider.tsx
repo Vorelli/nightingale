@@ -8,7 +8,10 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { setAudioPlayable, setReloadSong } from "../redux/reducers/globalReducer";
+import {
+  setAudioPlayable,
+  setReloadSong,
+} from "../redux/reducers/globalReducer";
 import {
   currentSongRequest,
   currentSongRequestSuccess,
@@ -24,7 +27,9 @@ export type AudioContextState = {
   runFirstTime: Function;
   reloadSong: Function;
   audioSource: MediaElementAudioSourceNode | null;
-  setAudioSource: React.Dispatch<React.SetStateAction<null | MediaElementAudioSourceNode>>;
+  setAudioSource: React.Dispatch<
+    React.SetStateAction<null | MediaElementAudioSourceNode>
+  >;
 };
 
 const AudioContextStateContext = createContext<null | AudioContextState>(null);
@@ -45,7 +50,8 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
 }: Props & PropsWithChildren) {
   const [audioContext, setAudioContext] = useState<null | AudioContext>(null);
   const [analyzerNode, setAnalyzerNode] = useState<null | AnalyserNode>(null);
-  const [audioSource, setAudioSource] = useState<null | MediaElementAudioSourceNode>(null);
+  const [audioSource, setAudioSource] =
+    useState<null | MediaElementAudioSourceNode>(null);
   const [firstTime, setFirstTime] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { numBars } = useSelector((s: RootState) => s.audio);
@@ -54,7 +60,9 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
   const { URL } = useSelector((s: RootState) => s.global);
 
   const { status } = useSelector((s: RootState) => s.settings);
-  const { startingTime, currentSongLoading } = useSelector((s: RootState) => s.songs);
+  const { startingTime, currentSongLoading } = useSelector(
+    (s: RootState) => s.songs
+  );
 
   navigator.mediaSession.setActionHandler("play", () => handlePlay());
   navigator.mediaSession.setActionHandler("pause", () => handlePause());
@@ -76,7 +84,9 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
     }
   }
 
-  function handleTimeUpdate(_ev: React.SyntheticEvent<HTMLAudioElement, Event>) {
+  function handleTimeUpdate(
+    _ev: React.SyntheticEvent<HTMLAudioElement, Event>
+  ) {
     if (audioSource && !movingTime) {
       setCurrentT &&
         setCurrentT(
@@ -113,7 +123,10 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
       const audio = audioRef.current as HTMLAudioElement;
       const currentSrc = audio.src;
       const indexOfStreaming = currentSrc.indexOf("/streaming/");
-      if (indexOfStreaming === -1 || currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)) {
+      if (
+        indexOfStreaming === -1 ||
+        currentSong !== currentSrc.slice(indexOfStreaming + 11, -4)
+      ) {
         const newSrc = URL + "/streaming/" + currentSong + ".mp4";
         audio.crossOrigin = "anonymous";
         audio.src = newSrc;
@@ -134,9 +147,19 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
   }, [startingTime, audioRef]);
 
   useEffect(() => {
-    if (audioContext !== null && audioRef !== undefined && audioRef.current !== null) {
-      if (audioSource === null && audioContext !== null && analyzerNode !== null) {
-        const audioSource = audioContext.createMediaElementSource(audioRef.current);
+    if (
+      audioContext !== null &&
+      audioRef !== undefined &&
+      audioRef.current !== null
+    ) {
+      if (
+        audioSource === null &&
+        audioContext !== null &&
+        analyzerNode !== null
+      ) {
+        const audioSource = audioContext.createMediaElementSource(
+          audioRef.current
+        );
         audioSource.connect(analyzerNode);
         analyzerNode.connect(audioContext.destination);
         setAudioSource(audioSource);
@@ -152,13 +175,21 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
       .then((syncData) => {
         if (syncData.currentSong && syncData.currentTime >= 0) {
           dispatch(currentSongRequestSuccess(syncData.currentSong));
-          const ping = new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
-          dispatch(setStartTime(Math.floor(parseInt(syncData.currentTime) / 1000 - ping / 2000)));
+          const ping =
+            new Date().getUTCMilliseconds() - timeBefore.getUTCMilliseconds();
+          dispatch(
+            setStartTime(
+              Math.floor(parseInt(syncData.currentTime) / 1000 - ping / 2000)
+            )
+          );
           dispatch(setStatus(syncData.status));
         }
       })
       .catch((err) => {
-        console.log("error encountered when trying to sync with the server", err);
+        console.log(
+          "error encountered when trying to sync with the server",
+          err
+        );
       });
   };
 

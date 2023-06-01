@@ -9,6 +9,9 @@ import Info from "./Info";
 import Projects from "./Projects";
 import Resume from "./Resume";
 import { useInfoContext } from "./InfoContextProvider";
+import { useResumeContext } from "./ResumeContextProvider";
+import { useProjectsContext } from "./ProjectsContextProvider";
+import Lyrics from "./Lyrics";
 
 type Props = {};
 interface WindowComponents {
@@ -22,16 +25,20 @@ function WindowManager({}: Props) {
   const windows = useSelector((s: RootState) => s.windows.windows);
   const dispatch = useDispatch();
   const infoC = useInfoContext();
+  const resumeC = useResumeContext();
+  const projectC = useProjectsContext();
 
   useEffect(() => {
     setWindowComponents({
       main: <MainPlayer key={"main"} />,
+      lyrics: <Lyrics key="lyrics" />,
       files: <Files key="files" />,
       info: infoC && infoC.info ? <Info key="info" /> : null,
-      projects: <Projects key="projects" />,
-      resume: <Resume key="resume" />,
+      projects:
+        projectC && projectC.project ? <Projects key="projects" /> : null,
+      resume: resumeC && resumeC.resume ? <Resume key="resume" /> : null,
     });
-  }, [infoC]);
+  }, [infoC, resumeC, projectC]);
 
   const hiddenWindows = new Array<string>();
   const windowKeys = Object.keys(windows).filter(

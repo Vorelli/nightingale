@@ -216,6 +216,10 @@ a {
   grid-template: 10% 10% 80%/1fr;
 }
 
+#projects-player {
+  grid-template: 10% 90%/1fr;
+}
+
 @keyframes moveBack {
   0% {
     background-position: 0% center;
