@@ -6,13 +6,13 @@ import LyricsLine from "./LyricsLine";
 
 const Lyrics = () => {
   const { currentSong, songs } = useSelector((s: RootState) => s.songs);
-  const { hidden } = useSelector((s: RootState) => s.windows.windows["info"]);
+  const { hidden } = useSelector((s: RootState) => s.windows.windows["lyrics"]);
   const { audioPlayable } = useSelector((s: RootState) => s.global);
 
   return (
     <DesktopWindow storeName="lyrics" title="Lyrics" id="lyrics-player">
       {(!hidden && (
-        <div className="overflow-y-scroll flex flex-col items-center col-span-2 m-2 mr-0">
+        <div className="overflow-y-auto flex flex-col items-center col-span-2 m-2 mr-0">
           {(currentSong &&
             songs[currentSong] &&
             songs[currentSong].lyrics.map((line, i) => {

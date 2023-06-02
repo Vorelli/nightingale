@@ -5,6 +5,12 @@ interface Props {
 }
 
 const badges = {
+  sass: "https://img.shields.io/badge/SASS-hotpink.svg?style=for-the-badge&logo=SASS&logoColor=white",
+  "node.js":
+    "https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white",
+  jest: "https://img.shields.io/badge/Jest-323330?style=for-the-badge&logo=Jest&logoColor=white",
+  ffmpeg:
+    "https://shields.io/badge/FFmpeg-%23171717.svg?logo=ffmpeg&style=for-the-badge&labelColor=171717&logoColor=5cb85c",
   typescript:
     "https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white",
   "express.js":
@@ -38,13 +44,14 @@ const badges = {
     "https://img.shields.io/badge/-Axios-671ddf?logo=axios&logoColor=black&style=for-the-badge",
   vercel:
     "https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white",
+  rust: "https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white",
 } as { [key: string]: string | undefined };
 
 const TechnologyBadges = ({ technology }: Props) => {
   return (
     <div className="flex flex-wrap justify-between">
       <div className="w-full flex justify-center">
-        <h4>Technology Used</h4>
+        <h4 className="text-lg font-bold">Technology Used</h4>
       </div>
       {technology
         .filter((tech) => !!badges[tech.toLowerCase()])

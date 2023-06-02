@@ -12,6 +12,7 @@ import { useInfoContext } from "./InfoContextProvider";
 import { useResumeContext } from "./ResumeContextProvider";
 import { useProjectsContext } from "./ProjectsContextProvider";
 import Lyrics from "./Lyrics";
+import Inquiry from "./Inquiry";
 
 type Props = {};
 interface WindowComponents {
@@ -32,7 +33,8 @@ function WindowManager({}: Props) {
     setWindowComponents({
       main: <MainPlayer key={"main"} />,
       lyrics: <Lyrics key="lyrics" />,
-      files: <Files key="files" />,
+      //files: <Files key="files" />,
+      inquiry: <Inquiry key="inquiry" />,
       info: infoC && infoC.info ? <Info key="info" /> : null,
       projects:
         projectC && projectC.project ? <Projects key="projects" /> : null,

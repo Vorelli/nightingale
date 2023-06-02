@@ -30,8 +30,8 @@ const DesktopWindow = (props: {
   gridTemplate?: string;
   headerElements?: React.ReactElement;
 }) => {
-  const [width, setWidth] = useState(800);
-  const [height, setHeight] = useState(600);
+  const [width, setWidth] = useState(400);
+  const [height, setHeight] = useState(110);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const container = useRef(null);
@@ -42,8 +42,8 @@ const DesktopWindow = (props: {
   const { windowOrder } = useSelector((s: RootState) => s.windows);
   const order = windowOrder.length - windowOrder.indexOf(props.storeName);
   const [fixedPos, setFixedPos] = useState<undefined | Position>({
-    x: windowWidth - width - minBound,
-    y: windowHeight - height - minBound,
+    x: 50 * (order - 1) + 20,
+    y: 50 * (order - 1) + 20,
   });
 
   useEffect(() => {

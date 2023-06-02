@@ -1,10 +1,11 @@
 import express, { Response, Request } from "express";
-import { playlistSongs, playlists } from "../db/schema.js";
+import { playlistSongs, playlists, messages } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { appWithExtras } from "../types/types.js";
 import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
 import { readFile } from "fs";
 import path from "path";
+import queryString from "querystring";
 const router = express.Router();
 
 router.get("/songs", (req, res) => {
@@ -117,7 +118,33 @@ function readFilesAndThen(
   }
 }
 
-router.get("/resume", (req, res) => {
+router.post("/inquiry", (req, res) => {
+  let { name, message, contact } = req.body;
+  console.log(req.body);
+  name = queryString.escape(name);
+  message = queryString.escape(message);
+  contact = queryString.escape(contact);
+  if (name.length > 0 && message.length > 0 && contact.length > 0) {
+    (req.app as appWithExtras).locals.db
+      .insert(messages)
+      .values({ name, body: message, contact })
+      .returning()
+      .then((_retData) => {
+        return res.status(200).json({ message: "success" });
+      })
+      .catch((err) => {
+        console.log(
+          "error encountered when trying to add message to the database:",
+          err
+        );
+        return res.sendStatus(500);
+      });
+  } else {
+    return res.sendStatus(400);
+  }
+});
+
+router.get("/resume", (_req, res) => {
   function sendData(data: Buffer[]) {
     const resume = data[0];
     const personal = new String(data[1]) as string;

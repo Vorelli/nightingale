@@ -1,6 +1,5 @@
 import {
   doublePrecision,
-  foreignKey,
   index,
   integer,
   json,
@@ -18,12 +17,26 @@ import pg from "pg";
 const { Pool } = pg;
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "path";
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const defaultCascade = {
   onDelete: "cascade" as UpdateDeleteAction,
   onUpdate: "cascade" as UpdateDeleteAction,
 };
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: text("name").notNull(),
+    body: text("body").notNull(),
+    contact: text("contact").notNull(),
+    dateCreated: timestamp("dateCreated").defaultNow().notNull(),
+  },
+  (messages) => {
+    return {
+      idxMessageCreated: index("idx_message_created").on(messages.dateCreated),
+    };
+  }
+);
 
 export const artists = pgTable(
   "artists",
@@ -167,7 +180,7 @@ export type ReturningGenres = InferModel<typeof genres, "select">;
 export type ReturningPlaylists = InferModel<typeof playlists, "select">;
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, "select">;
 
-async function dbMigrate(): Promise<[NodePgDatabase, pg.Pool]> {
+async function dbMigrate(d: string): Promise<[NodePgDatabase, pg.Pool]> {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     idleTimeoutMillis: 50 * 1000,
@@ -179,7 +192,7 @@ async function dbMigrate(): Promise<[NodePgDatabase, pg.Pool]> {
   });
   const db = drizzle(pool);
   await migrate(db, {
-    migrationsFolder: path.resolve(__dirname, "../../migrations-folder"),
+    migrationsFolder: path.resolve(d, "../migrations-folder"),
   });
   return [db, pool];
 }

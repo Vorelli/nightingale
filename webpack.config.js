@@ -23,7 +23,8 @@ export default {
       },
       {
         test: /\.tsx?$/,
-        exclude: /node_modules/,
+        include: [/client/],
+        exclude: [/node_modules/, /server/],
         use: "ts-loader" /* {
           loader: "babel-loader",
           options: {

@@ -7,6 +7,7 @@ import https from "https";
 import fs from "fs";
 import express_ws from "express-ws";
 import compression from "compression";
+import morgan from "morgan";
 
 import { sessionsMiddleware } from "./middleware/sessions.js";
 import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
@@ -17,12 +18,11 @@ import { initializeQueue, advanceTime } from "./helpers/queue.js";
 import { Album, Song, appWithExtras } from "./types/types.js";
 import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 import { IncomingMessage, Server, ServerResponse } from "http";
-import morgan from "morgan";
 
 async function firstRun(): Promise<
   [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null]
 > {
-  const [db, pool] = await dbMigrate();
+  const [db, pool] = await dbMigrate(__dirname);
   let httpsServer: null | https.Server = null;
   var appStart: express.Application = express();
   var { app, getWss }: express_ws.Instance = express_ws(appStart);

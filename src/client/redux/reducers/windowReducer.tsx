@@ -13,13 +13,21 @@ export interface State {
   windows: Windows;
   windowOrder: string[];
 }
-const windowNames = ["main", "files", "info", "projects", "resume", "lyrics"];
+const windowNames = [
+  "main",
+  "files",
+  "info",
+  "projects",
+  "resume",
+  "lyrics",
+  "inquiry",
+];
 
 const initialWindowsState: Windows = windowNames.reduce(
   (acc: Windows, name: string) => {
     acc[name] = {
       hidden: false,
-      onTop: name === "main" ? false : true,
+      onTop: name === "resume" || name === "main" ? false : true,
     } as Window;
     return acc;
   },
@@ -28,7 +36,7 @@ const initialWindowsState: Windows = windowNames.reduce(
 
 const initialState: State = {
   windows: initialWindowsState,
-  windowOrder: ["main"],
+  windowOrder: ["resume", "main"],
 };
 
 export const windowReducer = createSlice({

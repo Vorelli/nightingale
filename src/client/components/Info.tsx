@@ -12,7 +12,7 @@ const Info = () => {
   return (
     <DesktopWindow storeName="info" title="Info" id="info-player">
       {(!hidden && (
-        <div className="overflow-y-scroll col-span-2 m-2 mr-0">
+        <div className="overflow-y-auto col-span-2 m-2 mr-0">
           {(c &&
             c.info &&
             c.info.split("\n").map((line, i) => {

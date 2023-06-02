@@ -47,7 +47,7 @@ const Project = ({ project, handleLeft, handleRight }: Props) => {
       </div>
     )) ||
     (imageC && imageC.zoom && imageC.image ? (
-      <div className="col-span-2 row-span-3 w-full h-full">
+      <div className="col-span-2 row-span-2 w-full h-full">
         <img
           className="w-full h-full object-contain"
           onClick={() => imageC.toggleZoom()}
@@ -61,17 +61,17 @@ const Project = ({ project, handleLeft, handleRight }: Props) => {
           <Images images={project.images} />
           <TechnologyBadges technology={project.technology} />
         </div>
-        <div className="right flex p-2 flex-col justify-around items-center space-y-2">
-          <h4>Description:</h4>
-          <div className="overflow-y-auto">
+        <div className="right flex p-2 flex-col justify-around items-center space-y-4">
+          <h4 className="text-lg font-bold">Description:</h4>
+          <div className="overflow-y-auto w-[90%] space-y-2 flex flex-col items-center">
             {project.description.map((p) => (
               <p className="indent-4" key={p}>
                 {p}
               </p>
             ))}
           </div>
-          <h4>Technical Challenges</h4>
-          <div className="overflow-y-auto">
+          <h4 className="text-lg font-bold">Technical Challenges</h4>
+          <div className="overflow-y-auto w-[90%] space-y-2 flex flex-col items-center">
             {project.challenges.reduce((acc, challenge) => {
               return acc.concat(
                 challenge.split("\n").map((challenge) => (

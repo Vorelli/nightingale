@@ -17,11 +17,11 @@ const Projects = () => {
   const project = projectC && projectC.project && projectC.project[index];
   const header = (
     <>
-      <div className="text-center">
-        <p>Name: {(project && project.name) || "Loading..."}</p>
+      <div className="text-center pt-2">
+        <p>Project Name: {(project && project.name) || "Loading..."}</p>
         <p>Role: {(project && project.role) || "Loading..."}</p>
       </div>
-      <div className="flex flex-col text-center [&>*]:pointer-events-auto">
+      <div className="flex pt-2 flex-col text-center [&>*]:pointer-events-auto">
         {project &&
           project.links.map((link) => (
             <a
