@@ -1,25 +1,25 @@
 import path from "path";
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import express from "express";
-import { dbMigrate } from "./db/schema.js";
+import { dbMigrate } from "./db/schema";
 import https from "https";
 import fs from "fs";
 import express_ws from "express-ws";
 import compression from "compression";
 import morgan from "morgan";
 
-import { sessionsMiddleware } from "./middleware/sessions.js";
-import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
-import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
-import { loadSongs } from "./helpers/loadSongs.js";
-import apiHandler from "./handlers/apiHandler.js";
-import { initializeQueue, advanceTime } from "./helpers/queue.js";
-import { Album, Song, appWithExtras } from "./types/types.js";
-import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
+import { sessionsMiddleware } from "./middleware/sessions";
+import { setCorsAndHeaders } from "./middleware/corsAndHeaders";
+import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes";
+import { loadSongs } from "./helpers/loadSongs";
+import apiHandler from "./handlers/apiHandler";
+import { initializeQueue, advanceTime } from "./helpers/queue";
+import { Album, Song, appWithExtras } from "./types/types";
+import setDefaultPlaylist from "./helpers/setDefaultPlaylist";
 import { IncomingMessage, Server, ServerResponse } from "http";
 
-async function firstRun(): Promise<
+async function firstRun(
+  __dirname: string
+): Promise<
   [appWithExtras, Server<typeof IncomingMessage, typeof ServerResponse> | null]
 > {
   const [db, pool] = await dbMigrate(__dirname);

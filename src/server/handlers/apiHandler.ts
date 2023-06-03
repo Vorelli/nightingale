@@ -1,8 +1,8 @@
 import express, { Response, Request } from "express";
-import { playlistSongs, playlists, messages } from "../db/schema.js";
+import { playlistSongs, playlists, messages } from "../db/schema";
 import { eq } from "drizzle-orm";
-import { appWithExtras } from "../types/types.js";
-import { nextSong, previousSong, sendSync } from "../helpers/queue.js";
+import { appWithExtras } from "../types/types";
+import { nextSong, previousSong, sendSync } from "../helpers/queue";
 import { readFile } from "fs";
 import path from "path";
 import queryString from "querystring";

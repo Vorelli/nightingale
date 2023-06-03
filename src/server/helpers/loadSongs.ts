@@ -18,19 +18,19 @@ import {
   ReturningAlbums,
   NewArtists,
   NewGenres,
-} from "../db/schema.js";
+} from "../db/schema";
 import { eq } from "drizzle-orm";
 import path from "path";
 import { getAudioDurationInSeconds } from "get-audio-duration";
-import { isAudio } from "./isAudio.js";
-import { importMusicMetadata } from "./audioMetadata.js";
+import { isAudio } from "./isAudio";
+import { importMusicMetadata } from "./audioMetadata";
 import sharp from "sharp";
-import ffmpeg from "fluent-ffmpeg/index.js";
+import ffmpeg from "fluent-ffmpeg/index";
 import { ICommonTagsResult } from "music-metadata";
 import { AnyPgTable } from "drizzle-orm/pg-core";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { Album, appWithExtras, Song } from "../types/types.js";
-import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
+import { Album, appWithExtras, Song } from "../types/types";
+import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers";
 
 interface innerJoinReturn {
   songs: Songs;

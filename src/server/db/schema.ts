@@ -190,9 +190,11 @@ async function dbMigrate(d: string): Promise<[NodePgDatabase, pg.Pool]> {
     console.log("server encountered error with pg database:", err);
     console.log("hopefully it will keep running...");
   });
+  const newPath = path.resolve(d, "migrations-folder");
+  console.log("path:", newPath);
   const db = drizzle(pool);
   await migrate(db, {
-    migrationsFolder: path.resolve(d, "../migrations-folder"),
+    migrationsFolder: newPath,
   });
   return [db, pool];
 }

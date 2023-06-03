@@ -1,8 +1,11 @@
-import { PlaylistSongs, playlistSongs, playlists } from "../db/schema.js";
-import { appWithExtras } from "../types/types.js";
+import { PlaylistSongs, playlistSongs, playlists } from "../db/schema";
+import { appWithExtras } from "../types/types";
 import { eq } from "drizzle-orm";
 
-export function playlistFromQueue(queue: string[], playlistId: string): PlaylistSongs[] {
+export function playlistFromQueue(
+  queue: string[],
+  playlistId: string
+): PlaylistSongs[] {
   const songs = new Array<PlaylistSongs>();
   for (var i = 0; i < queue.length; i++) {
     songs.push({
