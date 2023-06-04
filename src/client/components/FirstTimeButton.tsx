@@ -8,6 +8,7 @@ import { handleDragStart } from "../redux/reducers/windowReducer";
 
 type Props = {};
 
+const buttonSx = { width: "50px", height: "50px" };
 function FirstTimeButton({}: Props) {
   const audioContext = useAudioContext();
   const dispatch = useDispatch();
@@ -28,7 +29,7 @@ function FirstTimeButton({}: Props) {
         width={100}
         onClick={handleButtonClick}
       >
-        <PlayArrowOutlined sx={{ width: "50px", height: "50px" }} />
+        <PlayArrowOutlined sx={buttonSx} />
       </MyIconButton>
       <a
         target="_blank"

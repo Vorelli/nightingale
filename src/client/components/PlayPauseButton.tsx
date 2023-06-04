@@ -17,16 +17,28 @@ function PlayPauseButton({}: Props) {
 
   const [iconSx, setIconSx] = useState({ width: "24px", height: "24px" });
   useEffect(() => {
-    setIconSx({
-      width: hidden ? "16px" : "24px",
-      height: hidden ? "16px" : "24px",
-    });
+    const l = hidden ? "16px" : "24px";
+    setIconSx((cur) =>
+      cur.height !== l
+        ? {
+            width: l,
+            height: l,
+          }
+        : cur
+    );
   }, [hidden]);
   const pausePlayIcon =
-    status === "PLAYING" ? <PauseIcon sx={iconSx} /> : <PlayArrowIcon sx={iconSx} />;
+    status === "PLAYING" ? (
+      <PauseIcon sx={iconSx} />
+    ) : (
+      <PlayArrowIcon sx={iconSx} />
+    );
 
   return (
-    <MyIconButton name={status === "PLAYING" ? "Pause" : "Play"} onClick={handlePlayPause}>
+    <MyIconButton
+      name={status === "PLAYING" ? "Pause" : "Play"}
+      onClick={handlePlayPause}
+    >
       {pausePlayIcon}
     </MyIconButton>
   );

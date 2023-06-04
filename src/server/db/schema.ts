@@ -191,7 +191,6 @@ async function dbMigrate(d: string): Promise<[NodePgDatabase, pg.Pool]> {
     console.log("hopefully it will keep running...");
   });
   const newPath = path.resolve(d, "migrations-folder");
-  console.log("path:", newPath);
   const db = drizzle(pool);
   await migrate(db, {
     migrationsFolder: newPath,

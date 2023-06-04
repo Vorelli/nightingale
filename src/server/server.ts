@@ -1,21 +1,21 @@
 import path from "path";
 import express from "express";
-import { dbMigrate } from "./db/schema";
 import https from "https";
 import fs from "fs";
 import express_ws from "express-ws";
 import compression from "compression";
 import morgan from "morgan";
-
-import { sessionsMiddleware } from "./middleware/sessions";
-import { setCorsAndHeaders } from "./middleware/corsAndHeaders";
-import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes";
-import { loadSongs } from "./helpers/loadSongs";
-import apiHandler from "./handlers/apiHandler";
-import { initializeQueue, advanceTime } from "./helpers/queue";
-import { Album, Song, appWithExtras } from "./types/types";
-import setDefaultPlaylist from "./helpers/setDefaultPlaylist";
 import { IncomingMessage, Server, ServerResponse } from "http";
+
+import { dbMigrate } from "./db/schema.js";
+import { sessionsMiddleware } from "./middleware/sessions.js";
+import { setCorsAndHeaders } from "./middleware/corsAndHeaders.js";
+import { attachWebsocketRoutes } from "./middleware/attachWebSocketRoutes.js";
+import { loadSongs } from "./helpers/loadSongs.js";
+import apiHandler from "./handlers/apiHandler.js";
+import { initializeQueue, advanceTime } from "./helpers/queue.js";
+import { Album, Song, appWithExtras } from "./types/types.js";
+import setDefaultPlaylist from "./helpers/setDefaultPlaylist.js";
 
 async function firstRun(
   __dirname: string
@@ -53,7 +53,7 @@ async function firstRun(
   app.locals.shuffleBy = "random";
   app.locals.pool = pool;
   app.locals.db = db;
-  const infoDir = path.resolve(__dirname, "../public/info");
+  const infoDir = path.resolve(__dirname, "public/info");
   app.locals.infoDir = infoDir;
   app.locals.wait = new Promise<void>((resolve, reject) => {
     loadSongs(app as appWithExtras, db)
@@ -91,7 +91,7 @@ async function firstRun(
   app.options("*", setCorsAndHeaders);
   app.use(sessionsMiddleware);
 
-  app.use(express.static(path.join(__dirname, "../public")));
+  app.use(express.static(path.join(__dirname, "public")));
   attachWebsocketRoutes(app);
   app.use("/api", apiHandler);
   return [app as appWithExtras, httpsServer];

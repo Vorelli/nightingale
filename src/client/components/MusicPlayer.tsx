@@ -77,9 +77,13 @@ const MusicPlayerInner = React.memo(function MusicPlayer({ audioRef }: Props) {
 
   useEffect(() => {
     const w = hidden ? "16px" : "24px";
-    setIconSx({
-      height: w,
-      width: w,
+    setIconSx((cur) => {
+      return cur.height === w
+        ? cur
+        : {
+            height: w,
+            width: w,
+          };
     });
   }, [hidden]);
 

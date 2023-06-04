@@ -2,83 +2,42 @@ import React from "react";
 import { useSelector } from "react-redux";
 import PlaylistLabel from "./PlaylistLabel";
 import { RootState } from "../redux/store";
-import { millisecondsToTime } from "../helpers/time";
+import PlaylistDisplay from "./PlaylistDisplay";
 
 type Props = {};
 
 function PlaylistContainer({}: Props) {
-  const { playlists, playlistIndex } = useSelector((state: RootState) => state.playlists);
-  const { songs } = useSelector((state: RootState) => state.songs);
+    const { playlists, playlistIndex } = useSelector(
+        (state: RootState) => state.playlists
+    );
+    const { songs } = useSelector((state: RootState) => state.songs);
 
-  const rows = playlists[playlistIndex]?.songs.map((song: string) => songs[song]);
-  const columns = [
-    //{ field: "track", headerName: "Track", width: 25 },
-    { field: "name", headerName: "Title", width: 150 },
-    { field: "albumArtist", headerName: "Artist", width: 75 },
-    { field: "albumName", headerName: "Album", width: 200 },
-    {
-      field: "duration",
-      headerName: "Duration",
-      width: 50,
-      type: "number",
-      valueFormatter: (params: { value: number }) => {
-        return Math.floor(params.value / 1000 / 60) + ":" + ((params.value / 1000 / 60) % 60);
-      },
-    },
-    { field: "year", headerName: "Year", width: 50 },
-  ];
+    const rows = playlists[playlistIndex]?.songs.map(
+        (song: string) => songs[song]
+    );
 
-  return (
-    <div className="h-full w-full row-start-2 row-span-2 flex flex-col">
-      <header className="ml-1 mt-1">
-        <ul
-          key={5}
-          className="playlistBar flex mt-1 ml-1 h-[35px] w-full overflow-x-auto relative "
-        >
-          {typeof playlists === "object" &&
-            Object.keys(playlists).map((key: any) => {
-              const playlist = playlists[key];
-              return <PlaylistLabel key={playlist.id} playlist={playlist} />;
-            })}
-        </ul>
-      </header>
-      <article className="w-full text-xs overflow-x-auto h-full mt-2 bg-base-200">
-        <header className="w-full h-4 flex justify-between">
-          {columns.map((column) => (
-            <h2 className={"text-center"} style={{ flex: column.width }} key={column.field}>
-              {column.headerName}
-            </h2>
-          ))}
-        </header>
-        {rows &&
-          rows.map((row, i) => (
-            <div
-              className="flex h-4 justify-between"
-              key={(row && row.md5) || Math.floor(Math.random() * 1000000)}
-            >
-              {columns
-                .map((column) => {
-                  return (
-                    (row && row[column.field] && (
-                      <h2
-                        className={"text-center overflow-x-hidden overflow-y-auto h-full"}
-                        style={{ flex: column.width }}
-                        key={column.field}
-                      >
-                        {column.field === "duration"
-                          ? millisecondsToTime(row[column.field])
-                          : row[column.field]}
-                      </h2>
-                    )) ||
-                    null
-                  );
-                })
-                .filter((v) => v !== null)}
-            </div>
-          ))}
-      </article>
-    </div>
-  );
+    return (
+        <div className="h-full w-full row-start-2 row-span-2 flex flex-col">
+            <header className="ml-1 mt-1">
+                <ul
+                    key={5}
+                    className="playlistBar flex mt-1 ml-1 h-[35px] w-full overflow-x-auto relative "
+                >
+                    {typeof playlists === "object" &&
+                        Object.keys(playlists).map((key: any) => {
+                            const playlist = playlists[key];
+                            return (
+                                <PlaylistLabel
+                                    key={playlist.id}
+                                    playlist={playlist}
+                                />
+                            );
+                        })}
+                </ul>
+            </header>
+            <PlaylistDisplay rows={rows} />
+        </div>
+    );
 }
 
 export default PlaylistContainer;

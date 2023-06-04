@@ -1,5 +1,5 @@
-import { PlaylistSongs, playlistSongs, playlists } from "../db/schema";
-import { appWithExtras } from "../types/types";
+import { PlaylistSongs, playlistSongs, playlists } from "../db/schema.js";
+import { appWithExtras } from "../types/types.js";
 import { eq } from "drizzle-orm";
 
 export function playlistFromQueue(

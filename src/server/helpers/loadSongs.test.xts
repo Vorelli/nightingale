@@ -1,0 +1,22 @@
+import { loadSongs } from "./loadSongs";
+import { firstRun } from "../server";
+import { dbMigrate } from "../db/schema";
+import path from "path";
+import * as dotenv from "dotenv";
+//import { config } from "../../../node_modules/.pnpm/dotenv-esm@16.0.3-3/node_modules/dotenv-esm/lib/main";
+const filePath = path.resolve(__dirname, "../../../");
+xdescribe("loadSongs", () => {
+  beforeAll(() => {
+    dotenv.config({
+      path: path.resolve(filePath, ".env"),
+    });
+  });
+  /*
+  it("should work", async () => {
+    console.log("path:", __dirname, filePath);
+    let [app] = await firstRun(filePath);
+    let [db, pool] = await dbMigrate(filePath);
+    expect(loadSongs(app, db)).toBe(true);
+  });
+ */
+});
