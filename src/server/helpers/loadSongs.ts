@@ -30,6 +30,7 @@ import { AnyPgTable } from "drizzle-orm/pg-core";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Album, appWithExtras, Song } from "../types/types.js";
 import { getAlbumToInsert, getSongsToInsert } from "./dbHelpers.js";
+import { parseFile } from "music-metadata";
 
 interface innerJoinReturn {
     songs: Songs;
@@ -493,8 +494,13 @@ async function processMd5s(
                             // And we can just return that 'Albums object'
                         } else {
                             const ret = getAlbumFromRows(rows);
+                            if (ret === undefined) return resolve(false);
+                            // TODO: I started on the path to comparing information on disk versus in the database.
+                            // that would be the next direction here. so if information on disk changes, those changes are reflected in the database.
+                            // What would be nice is when it detects changes on disk, but can be pretty confidant it's the same song is to
+                            // move/rename the streaming file instead of creating a new one and forgetting about the old one.
                             //const compare = await getSongInfo(app, filePath, md5);
-                            resolve(ret === undefined ? false : ret);
+                            resolve(ret);
                             //if (ret === undefined) return resolve(false);
                             // compareTagsAndUpdate(app, ret, compare, () => resolve(ret));
                             // we need to delete the current album from the database.
@@ -773,38 +779,44 @@ async function getSongInfo(
     return new Promise<Album | boolean>(async (resolve, reject) => {
         try {
             return checkIfFileExists(getPath(app, md5, "mp4"))
-                .then(async () => {
-                    const streamingPath = getPath(app, md5, "mp4");
-                    return new Promise<void>((resolve, reject) => {
-                        try {
-                            ffmpeg(filePath)
-                                .withNoVideo()
-                                .withAudioCodec("aac")
-                                .withAudioBitrate(192)
-                                .output(streamingPath)
-                                .on("end", () => resolve())
-                                .on("error", (err) => {
-                                    reject(err);
-                                })
-                                .run();
-                        } catch (err) {
-                            reject(err);
-                        }
-                    });
+                .then(async (doesntExist) => {
+                    if (doesntExist) {
+                        const streamingPath = getPath(app, md5, "mp4");
+                        return new Promise<void>((resolve, reject) => {
+                            try {
+                                ffmpeg(filePath, {})
+                                    .withNoVideo()
+                                    .withAudioCodec("aac")
+                                    .withAudioBitrate(192)
+                                    .output(streamingPath)
+                                    .on("end", () => resolve())
+                                    .on("error", (err) => {
+                                        reject(err);
+                                    })
+                                    .run();
+                            } catch (err) {
+                                reject(err);
+                            }
+                        });
+                    }
                 })
                 .then(async () => {
                     let duration = getAudioDurationInSeconds(filePath).then(
                         (durationInSeconds) => durationInSeconds * 1000
                     );
 
-                    let tags = await useParseFile(filePath).then(
+                    let tags = await parseFile(filePath).then(
                         (tags) => tags.common
                     );
 
                     let imageChecking = checkIfFileExists(
                         getPath(app, md5, "jpg")
-                    ).then(async () => {
-                        if (tags.picture && tags.picture.length > 0) {
+                    ).then(async (doesntExist) => {
+                        if (
+                            doesntExist &&
+                            tags.picture &&
+                            tags.picture.length > 0
+                        ) {
                             const newImage = await sharp(tags.picture[0].data)
                                 .resize(256)
                                 .jpeg()
@@ -837,10 +849,17 @@ async function getSongInfo(
                                 resolve(albumObj);
                             }
                         )
+                        .catch((err) =>
+                            console.log(
+                                "is this where it's catching for audio files?",
+                                err
+                            )
+                        )
                         .catch(reject);
                 })
                 .catch((_err) => {
-                    console.log("not audio:", filePath);
+                    const fileP = filePath.split("/");
+                    console.log("not audio:", fileP[fileP.length - 1]);
                     resolve(false);
                 });
         } catch (err) {
@@ -853,8 +872,9 @@ function checkIfFileExists(filePath: string) {
     return new Promise<boolean>((resolve, reject) => {
         fs.access(filePath, (err) => {
             if (err?.code === "ENOENT") {
-                return resolve(true);
-            } else reject();
+                return resolve(true); // this is if it does not exist
+            } else if (err) reject(err);
+            else resolve(false);
         });
     });
 }
