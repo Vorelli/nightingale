@@ -1,31 +1,31 @@
 import React from "react";
 import Desktop from "./Desktop";
-import { AudioContextProvider } from "./AudioContextProvider";
-import { NodeContextProvider } from "./NodeContextProvider";
-import { TimeseekContextProvider } from "./TimeseekContextProvider";
-import { InfoContextProvider } from "./InfoContextProvider";
-import { ResumeContextProvider } from "./ResumeContextProvider";
-import { ProjectsContextProvider } from "./ProjectsContextProvider";
-import { ProjectImageContextProvider } from "./ProjectImageContextProvider";
+import { AudioContextProvider } from "./Providers/AudioContextProvider";
+import { InfoContextProvider } from "./Providers/InfoContextProvider";
+import { NodeContextProvider } from "./Providers/NodeContextProvider";
+import { ProjectImageContextProvider } from "./Providers/ProjectImageContextProvider";
+import { ProjectsContextProvider } from "./Providers/ProjectsContextProvider";
+import { ResumeContextProvider } from "./Providers/ResumeContextProvider";
+import { TimeseekContextProvider } from "./Providers/TimeseekContextProvider";
 
 const App = () => {
-  return (
-    <NodeContextProvider>
-      <TimeseekContextProvider>
-        <AudioContextProvider>
-          <InfoContextProvider>
-            <ResumeContextProvider>
-              <ProjectsContextProvider>
-                <ProjectImageContextProvider>
-                  <Desktop />
-                </ProjectImageContextProvider>
-              </ProjectsContextProvider>
-            </ResumeContextProvider>
-          </InfoContextProvider>
-        </AudioContextProvider>
-      </TimeseekContextProvider>
-    </NodeContextProvider>
-  );
+    return (
+        <NodeContextProvider>
+            <TimeseekContextProvider>
+                <AudioContextProvider>
+                    <InfoContextProvider>
+                        <ResumeContextProvider>
+                            <ProjectsContextProvider>
+                                <ProjectImageContextProvider>
+                                    <Desktop />
+                                </ProjectImageContextProvider>
+                            </ProjectsContextProvider>
+                        </ResumeContextProvider>
+                    </InfoContextProvider>
+                </AudioContextProvider>
+            </TimeseekContextProvider>
+        </NodeContextProvider>
+    );
 };
 App.whyDidYouRender = true;
 export default App;

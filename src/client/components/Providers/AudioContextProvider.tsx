@@ -7,19 +7,20 @@ import React, {
     useState
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../redux/store";
+import { RootState } from "../../redux/store";
 import {
     setAudioPlayable,
     setReloadSong
-} from "../redux/reducers/globalReducer";
+} from "../../redux/reducers/globalReducer";
 import {
     ClientSong,
     currentSongRequest,
     currentSongRequestSuccess,
     setStartTime
-} from "../redux/reducers/songsReducer";
-import { setStatus } from "../redux/reducers/settingsReducer";
+} from "../../redux/reducers/songsReducer";
+import { setStatus } from "../../redux/reducers/settingsReducer";
 import { useTimeseekContext } from "./TimeseekContextProvider";
+import { objectsDeepEqual } from "../../helpers/objectsDeepEqual";
 
 export type AudioContextState = {
     audioContext: AudioContext | null;
@@ -82,17 +83,16 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
     }, [navigator.mediaSession]);
 
     useEffect(() => {
-        if (typeof currentSong === "string") {
-            const song = songs[currentSong];
-            const meta = JSON.stringify(navigator.mediaSession.metadata);
-            const newMeta = song && metadataFromSong(song);
-            if (
-                song &&
-                navigator.mediaSession &&
-                meta !== JSON.stringify(newMeta)
-            ) {
-                navigator.mediaSession.metadata = newMeta;
-            }
+        const song = songs[currentSong || ""];
+        const meta = JSON.stringify(navigator.mediaSession.metadata);
+        const newMeta = song && metadataFromSong(song);
+        if (
+            typeof currentSong === "string" &&
+            song &&
+            navigator.mediaSession &&
+            !objectsDeepEqual(meta, newMeta)
+        ) {
+            navigator.mediaSession.metadata = newMeta;
         }
     }, [songs, currentSong]);
 

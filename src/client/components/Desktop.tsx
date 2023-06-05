@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import MainPlayer from "./MainPlayer";
 import Background from "./Background";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -16,8 +15,8 @@ import {
 } from "../redux/reducers/playlistsReducer";
 import { setStatus } from "../redux/reducers/settingsReducer";
 import { RootState } from "../redux/store";
-import { useAudioContext } from "./AudioContextProvider";
 import WindowManager from "./WindowManager";
+import { useAudioContext } from "./Providers/AudioContextProvider";
 
 interface Props {
     reloadSong: Function | undefined;
