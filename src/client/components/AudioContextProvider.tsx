@@ -63,17 +63,62 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
     const { URL } = useSelector((s: RootState) => s.global);
     const { status } = useSelector((s: RootState) => s.settings);
 
-    navigator.mediaSession.setActionHandler("play", handlePlay);
-    navigator.mediaSession.setActionHandler("pause", handlePause);
-    navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-    navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
+    useEffect(() => {
+        if (navigator.mediaSession) {
+            navigator.mediaSession.setActionHandler("play", handlePlay);
+            navigator.mediaSession.setActionHandler("pause", handlePause);
+            navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+            navigator.mediaSession.setActionHandler(
+                "previoustrack",
+                handlePrev
+            );
+        }
+        return () => {
+            navigator.mediaSession.setActionHandler("play", null);
+            navigator.mediaSession.setActionHandler("pause", null);
+            navigator.mediaSession.setActionHandler("nexttrack", null);
+            navigator.mediaSession.setActionHandler("previoustrack", null);
+        };
+    }, [navigator.mediaSession]);
+
+    useEffect(() => {
+        if (typeof currentSong === "string") {
+            const song = songs[currentSong];
+            const meta = JSON.stringify(navigator.mediaSession.metadata);
+            const newMeta = song && metadataFromSong(song);
+            if (
+                song &&
+                navigator.mediaSession &&
+                meta !== JSON.stringify(newMeta)
+            ) {
+                navigator.mediaSession.metadata = newMeta;
+            }
+        }
+    }, [songs, currentSong]);
+
+    function metadataFromSong(song: ClientSong): MediaMetadata {
+        return new MediaMetadata({
+            title: song.name,
+            artist: song.albumArtist,
+            album: song.albumName,
+            artwork: [
+                {
+                    sizes: "256x256",
+                    type: "image/jpg",
+                    src: `/streaming/${song.md5}.jpg`
+                }
+            ]
+        });
+    }
 
     function handlePrev() {
         fetch(URL + "/api/prev", { method: "PUT" });
     }
+
     function handleNext() {
         fetch(URL + "/api/next", { method: "PUT" });
     }
+
     function handlePlay(deets: MediaSessionActionDetails) {
         console.log(deets);
         fetch(URL + "/api/play", { method: "PUT" });
@@ -93,6 +138,13 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
                     "handleTimeUpdate in audioContextProvider"
                 );
         }
+        const song = currentSong && songs[currentSong];
+        if (song && audioSource)
+            navigator.mediaSession.setPositionState({
+                duration: song.duration,
+                playbackRate: 1,
+                position: Math.max(0, audioSource.mediaElement.currentTime ?? 0)
+            });
     }
 
     /**
@@ -152,21 +204,6 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
         };
     }, []);
 
-    function metadataFromSong(song: ClientSong): MediaMetadata {
-        return new MediaMetadata({
-            title: song.name,
-            artist: song.albumArtist,
-            album: song.name,
-            artwork: [
-                {
-                    sizes: "256x256",
-                    type: "image/png",
-                    src: `/${song.md5}.png`
-                }
-            ]
-        });
-    }
-
     /*
      * This useEffect's purpose is to change the audio's src when the
      * currentSong changes in the redux state. This can happen for various
@@ -176,10 +213,6 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
     useEffect(() => {
         const audio = audioRef.current;
         if (!!audio && currentSong && !currentSongLoading) {
-            const song = songs[currentSong];
-            if (song) {
-                navigator.mediaSession.metadata = metadataFromSong(song);
-            }
             const currentSrc = audio.src;
             const indexOfStreaming = currentSrc.indexOf("/streaming/");
             if (
@@ -192,7 +225,7 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
                 audio.load();
             }
         }
-    }, [currentSong, currentSongLoading]);
+    }, [currentSong, currentSongLoading, songs]);
 
     /**
      * This useEffect's purpose is to start playing after the src has changed.
@@ -306,6 +339,12 @@ const InnerAudioContextProvider = React.memo(function AudioContextProvider({
                 <audio
                     src="test.mp3"
                     onTimeUpdate={(ev) => handleTimeUpdate(ev)}
+                    onPlay={() => {
+                        navigator.mediaSession.playbackState = "playing";
+                    }}
+                    onPause={() => {
+                        navigator.mediaSession.playbackState = "paused";
+                    }}
                     controls={false}
                     ref={audioRef}
                 />

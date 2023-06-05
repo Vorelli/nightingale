@@ -58,6 +58,8 @@ const InnerCollection = React.memo(function Collection({
                 groupedSongs = groupSongsBy("albumArtist", songs);
                 groupedSongs = groupGroupsOfSongsBy("albumName", groupedSongs);
                 break;
+            case "genres":
+                groupedSongs = groupSongsBy("genreDic", songs);
             default:
                 groupedSongs = groupSongsBy(groupBy, songs);
                 break;
@@ -182,12 +184,13 @@ const InnerCollection = React.memo(function Collection({
         subGroup: string,
         icons: JSX.Element[][]
     ) {
+        const id = groupedSongs[group][subGroup][0].album_id;
         return (
             <StyledTreeItem
                 expandIcon={icons[1][0]}
                 collapseIcon={icons[1][1]}
-                key={subGroup}
-                nodeId={subGroup}
+                key={id}
+                nodeId={id}
                 label={subGroup}
             >
                 {(groupedSongs[group][subGroup] as ClientSong[]).map(
@@ -204,18 +207,31 @@ const InnerCollection = React.memo(function Collection({
         );
     }
 
+    const groupToId: { [key: string]: keyof ClientSong } = {
+        artist: "albumArtist_id",
+        album: "albumId"
+    };
     function renderGroup(
         groupedSongs: GroupedSongs | SuperGroupedSongs,
         group: string,
         icons: JSX.Element[][]
     ) {
+        const grouping = groupBy === "artistAlbum" ? "artist" : groupBy;
+        const key =
+            groupBy === "artistAlbum" && Object.keys(groupedSongs[group])[0];
+        const id =
+            key !== false
+                ? (groupedSongs[group] as GroupedSongs)[key][0][
+                      groupToId[grouping]
+                  ]
+                : (groupedSongs[group] as ClientSong[])[0][groupToId[grouping]];
         return (
             <StyledTreeItemDashed
                 expandIcon={icons[0][0]}
                 collapseIcon={icons[0][1]}
                 className="justify-self-start"
-                key={group}
-                nodeId={group}
+                key={id}
+                nodeId={id}
                 label={group}
             >
                 {(!(groupedSongs[group] instanceof Array) &&
