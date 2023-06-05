@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import MyIconButton from "./MyIconButton";
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import StyledSlider from "./StyledSlider";

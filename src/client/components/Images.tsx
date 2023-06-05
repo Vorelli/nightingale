@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Image } from "./Project";
-import { Button, Card, IconButton } from "@mui/material";
+import Card from "@mui/material/Card";
+import IconButton from "@mui/material/IconButton";
 import Carousel from "react-material-ui-carousel";
 import West from "@mui/icons-material/West";
 import East from "@mui/icons-material/East";

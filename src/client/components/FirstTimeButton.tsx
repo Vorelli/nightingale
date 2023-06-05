@@ -1,7 +1,7 @@
 import React from "react";
 import MyIconButton from "./MyIconButton";
-import { PlayArrowOutlined } from "@mui/icons-material";
-import { Button } from "@mui/material";
+import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
+import Button from "@mui/material/Button";
 import { useAudioContext } from "./Providers/AudioContextProvider";
 import { useDispatch } from "react-redux";
 import { handleDragStart } from "../redux/reducers/windowReducer";

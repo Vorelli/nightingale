@@ -12,6 +12,7 @@ compose.yaml
 public/*.js
 public/*.js.LICENSE.txt
 public/*.css
+public/*.json
 public/index.html
 .pnpm-debug.log
 pnpm-lock.yaml

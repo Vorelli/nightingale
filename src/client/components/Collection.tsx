@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { ClientSong } from "../redux/reducers/songsReducer";
 import TreeView from "@mui/lab/TreeView";
-import { TreeItem, TreeItemProps } from "@mui/lab";
+import TreeItem, { TreeItemProps } from "@mui/lab/TreeItem";
 import AlbumIcon from "@mui/icons-material/Album";
 import AlbumTwoToneIcon from "@mui/icons-material/AlbumTwoTone";
 import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
@@ -13,7 +13,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import { alpha, styled } from "@mui/material/styles";
 import { TransitionProps } from "@mui/material/transitions";
 import { useSpring, animated } from "@react-spring/web";
-import { Collapse } from "@mui/material";
+import Collapse from "@mui/material/Collapse";
 
 type Props = {
     groupBy: string;

@@ -1,4 +1,4 @@
-import { IconButton } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
 import React from "react";
 import Images from "./Images";
 import TechnologyBadges from "./TechnologyBadges";

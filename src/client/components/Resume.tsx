@@ -1,18 +1,19 @@
-import React from "react";
+import React, { lazy, useEffect, useState } from "react";
 import DesktopWindow from "./DesktopWindow";
 import { useResumeContext } from "./Providers/ResumeContextProvider";
-import { Page, pdfjs } from "react-pdf";
-import { Document } from "react-pdf";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 import PersonalInfo from "./PersonalInfo";
 import { RootState } from "../redux/store";
 import { useSelector } from "react-redux";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "../../../node_modules/.pnpm/pdfjs-dist@3.6.172/node_modules/pdfjs-dist/build/pdf.worker.min.js",
-    import.meta.url
-).toString();
+const Document = lazy(() => import("react-pdf/dist/esm/Document"));
+const Page = lazy(() => import("react-pdf/dist/esm/Page"));
+import("./ResumeStyle");
+import("react-pdf").then((pdf) => {
+    pdf.pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        "../../../node_modules/.pnpm/pdfjs-dist@3.6.172/node_modules/pdfjs-dist/build/pdf.worker.min.js",
+        import.meta.url
+    ).toString();
+});
 
 const Resume = () => {
     const { hidden } = useSelector(
@@ -20,16 +21,18 @@ const Resume = () => {
     );
     const resumeC = useResumeContext();
 
+    useEffect(() => {}, []);
+
     const resume =
         resumeC && resumeC.resume ? (
-            <Document
-                file={resumeC.resume}
-                className="w-full flex flex-col items-center col-span-2 m-auto"
-            >
-                {/*<a href="/info/resume.pdf">*/}
-                <Page pageNumber={1} />
-                {/*</a>*/}
-            </Document>
+            Document && (
+                <Document
+                    file={resumeC.resume}
+                    className="w-full flex flex-col items-center col-span-2 m-auto"
+                >
+                    {Page && <Page pageNumber={1} />}
+                </Document>
+            )
         ) : (
             <div>Loading...</div>
         );
