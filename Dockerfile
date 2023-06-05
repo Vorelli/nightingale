@@ -1,4 +1,4 @@
-FROM node:16-alpine AS base
+FROM node:18-alpine AS base
 
 WORKDIR /app
 COPY package*.json pnpm-lock.yaml ./
@@ -14,8 +14,9 @@ RUN pnpm build:back
 RUN pnpm migrate_db
 RUN pnpm prune --prod
 
-FROM node:16-alpine AS release
+FROM node:18-alpine AS release
 RUN apk add ffmpeg
+RUN npm install -g pnpm
 WORKDIR /app
 RUN mkdir /app/public
 RUN mkdir /app/public/streaming

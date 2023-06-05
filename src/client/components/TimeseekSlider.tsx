@@ -83,6 +83,7 @@ function TimeseekSlider() {
     const actuallySetCurrentT = React.useMemo(() => {
         return (num: number) => {
             setCurrentT &&
+                num !== timeseekContext.currentT &&
                 setCurrentT(num, "from actuallySetCurrentT react memo");
         };
     }, []);

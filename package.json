@@ -6,7 +6,7 @@
     "scripts": {
         "test": "NODE_OPTIONS=--experimental-vm-modules npx jest --watch",
         "build:dev": "tsc --watch --preserveWatchOutput",
-        "start:dev": "nodemon dist/src/server/index.js --watch dist",
+        "start:dev": "DEV=true nodemon dist/src/server/index.js --watch dist",
         "dev": "webpack serve",
         "b": "webpack -w --mode production",
         "build": "webpack --mode production",
