@@ -26,7 +26,20 @@ describe("objectsDeepEqual", () => {
         }
       ]
     };
+    const c = {
+      album: "hello",
+      artist: "hello",
+      title: "hello",
+      artwork: [
+        {
+          sizes: "18x19",
+          src: "hello.jpg",
+          type: "image/hello"
+        }
+      ]
+    };
     expect(objectsDeepEqual(a, b)).toBe(true);
+    expect(objectsDeepEqual(a, c)).toBe(false);
   });
 
   it("should return false when they're different", () => {
