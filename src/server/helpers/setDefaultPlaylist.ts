@@ -1,48 +1,30 @@
-import { PlaylistSongs, playlistSongs, playlists } from "../db/schema.js";
-import { appWithExtras } from "../types/types.js";
-import { eq } from "drizzle-orm";
+import { type Application, type WithWebsocketMethod } from 'express-ws'
+import { type PlaylistSongs, playlistSongs, playlists } from '../db/schema.js'
+import { eq } from 'drizzle-orm'
 
-export function playlistFromQueue(
-  queue: string[],
-  playlistId: string
-): PlaylistSongs[] {
-  const songs = new Array<PlaylistSongs>();
-  for (var i = 0; i < queue.length; i++) {
-    songs.push({
-      order: i,
-      songMd5: queue[i],
-      playlistId: playlistId,
-    } as PlaylistSongs);
-  }
-  return songs;
+export function playlistFromQueue (queue: string[], playlistId: string): PlaylistSongs[] {
+  return queue.map((songMd5: string, i: number) => {
+    const playlistSong: PlaylistSongs = { order: i, songMd5, playlistId }
+    return playlistSong
+  })
 }
 
-export default async function setDefaultPlaylist(app: appWithExtras) {
-  const defaultQueue = app.locals.queues[app.locals.queueIndex];
-  const { db } = app.locals;
-  return new Promise<void>(async (resolve, reject) => {
-    try {
-      const currentDefaultPlaylist = await db
-        .select()
-        .from(playlists)
-        .where(eq(playlists.name, "Default"));
-      // If it exists, delete its songs from playlistSongs
-      if (currentDefaultPlaylist && currentDefaultPlaylist[0]) {
-        await db
-          .delete(playlistSongs)
-          .where(eq(playlistSongs.playlistId, currentDefaultPlaylist[0].id));
-      }
-      await db.delete(playlists).where(eq(playlists.name, "Default"));
-      const defaultPlaylist = await db
-        .insert(playlists)
-        .values([{ name: "Default" }])
-        .returning();
-      const pSongs = playlistFromQueue(defaultQueue, defaultPlaylist[0].id);
-      await db.insert(playlistSongs).values(pSongs);
-      resolve();
-    } catch (err) {
-      console.log("error occurred when trying to set the default playlist");
-      reject(err);
-    }
-  });
+export default async function setDefaultPlaylist (app: Application & WithWebsocketMethod): Promise<void> {
+  const defaultQueue = app.locals.queues[app.locals.queueIndex]
+  const { db } = app.locals
+  await db.select().from(playlists).where(eq(playlists.name, 'Default'))
+    .then(async (currentDefaultPlaylists) => {
+      // If the default playlist exists, delete its songs from playlistSongs
+      return await Promise.all([currentDefaultPlaylists.map(playlist => {
+        return db.delete(playlistSongs).where(eq(playlistSongs.playlistId, playlist.id))
+      })])
+    }).then(() => db.delete(playlists).where(eq(playlists.name, 'Default')))
+    .then(() => db.insert(playlists).values([{ name: 'Default' }]).returning())
+    .then(defaultPlaylist => {
+      const pSongs = playlistFromQueue(defaultQueue, defaultPlaylist[0].id)
+      return db.insert(playlistSongs).values(pSongs)
+    }).then(() => { }).catch(err => {
+      console.log('error occurred when trying to set the default playlist')
+      throw err
+    })
 }
