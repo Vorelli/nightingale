@@ -17,20 +17,23 @@ import {
   type ReturningGenres,
   type ReturningAlbums,
   type NewArtists,
-  type NewGenres
+  type NewGenres,
+  type ReturningAlbumGenres,
+  type ReturningAlbumArtists,
+  type ReturningSongs
 } from '../db/schema.js'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import path from 'path'
 import { getAudioDurationInSeconds } from 'get-audio-duration'
 import sharp from 'sharp'
 import ffmpeg from 'fluent-ffmpeg/index.js'
-import { type ICommonTagsResult, parseFile } from 'music-metadata'
-import { type AnyPgTable } from 'drizzle-orm/pg-core'
-import { type NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { type ICommonTagsResult, parseFile } from '@vorelli/music-metadata'
 import { type FilePathAndMD5, type Album, type Song, type DirectoryAndSubElements } from '../types/types.js'
 import { getAlbumToInsert, getSongsToInsert } from './dbHelpers.js'
 import { type Application } from 'express'
 import { type Dirent } from 'fs'
+import { type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
+import { type AnySQLiteTable } from 'drizzle-orm/sqlite-core/index.js'
 
 interface innerJoinReturn {
   songs: Songs
@@ -41,14 +44,12 @@ interface innerJoinReturn {
   albumGenres: AlbumGenres
 }
 let app: Application
-let db: NodePgDatabase
 
-export async function loadSongs (appFromSource: Application, dbFromSource: NodePgDatabase): Promise<Album[]> {
+export async function loadSongs (appFromSource: Application): Promise<Album[]> {
   app = appFromSource
-  db = dbFromSource
   const musicDir = process.env.MUSIC_DIRECTORY as string
   return await processPaths([path.resolve(musicDir)])
-    .then(async (md5s) => await processMd5s(app, md5s, db))
+    .then(async (md5s) => await processMd5s(app, md5s))
 }
 
 async function processPaths (pathsInMusic: Dirent[] | string[], parentDir = ''): Promise<Array<{ md5: string, filePath: string }>> {
@@ -97,9 +98,7 @@ function getAlbumFromRows (rows: innerJoinReturn[]): Album | undefined {
         const songs = val.songs as Songs & WithOptionalAlbumId
         const tempAlbumId = val.songs.albumId
         delete (songs as WithOptionalAlbumId).albumId
-        let albumArtist = val.albums.albumArtist
-        if (albumArtist === null) albumArtist = 'Unknown Artist'
-        else if (val.albums.albumArtist !== null) albumArtist = findArtistName(rows, val.albums.albumArtist) ?? 'Unknown Artist'
+        const albumArtist = findArtistName(rows, val.albums.albumArtistId) ?? 'Unknown Artist'
         const albums: Album = {
           name: val.albums.name ?? 'Unknown Album Name',
           yearReleased: val.albums.year ?? 1970,
@@ -125,7 +124,8 @@ function getAlbumFromRows (rows: innerJoinReturn[]): Album | undefined {
   return albumObj
 }
 
-function findArtistName (artistList: innerJoinReturn[], artistId: string): string | null {
+function findArtistName (artistList: innerJoinReturn[], artistId: number | null): string | null {
+  if (artistId === null) return null
   for (let i = 0; i < artistList.length; i++) {
     if (artistList[i].artists.id === artistId) {
       return artistList[i].artists.name
@@ -155,7 +155,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
           if (compA !== compB) {
             // return false;
             console.log('trying to set', key, b[key])
-            resolve(app.locals.db.update(albums).set({ [key]: b[key] }).then())
+            resolve(app.locals.db.update(albums).set({ [key]: b[key] }).all())
           }
           resolve()
         } else {
@@ -181,6 +181,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                 .select()
                 .from(table)
                 .where(eq(table.name, name))
+                .all()
             })
           )
           const addsToDb: Array<Promise<any>> = []
@@ -206,6 +207,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                   app.locals.db
                     .delete(table)
                     .where(eq(table.id, id))
+                    .all()
                 )
               )
             )
@@ -223,6 +225,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                     .select()
                     .from(table)
                     .where(eq(table.name, newName))
+                    .all()
                 })
               )
             })
@@ -251,7 +254,8 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                               existingArr[i][0]
                                 .id,
                             albumId: a.albumId
-                          }))
+                          })
+                          .all())
                       } else {
                         console.log(
                           'adding existing genre to album:',
@@ -265,7 +269,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                               existingArr[i][0]
                                 .id,
                             albumId: a.albumId
-                          }))
+                          }).all())
                       }
                     }
                     console.log(
@@ -284,6 +288,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                       .insert(table)
                       .values({ name: newName })
                       .returning()
+                      .all()
                   })
               )
               return await Promise.all([additions, Promise.all(addsToDb)]).then(([additions, _adds]) => additions)
@@ -318,6 +323,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                             artistId,
                             albumId
                           })
+                          .all()
                       )
                     }
                   } else {
@@ -340,6 +346,7 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                             genreId,
                             albumId
                           })
+                          .all()
                       )
                     }
                   }
@@ -370,10 +377,11 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
                       return app.locals.db
                         .update(albums)
                         .set({
-                          albumArtist:
-                            newAlbumArtist.name
+                          albumArtistId:
+                            newAlbumArtist.id
                         })
                         .where(eq(albums.id, albumId))
+                        .all()
                     }
                   })
                   .catch((err) => {
@@ -400,18 +408,17 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
   for (let i = 0; i < keys.length; i++) {
     if (keys[i] === 'md5') continue
     songPromises.push(
-      new Promise((resolve, reject) => {
+      new Promise((resolve, _reject) => {
         const key = keys[i] as keyof Song
         if (a.songs[0][key] !== b.songs[0][key]) {
           // return false;
-          app.locals.db
+          const set = app.locals.db
             .update(songs)
             .set({ [key]: b.songs[0][key] })
             .where(eq(songs.md5, b.songs[0].md5))
-            .then(() => { console.log('updated:', key, b.songs[0][key]) }
-            )
-            .then(resolve)
-            .catch(reject)
+            .all()
+          console.log('updated:', key, b.songs[0][key])
+          resolve(set)
         } else resolve()
       })
     )
@@ -425,51 +432,50 @@ async function compareTagsAndUpdate (app: Application, a: Album, b: Album | bool
   )
 }
 
-async function processMd5s (app: Application, md5s: FilePathAndMD5[], db: NodePgDatabase): Promise<Album[]> {
+async function processMd5s (app: Application, md5s: FilePathAndMD5[]): Promise<Album[]> {
   console.log('FILES WITH MD5s NOT IN DB:')
 
   return await Promise.all(
     md5s.map(async ({ md5, filePath }) => {
       return await new Promise<boolean | Album>((resolve, reject) => {
-        db.select()
-          .from(songs)
-          .innerJoin(albums, eq(songs.albumId, albums.id))
-          .innerJoin(
-            albumArtists,
-            eq(albumArtists.albumId, albums.id)
-          )
-          .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
-          .innerJoin(genres, eq(albumGenres.genreId, genres.id))
-          .innerJoin(artists, eq(albumArtists.artistId, artists.id))
-          .where(eq(songs.md5, md5))
-          .then(async (rows: innerJoinReturn[]) => {
-            if (rows.length === 0) {
-              resolve(getSongInfo(app, filePath, md5))
+        try {
+          const rows = app.locals.db.select().from(songs)
+            .innerJoin(albums, eq(songs.albumId, albums.id))
+            .innerJoin(
+              albumArtists,
+              and(eq(albumArtists.albumId, albums.id), eq(albums.albumArtistId, albumArtists.artistId))
+            )
+            .innerJoin(albumGenres, eq(albumGenres.albumId, albums.id))
+            .innerJoin(genres, eq(albumGenres.genreId, genres.id))
+            .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+            .where(eq(songs.md5, md5))
+            .all()
+          if (rows.length === 0) {
+            resolve(getSongInfo(app, filePath, md5))
 
-              // TODO: use a .then on the getSongInfo to insert it into the database
-              // And once it's in the database, then we don't have to worry about it
-              // And we can just return that 'Albums object'
-            } else {
-              const ret = getAlbumFromRows(rows)
-              if (ret === undefined) { resolve(false); return }
-              // TODO: I started on the path to comparing information on disk versus in the database.
-              // that would be the next direction here. so if information on disk changes, those changes are reflected in the database.
-              // What would be nice is when it detects changes on disk, but can be pretty confidant it's the same song is to
-              // move/rename the streaming file instead of creating a new one and forgetting about the old one.
-              // const compare = await getSongInfo(app, filePath, md5);
-              resolve(ret)
-              // if (ret === undefined) return resolve(false);
-              // compareTagsAndUpdate(app, ret, compare, () => resolve(ret));
-              // we need to delete the current album from the database.
-              // this should include the song.
-              // I don't think we should delete the artist or genre.
-              // These can be cleaned up when the server checks for danglers in the db
-            }
-          })
-          .catch((err) => {
-            console.error('failed db search:', err)
-            reject(err)
-          })
+            // TODO: use a .then on the getSongInfo to insert it into the database
+            // And once it's in the database, then we don't have to worry about it
+            // And we can just return that 'Albums object'
+          } else {
+            const ret = getAlbumFromRows(rows)
+            if (ret === undefined) { resolve(false); return }
+            // TODO: I started on the path to comparing information on disk versus in the database.
+            // that would be the next direction here. so if information on disk changes, those changes are reflected in the database.
+            // What would be nice is when it detects changes on disk, but can be pretty confidant it's the same song is to
+            // move/rename the streaming file instead of creating a new one and forgetting about the old one.
+            // const compare = await getSongInfo(app, filePath, md5);
+            resolve(ret)
+            // if (ret === undefined) return resolve(false);
+            // compareTagsAndUpdate(app, ret, compare, () => resolve(ret));
+            // we need to delete the current album from the database.
+            // this should include the song.
+            // I don't think we should delete the artist or genre.
+            // These can be cleaned up when the server checks for danglers in the db
+          }
+        } catch (err) {
+          console.error('failed db search:', err)
+          reject(err)
+        }
       })
     })
   )
@@ -505,7 +511,7 @@ async function processMd5s (app: Application, md5s: FilePathAndMD5[], db: NodePg
       // now that albums are merged into a similar sort of grouping, we can insert into the database.
       // var inserts: Promise<void>[] = [];
       return await new Promise<Album[]>((resolve, reject) => {
-        insertAllIntoDb(db, mergedAlbums)
+        insertAllIntoDb(app.locals.db, mergedAlbums)
           .then(() => {
             /*
                 name: rows[0].albums.name ?? "Unknown Album Name",
@@ -554,22 +560,22 @@ function uniqueFromObject (objs: Map<string, any>, key: string, seen: string[]):
 }
 
 async function insertAllIntoDb (
-  db: NodePgDatabase,
+  db: BetterSQLite3Database,
   albumList: Map<string, Album>
 ): Promise<void> {
   const artistLookUps = Array.from(albumList.values()).flatMap(
     (album: Album) =>
       album.artists.map(async (artist: string) =>
-        await db
+        db
           .select()
           .from(artists)
           .where(eq(artists.name, artist))
-          .execute()
+          .all()
       )
   )
   const genreLookUps = Array.from(albumList.values()).flatMap((album) =>
     album.genres.map(async (genre) =>
-      await db.select().from(genres).where(eq(genres.name, genre)).execute()
+      db.select().from(genres).where(eq(genres.name, genre)).all()
     )
   )
 
@@ -594,13 +600,11 @@ async function insertAllIntoDb (
         )
       }
 
-      const insertIntoTable = async (
-        table: AnyPgTable,
+      function insertIntoTable<T1> (
+        table: AnySQLiteTable,
         values: any[]
-      ): Promise<any> => {
-        return values.length === 0
-          ? await Promise.resolve([])
-          : await db.insert(table).values(values).returning()
+      ): T1[] {
+        return values.length === 0 ? [] : db.insert(table).values(values).returning().all() as T1[]
       }
 
       const returnedArtistNames = uniqueElements(
@@ -622,11 +626,8 @@ async function insertAllIntoDb (
         returnedGenreNames,
         uniqueGenres
       )
-      const artistInsert = insertIntoTable(artists, uniqueArtists)
-      const genreInsert = insertIntoTable(genres, uniqueGenres)
-
-      const inserts: [ReturningArtists[], ReturningGenres[]] =
-        await Promise.all([artistInsert, genreInsert])
+      const artistInserts = insertIntoTable<ReturningArtists>(artists, uniqueArtists)
+      const genreInserts = insertIntoTable<ReturningGenres>(genres, uniqueGenres)
 
       const nameToId = <T>(
         arr: T[],
@@ -643,15 +644,12 @@ async function insertAllIntoDb (
       }
 
       const artistNameToId = nameToId<ReturningArtists>(
-        [
-          ...inserts[0],
-          ...returnFromDb[0]
-        ].flat(),
+        [...artistInserts, ...returnFromDb[0]].flat(),
         'id',
         'name'
       )
       const genreNameToId = nameToId(
-        [...inserts[1], ...returnFromDb[1]].flat(),
+        [...genreInserts, ...returnFromDb[1]].flat(),
         'id',
         'name'
       )
@@ -664,12 +662,12 @@ async function insertAllIntoDb (
           )
       )
 
-      const insertedAlbums: ReturningAlbums[] = await insertIntoTable(
+      const insertedAlbums: ReturningAlbums[] = insertIntoTable(
         albums,
         albumsToInsert
       )
 
-      const albumToId = insertedAlbums.reduce<Record<string, string>>((acc, cur) => {
+      const albumToId = insertedAlbums.reduce<Record<string, number>>((acc, cur) => {
         if (cur.name !== null) {
           acc[cur.name] = cur.id
         }
@@ -696,11 +694,11 @@ async function insertAllIntoDb (
           }))
       )
 
-      return await Promise.all([
-        insertIntoTable(songs, songsToInsert),
-        insertIntoTable(albumArtists, albumArtistsToInsert),
-        insertIntoTable(albumGenres, albumGenresToInsert)
-      ]).then()
+      return [
+        insertIntoTable<ReturningSongs>(songs, songsToInsert),
+        insertIntoTable<ReturningAlbumArtists>(albumArtists, albumArtistsToInsert),
+        insertIntoTable<ReturningAlbumGenres>(albumGenres, albumGenresToInsert)
+      ]
     }
   )
 }
@@ -723,15 +721,11 @@ async function handleDir (filePath: string | Dirent, parentDir = ''): Promise<Di
  * @param md5 The MD5 of the music file. Passed around for efficiency.
  * @returns Promise<Album | boolean> - A boolean is returned when it is found the file is not an audio file. An album otherwise.
             */
-async function getSongInfo (
-  app: Application,
-  filePath: string,
-  md5: string
-): Promise<Album | boolean> {
-  return await fileDoesntExist(getPath(app, md5, 'mp4'))
+async function getSongInfo (app: Application, filePath: string, md5: string): Promise<Album | boolean> {
+  const streamingPath = getPath(app, md5, 'mp4')
+  return await fileDoesntExist(streamingPath)
     .then(async (doesntExist) => {
       if (doesntExist) {
-        const streamingPath = getPath(app, md5, 'mp4')
         await new Promise<void>((resolve, reject) => {
           try {
             ffmpeg(filePath, {})
@@ -751,22 +745,20 @@ async function getSongInfo (
       }
     })
     .then(async () => {
-      const duration = getAudioDurationInSeconds(filePath).then(
+      const duration = getAudioDurationInSeconds(streamingPath).then(
         (durationInSeconds) => durationInSeconds * 1000
       )
 
-      const tags = await parseFile(filePath).then(
+      const tags = parseFile(filePath).then(
         (tags) => tags.common
       )
 
       const imageChecking = fileDoesntExist(
         getPath(app, md5, 'jpg')
-      ).then(async (doesntExist) => {
-        if (
-          doesntExist &&
-          tags.picture !== undefined &&
-          tags.picture.length > 0
-        ) {
+      )
+
+      return await Promise.all([tags, imageChecking, duration]).then(async ([tags, doesntExist, duration]: [ICommonTagsResult, boolean, number]) => {
+        if (doesntExist && tags.picture !== undefined && tags.picture.length > 0) {
           const newImage = await sharp(tags.picture[0].data)
             .resize(256)
             .jpeg()
@@ -774,29 +766,8 @@ async function getSongInfo (
           const streamingPath = getPath(app, md5, 'jpg')
           fs.writeFile(streamingPath, newImage).catch((err) => { console.log('Error occurred when trying to write new image to disk:', err) })
         }
+        return craftAlbumObj(tags, md5, filePath, duration)
       })
-
-      return await Promise.all([duration, tags, imageChecking])
-        .then(
-          async ([
-            duration,
-            tags,
-            _imageProcessedAndSaved
-          ]) => craftAlbumObj(
-            tags,
-            md5,
-            filePath,
-            duration
-          )
-        )
-        .catch((err) => {
-          console.log(
-            "is this where it's catching for audio files?",
-            err
-          )
-          throw err
-        }
-        )
     })
     .catch((_err) => {
       const fileP = filePath.split('/')

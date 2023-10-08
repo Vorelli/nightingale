@@ -1,96 +1,29 @@
-import express, { type Response, type Request, Application } from 'express'
-import { playlistSongs, playlists, messages } from '../db/schema.js'
-import { WebSocket } from 'ws'
+import express, { type Response, type Request, type Application } from 'express'
+import { playlistSongs, playlists, messages, songs, albums, artists, albumArtists, albumGenres, genres, type ReturningSongs, type ReturningAlbums, type ReturningArtists, type ReturningAlbumArtists, type ReturningAlbumGenres, type ReturningGenres } from '../db/schema.js'
+import { type WebSocket } from 'ws'
 import { eq } from 'drizzle-orm'
 import { nextSong, previousSong, sendSync } from '../helpers/queue.js'
 import { readFile } from 'fs'
 import path from 'path'
 import queryString from 'querystring'
+import { type ClientFriendlyPlaylistData, type ClientFriendlySongData } from '../types/types.js'
 const router = express.Router()
 
 router.get('/songs', (req, res) => {
-  const query = `
-  SELECT
-  song_data.md5,
-  song_data.path,
-  song_data.duration,
-  song_data."albumId",
-  song_data.track,
-  song_data.lyrics,
-  song_data.song_name AS "name",
-  song_data.album_id,
-  song_data.album_name AS "albumName",
-  song_data.year,
-  album_artist_data.name AS "albumArtist",
-  album_artist_data.id AS "albumArtist_id",
-  song_data.genres,
-  song_data.genre_ids,
-  artist_data.artists
-FROM
-  (
-      SELECT
-          songs.md5,
-          songs.path,
-          songs.duration,
-          songs."albumId",
-          songs.track,
-          songs.lyrics,
-          songs.name AS song_name,
-          albums.id AS album_id,
-          albums.name AS album_name,
-          albums.year,
-          albums."albumArtist",
-          array_agg(genres.name) AS genres,
-          json_object_agg(genres.name, genres.id) AS genre_ids
-      FROM
-          songs
-          JOIN albums ON songs."albumId" = albums.id
-          JOIN "albumGenres" ON albums.id = "albumGenres"."albumId"
-          JOIN genres ON "albumGenres"."genreId" = genres.id
-      GROUP BY
-          songs.md5,
-          albums.id
-  ) AS song_data
-  JOIN (
-      SELECT
-          albums.id AS album_id,
-          array_agg(artists.name) AS artists
-      FROM
-          albums
-          JOIN "albumArtists" ON albums.id = "albumArtists"."albumId"
-          JOIN artists ON "albumArtists"."artistId" = artists.id
-      GROUP BY
-          albums.id
-  ) AS artist_data ON song_data.album_id = artist_data.album_id
-  JOIN artists AS album_artist_data ON song_data."albumArtist" = album_artist_data.id;
-`
-
-  new Promise((resolve, reject) => {
-    (req.app as Application).locals.pool.connect(
-      (err, client, release) => {
-        if (err !== null) return reject(err)
-        client.query(query, (err, result) => {
-          release()
-          if (err !== null) { return reject(err); }
-          const data = result.rows.map((row) => {
-            return {
-              ...row,
-              albumArtist: row.albumArtist,
-              lyrics: row.lyrics?.split('\n'),
-              year: row.year
-            }
-          })
-          resolve(res.json(data))
-        })
-      }
-    )
-  }).catch((err) => {
-    console.error('error occurred when trying to make db call', err)
+  try {
+    const { db } = req.app.locals
+    const songsData = db.select().from(songs).innerJoin(albums, eq(albums.id, songs.albumId)).all()
+    const artistsData = db.select().from(artists).innerJoin(albumArtists, eq(albumArtists.artistId, artists.id)).all()
+    const genresData = db.select().from(genres).innerJoin(albumGenres, eq(albumGenres.genreId, genres.id)).all()
+    const jsonFormat: ClientFriendlySongData[] = transformSongQueryToJSON(songsData, artistsData, genresData)
+    res.json(jsonFormat)
+  } catch (err) {
+    console.error('error occurred when trying to collect song data', err)
     res.sendStatus(500)
-  })
+  }
 })
 
-function readFileAndThen(
+function readFileAndThen (
   fileName: string,
   res: Response,
   cb: (data: Buffer) => any
@@ -105,15 +38,15 @@ function readFileAndThen(
   })
 }
 
-function readFilesAndThen(
+function readFilesAndThen (
   fileNames: string[],
   res: Response,
   cb: (data: Buffer[]) => any
 ): void {
-  const data = new Array < Buffer > (fileNames.length)
+  const data = new Array < Buffer >(fileNames.length)
   let saved = 0
 
-  function saveToData(i: number, d: Buffer): void {
+  function saveToData (i: number, d: Buffer): void {
     data[i] = d
     saved++
     if (saved === fileNames.length) {
@@ -127,32 +60,30 @@ function readFilesAndThen(
 
 router.post('/inquiry', (req, res) => {
   let { name, message, contact } = req.body
-  console.log(req.body)
   name = queryString.escape(name)
   message = queryString.escape(message)
   contact = queryString.escape(contact)
   if (name.length > 0 && message.length > 0 && contact.length > 0) {
-    (req.app as Application).locals.db
-      .insert(messages)
-      .values({ name, body: message, contact })
-      .returning()
-      .then((_retData) => {
-        return res.status(200).json({ message: 'success' })
-      })
-      .catch((err) => {
-        console.log(
-          'error encountered when trying to add message to the database:',
-          err
-        )
-        return res.sendStatus(500)
-      })
+    try {
+      req.app.locals.db
+        .insert(messages)
+        .values({ name, body: message, contact })
+        .all()
+      return res.status(200).json({ message: 'success' })
+    } catch (err) {
+      console.log(
+        'error encountered when trying to add message to the database:',
+        err
+      )
+      return res.sendStatus(500)
+    }
   } else {
     return res.sendStatus(400)
   }
 })
 
 router.get('/resume', (_req, res) => {
-  function sendData(data: Buffer[]): void {
+  function sendData (data: Buffer[]): void {
     const resume = data[0]
     res.json({
       personal: {
@@ -184,31 +115,27 @@ router.get('/projects', (_req, res) => {
 })
 
 router.get('/playlists', (req, res) => {
-  (req.app as Application).locals.db
-    .select()
-    .from(playlists)
-    .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id))
-    .then((result) => {
-      const data = result.reduce < Record < string, Record<string, any>>> ((acc, val) => {
-        acc[val.playlists.id] = acc[val.playlists.id] ?? {}
-        acc[val.playlists.id].songs = acc[val.playlists.id].songs ?? []
-        acc[val.playlists.id].songs[val.playlistSongs.order ?? 0] = val.playlistSongs.songMd5 ?? 'missingMd5'
-        acc[val.playlists.id].id = val.playlists.id
-        acc[val.playlists.id].name = val.playlists.name
-        return acc
-      }, {})
-      res.json(data)
-    })
-    .catch((err) => {
-      console.error(
-        'Error occurred when trying to look up playlists from database.',
-        err
-      )
-      res.sendStatus(500)
-    })
+  try {
+    const playlistsData = req.app.locals.db.select().from(playlists)
+      .innerJoin(playlistSongs, eq(playlistSongs.playlistId, playlists.id)).all()
+    const data = playlistsData.reduce<ClientFriendlyPlaylistData>((acc, val, i) => {
+      acc[val.playlists.id] = acc[val.playlists.id] ?? {}
+      acc[val.playlists.id].name = val.playlists.name
+      acc[val.playlists.id].songs = acc[val.playlists.id].songs ?? new Array<string>()
+      acc[val.playlists.id].songs[val.playlistSongs.order ?? i] = val.playlistSongs.songMd5 ?? 'NO MD5 FOUND'
+      return acc
+    }, {})
+    res.json(data)
+  } catch (err) {
+    console.error(
+      'Error occurred when trying to look up playlists from database.',
+      err
+    )
+    res.sendStatus(500)
+  }
 })
 
-function toObject(toBeJson: any): any {
+function toObject (toBeJson: any): any {
   return JSON.parse(
     JSON.stringify(
       toBeJson,
@@ -286,5 +213,36 @@ router.put('/time', (req: Request, res: Response) => {
     res.sendStatus(400)
   }
 })
+
+function transformSongQueryToJSON (songsData: Array<{
+  songs: ReturningSongs
+  albums: ReturningAlbums
+}>, artistsData: Array<{
+  artists: ReturningArtists
+  albumArtists: ReturningAlbumArtists
+}>,
+genresData: Array<{
+  albumGenres: ReturningAlbumGenres
+  genres: ReturningGenres
+}>): ClientFriendlySongData[] {
+  return songsData.map(songData => {
+    const songJSON: ClientFriendlySongData = {
+      md5: songData.songs.md5,
+      path: songData.songs.path ?? 'Path not found for some reason...?',
+      duration: songData.songs.duration,
+      track: songData.songs.track ?? 0,
+      lyrics: songData.songs.lyrics ?? 'No lyrics available for this song. Consider adding them with an ID3 tag editor!',
+      name: songData.songs.name ?? 'No title available for this song. MD5:' + songData.songs.md5,
+      albumName: songData.albums.name ?? 'No Album Name Given. Add one using an ID3 editor!',
+      year: songData.albums.year ?? 1970,
+      albumArtist: artistsData.find(artist => artist.artists.id === songData.albums.albumArtistId)?.artists.name ?? 'No artist name found. Add one using an ID3 editor!',
+      genres: genresData.filter(genreData => genreData.albumGenres.albumId === songData.albums.id).map(genreData => genreData.genres.name),
+      artists: artistsData.filter(artistData => artistData.albumArtists.albumId === songData.albums.id).map(artistData => artistData.artists.name),
+      albumId: '' + songData.albums.id,
+      albumArtistId: '' + artistsData.find(artist => artist.artists.id === songData.albums.albumArtistId)?.artists.id ?? 0
+    }
+    return songJSON
+  })
+}
 
 export default router

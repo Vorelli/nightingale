@@ -1,35 +1,34 @@
 import {
-  doublePrecision,
   index,
   integer,
-  json,
-  pgTable,
+  real,
   text,
-  timestamp,
   uniqueIndex,
+  sqliteTable,
   type UpdateDeleteAction,
-  uuid,
-  varchar
-} from 'drizzle-orm/pg-core'
-import { type NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres'
-import { type InferModel } from 'drizzle-orm'
-import pg from 'pg'
-import { migrate } from 'drizzle-orm/node-postgres/migrator'
+  blob
+} from 'drizzle-orm/sqlite-core'
+import { type BetterSQLite3Database, drizzle } from 'drizzle-orm/better-sqlite3'
+import { sql, type InferModel } from 'drizzle-orm'
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import path from 'path'
-const { Pool } = pg
+import betterSQLite3 from 'better-sqlite3'
+
 const defaultCascade = {
   onDelete: 'cascade' as UpdateDeleteAction,
   onUpdate: 'cascade' as UpdateDeleteAction
 }
 
-export const messages = pgTable(
+export const messages = sqliteTable(
   'messages',
   {
-    id: uuid('id').primaryKey().notNull().defaultRandom(),
+    id: integer('id').primaryKey().notNull(),
     name: text('name').notNull(),
     body: text('body').notNull(),
     contact: text('contact').notNull(),
-    dateCreated: timestamp('dateCreated').defaultNow().notNull()
+    dateCreated: integer('dateCreated', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`current_timestamp`)
   },
   (messages) => {
     return {
@@ -38,10 +37,10 @@ export const messages = pgTable(
   }
 )
 
-export const artists = pgTable(
+export const artists = sqliteTable(
   'artists',
   {
-    id: uuid('id').primaryKey().notNull().defaultRandom(),
+    id: integer('id').primaryKey().notNull(),
     name: text('name').notNull()
   },
   (artists) => ({
@@ -50,10 +49,10 @@ export const artists = pgTable(
   })
 )
 
-export const genres = pgTable(
+export const genres = sqliteTable(
   'genres',
   {
-    id: uuid('id').primaryKey().notNull().defaultRandom(),
+    id: integer('id').primaryKey().notNull(),
     name: text('name').notNull()
   },
   (genres) => ({
@@ -62,13 +61,13 @@ export const genres = pgTable(
   })
 )
 
-export const albums = pgTable(
+export const albums = sqliteTable(
   'albums',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: integer('id').primaryKey(),
     name: text('name'),
     year: integer('year'),
-    albumArtist: uuid('albumArtist').references(() => artists.id, {
+    albumArtistId: integer('albumArtist').references(() => artists.id, {
       onUpdate: 'cascade',
       onDelete: 'set null'
     })
@@ -78,34 +77,34 @@ export const albums = pgTable(
   })
 )
 
-export const albumArtists = pgTable('albumArtists', {
-  albumId: uuid('albumId')
+export const albumArtists = sqliteTable('albumArtists', {
+  albumId: integer('albumId')
     .notNull()
     .references(() => albums.id, defaultCascade),
-  artistId: uuid('artistId')
+  artistId: integer('artistId')
     .notNull()
     .references(() => artists.id, defaultCascade)
 })
 
-export const albumGenres = pgTable('albumGenres', {
-  albumId: uuid('albumId')
+export const albumGenres = sqliteTable('albumGenres', {
+  albumId: integer('albumId')
     .notNull()
     .references(() => albums.id, defaultCascade),
-  genreId: uuid('genreId')
+  genreId: integer('genreId')
     .notNull()
     .references(() => genres.id, defaultCascade)
 })
 
-export const songs = pgTable(
+export const songs = sqliteTable(
   'songs',
   {
-    md5: varchar('md5', { length: 32 }).notNull().primaryKey(),
+    md5: text('md5').notNull().primaryKey(),
     name: text('name'),
     path: text('path'),
-    duration: doublePrecision('duration').notNull(),
+    duration: real('duration').notNull(),
     track: integer('track'),
     lyrics: text('lyrics'),
-    albumId: uuid('albumId')
+    albumId: integer('albumId')
       .notNull()
       .references(() => albums.id, defaultCascade)
   },
@@ -117,10 +116,10 @@ export const songs = pgTable(
   })
 )
 
-export const playlists = pgTable(
+export const playlists = sqliteTable(
   'playlists',
   {
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: integer('id').primaryKey(),
     name: text('name').notNull()
   },
   (playlists) => ({
@@ -132,23 +131,20 @@ export const playlists = pgTable(
   })
 )
 
-export const playlistSongs = pgTable('playlistSongs', {
-  playlistId: uuid('playlistId')
+export const playlistSongs = sqliteTable('playlistSongs', {
+  playlistId: integer('playlistId')
     .notNull()
     .references(() => playlists.id, defaultCascade),
   order: integer('order'),
-  songMd5: varchar('songMd5', { length: 32 }).references(
-    () => songs.md5,
-    defaultCascade
-  )
+  songMd5: text('songMd5').references(() => songs.md5, defaultCascade)
 })
 
-export const session = pgTable(
+export const session = sqliteTable(
   'session',
   {
-    sid: varchar('sid').primaryKey().notNull(),
-    sess: json('sess').notNull(),
-    expire: timestamp('expire', { precision: 6 }).notNull()
+    sid: text('sid').primaryKey().notNull(),
+    sess: blob('sess', { mode: 'json' }).notNull(),
+    expire: integer('expire', { mode: 'timestamp' }).notNull()
   },
   (session) => ({
     idx_expire: index('idx_expire').on(session.expire)
@@ -180,22 +176,15 @@ export type ReturningGenres = InferModel<typeof genres, 'select'>
 export type ReturningPlaylists = InferModel<typeof playlists, 'select'>
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, 'select'>
 
-async function dbMigrate (d: string): Promise<[NodePgDatabase, pg.Pool]> {
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    idleTimeoutMillis: 50 * 1000,
-    max: 50
-  })
-  pool.on('error', (err, _client) => {
-    console.log('server encountered error with pg database:', err)
-    console.log('hopefully it will keep running...')
-  })
+function dbMigrate (d: string): BetterSQLite3Database {
+  const musicDir = process.env.MUSIC_DIRECTORY as string
   const newPath = path.resolve(d, 'migrations-folder')
-  const db = drizzle(pool)
-  await migrate(db, {
-    migrationsFolder: newPath
-  })
-  return [db, pool]
+  const sqliteDb = betterSQLite3(
+    path.resolve(musicDir, 'music.db')
+  )
+  const db = drizzle(sqliteDb)
+  migrate(db, { migrationsFolder: newPath })
+  return db
 }
 
 export { dbMigrate }

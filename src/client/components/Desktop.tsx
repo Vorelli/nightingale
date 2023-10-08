@@ -71,12 +71,7 @@ const InnerDesktop = React.memo(function Desktop({ reloadSong }: Props) {
             .then((data: ClientSong[]) => {
                 const songs = data.reduce((acc, song: ClientSong) => {
                     acc[song.md5] = song;
-                    acc[song.md5].genreDic = acc[song.md5].genres.map(
-                        (genre) => ({
-                            name: genre,
-                            id: song.genre_ids[genre]
-                        })
-                    );
+                    acc[song.md5].genreDic = acc[song.md5].genres;
                     return acc;
                 }, {} as { [key: string]: ClientSong });
                 dispatch(songsRequestSuccess(songs));

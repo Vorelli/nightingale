@@ -7,7 +7,7 @@ interface InitialState {
   reloadSong: boolean;
 }
 const isDevServer = location.host.indexOf("localhost:8080") !== -1;
-const HOST = isDevServer ? "localhost:3000" : location.host;
+const HOST = isDevServer ? "localhost:3000" : (location.host + location.protocol === "http" ? "80" : "443");
 const PROTO = location.protocol + "//";
 
 const initialState: InitialState = {

@@ -8,7 +8,7 @@ import {
   type NewAlbumGenres
 } from '../db/schema.js'
 
-export function getSongsToInsert (album: Album, albumId: string): NewSongs[] {
+export function getSongsToInsert (album: Album, albumId: number): NewSongs[] {
   const songsToInsert = []
   for (let i = 0; i < album.songs.length; i++) {
     const s = album.songs[i] as NewSongs
@@ -39,16 +39,16 @@ export function getGenresToInsert (album: Album): NewGenres[] {
   return genres
 }
 
-export function getAlbumToInsert (album: Album, artistId: string): NewAlbums {
+export function getAlbumToInsert (album: Album, artistId: number): NewAlbums {
   const newAlbum: NewAlbums = {
     name: album.name,
     year: album.yearReleased,
-    albumArtist: artistId
+    albumArtistId: artistId
   }
   return newAlbum
 }
 
-export function getAlbumArtistsToInsert (albumId: string, artistIds: string[]): NewAlbumArtists[] {
+export function getAlbumArtistsToInsert (albumId: number, artistIds: number[]): NewAlbumArtists[] {
   const albumArtists = []
   for (let i = 0; i < artistIds.length; i++) {
     const newAlbumArtists: NewAlbumArtists = {
@@ -60,7 +60,7 @@ export function getAlbumArtistsToInsert (albumId: string, artistIds: string[]): 
   return albumArtists
 }
 
-export function getAlbumGenresToInsert (albumId: string, genreIds: string[]): NewAlbumGenres[] {
+export function getAlbumGenresToInsert (albumId: number, genreIds: number[]): NewAlbumGenres[] {
   const albumGenres = []
   for (let i = 0; i < genreIds.length; i++) {
     const newAlbumGenres: NewAlbumGenres = {

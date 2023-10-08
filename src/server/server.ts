@@ -8,20 +8,18 @@ import morgan from 'morgan'
 import { type IncomingMessage, type Server, type ServerResponse } from 'http'
 
 import { dbMigrate } from './db/schema.js'
-import { sessionsMiddleware } from './middleware/sessions.js'
+// import { sessionsMiddleware } from './middleware/sessions.js'
 import { setCorsAndHeaders } from './middleware/corsAndHeaders.js'
 import { attachWebsocketRoutes } from './middleware/attachWebSocketRoutes.js'
 import apiHandler from './handlers/apiHandler.js'
 import { type WsInstance } from './types/types.js'
 import { type WebSocket } from 'ws'
-import waitForSongsToLoad from './middleware/waitForSongsToLoad.js'
+import { waitForSongsToLoad, startLoadingSongs } from './middleware/waitForSongsToLoad.js'
 
-async function firstRun (
-  __dirname: string
-): Promise<
-  [Application & WithWebsocketMethod, Server<typeof IncomingMessage, typeof ServerResponse> | null]
-  > {
-  const [db, pool] = await dbMigrate(__dirname)
+async function firstRun (__dirname: string): Promise<
+[Application & WithWebsocketMethod, Server<typeof IncomingMessage, typeof ServerResponse> | null]
+> {
+  const db = dbMigrate(__dirname)
   let httpsServer: null | https.Server = null
   const appStart: express.Application = express()
   let { app, getWss }: WsInstance = express_ws(appStart)
@@ -48,15 +46,15 @@ async function firstRun (
   }
   app.locals.__dirname = __dirname
   app.locals.shuffleBy = 'random'
-  app.locals.pool = pool
   app.locals.db = db
   const infoDir = path.resolve(__dirname, 'public/info')
   app.locals.infoDir = infoDir
+  app.locals.loadingSongs = startLoadingSongs(app)
   app.use(waitForSongsToLoad)
 
   app.use(setCorsAndHeaders)
   app.options('*', setCorsAndHeaders)
-  app.use(sessionsMiddleware)
+  // app.use(sessionsMiddleware) TODO: Fix sessions middleware
 
   app.use(express.static(path.join(__dirname, 'public')))
   attachWebsocketRoutes(app)

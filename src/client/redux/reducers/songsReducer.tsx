@@ -9,11 +9,11 @@ interface ClientSong {
     artists: string[];
     albumName: string;
     genres: string[];
-    genreDic?: { name: string; id: string }[];
+    genreDic?: string[];
     genre_ids: { [key: string]: string };
     year: number;
     track: number;
-    lyrics: string[];
+    lyrics: string;
     [key: string]: any;
 }
 
