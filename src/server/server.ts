@@ -1,7 +1,7 @@
 import path from 'path'
 import express from 'express'
 import https from 'https'
-import fs from 'fs'
+import fs from 'fs/promises'
 import express_ws, { type Application, type WithWebsocketMethod } from 'express-ws'
 import compression from 'compression'
 import morgan from 'morgan'
@@ -26,8 +26,8 @@ async function firstRun (__dirname: string): Promise<
   const httpGetWss = getWss
   if (process.env.KEY_PATH !== undefined && process.env.CERT_PATH !== undefined) {
     const options = {
-      key: fs.readFileSync(path.resolve(process.env.KEY_PATH)),
-      cert: fs.readFileSync(path.resolve(process.env.CERT_PATH))
+      key: await fs.readFile(path.resolve(process.env.KEY_PATH)),
+      cert: await fs.readFile(path.resolve(process.env.CERT_PATH))
     }
     httpsServer = https.createServer(options, appStart);
     ({ getWss } = express_ws(app, httpsServer))
@@ -49,6 +49,7 @@ async function firstRun (__dirname: string): Promise<
   app.locals.db = db
   const infoDir = path.resolve(__dirname, 'public/info')
   app.locals.infoDir = infoDir
+  await fs.mkdir(path.join(__dirname, 'public', 'streaming')).catch(err => { console.log(err) })
   app.locals.loadingSongs = startLoadingSongs(app)
   app.use(waitForSongsToLoad)
 

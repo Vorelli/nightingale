@@ -812,7 +812,7 @@ function craftAlbumObj (tags: ICommonTagsResult, md5: string, filePath: string, 
         duration: isNaN(duration) ? 10000 : duration,
         track: tags.track.no ?? 0,
         lyrics:
-          typeof tags.lyrics === 'string'
+          tags.lyrics !== undefined && tags.lyrics?.length > 0
             ? formatLyrics(tags.lyrics).join('\n')
             : 'No lyrics available for this song. Consider adding them with an ID3 tag editor!',
         name: tags.title ?? 'No title available for this song.MD5:' + md5
