@@ -176,9 +176,9 @@ export type ReturningGenres = InferModel<typeof genres, 'select'>
 export type ReturningPlaylists = InferModel<typeof playlists, 'select'>
 export type ReturningPlaylistSongs = InferModel<typeof playlistSongs, 'select'>
 
-function dbMigrate (d: string): BetterSQLite3Database {
+function dbMigrate (): BetterSQLite3Database {
   const musicDir = process.env.MUSIC_DIRECTORY as string
-  const newPath = path.resolve(d, 'migrations-folder')
+  const newPath = path.resolve(musicDir, 'migrations-folder')
   const sqliteDb = betterSQLite3(
     path.resolve(musicDir, 'music.db')
   )

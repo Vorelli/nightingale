@@ -1,6 +1,6 @@
 {
   "name": "nightingale",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A personal radio server. Stream from anywhere",
   "main": "src/server/index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "build": "webpack --mode production",
     "build:back": "tsc",
     "start": "node dist/src/server/index.js",
-    "migrate_db": "drizzle-kit generate:sqlite --out migrations-folder --schema src/server/db/schema.ts --breakpoints"
+    "migrate_db": "drizzle-kit generate:sqlite --out $MUSIC_DIR/migrations-folder --schema src/server/db/schema.ts --breakpoints"
   },
   "repository": {
     "type": "git",

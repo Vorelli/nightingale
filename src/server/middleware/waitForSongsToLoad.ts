@@ -4,9 +4,12 @@ import { type Album, type Song } from '../types/types.js'
 import { advanceTime, initializeQueue } from '../helpers/queue.js'
 import setDefaultPlaylist from '../helpers/setDefaultPlaylist.js'
 import { type Application } from 'express-ws'
+import fs from 'fs/promises'
+import path from 'path'
 
-export async function startLoadingSongs (app: Application): Promise<Album[]> {
+export async function loadSongsAndWait (app: Application): Promise<Album[]> {
   try {
+    await fs.mkdir(path.join(app.locals.__dirname, 'public', 'streaming')).catch(err => { console.log(err) })
     const albums = await loadSongs(app)
     const md5s = albums.flatMap((album: Album) => album.songs.map((s: Song) => s.md5))
     const md5ToSong = albums.reduce(
@@ -23,6 +26,7 @@ export async function startLoadingSongs (app: Application): Promise<Album[]> {
     initializeQueue(app)
     await setDefaultPlaylist(app)
     advanceTime(app)
+    app.use(waitForSongsToLoad)
     return albums
   } catch (err) {
     console.log('error occurred when trying to process paths.', err)
