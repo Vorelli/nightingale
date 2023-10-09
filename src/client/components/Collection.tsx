@@ -259,6 +259,7 @@ const InnerCollection = React.memo(function Collection ({
     icons: JSX.Element[][]
   }): React.JSX.Element {
     const [nodes, setNodes] = useState(new Array<string>())
+    void nodes
     const { hidden } = useSelector(
       (s: RootState) => s.windows.windows.main
     )

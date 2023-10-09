@@ -57,6 +57,7 @@ async function firstRun (__dirname: string): Promise<
   app.options('*', setCorsAndHeaders)
   // app.use(sessionsMiddleware) TODO: Fix sessions middleware
 
+  console.log('public path:', path.join(__dirname, 'public'))
   app.use(express.static(path.join(__dirname, 'public')))
   attachWebsocketRoutes(app)
   app.use('/api', apiHandler)

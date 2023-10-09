@@ -45,7 +45,6 @@ Nightingale offers a wide range of features designed to enhance your music strea
       <ul>
         <li>Docker</li>
         <li>Docker Compose</li>
-        <li>Postgres database</li>
       </ul>
     </p>
   </li>
@@ -73,7 +72,6 @@ Nightingale offers a wide range of features designed to enhance your music strea
       This method requires (externally):
       <ul>
         <li>FFmpeg</li>
-        <li>Postgres database</li>
         <li>Node.js/npm</li>
       </ul>
         <p>The rest of the installation will assume you have these registered and ready to go.</p>
@@ -89,7 +87,6 @@ Nightingale offers a wide range of features designed to enhance your music strea
 
     # REQUIRED
     # All specified paths should be absolute
-    DATABASE_URL=database connection string
     COOKIE_SECRET=generate via [openssl rand -hex 32]
     MUSIC_DIRECTORY=path to your music library
     # OPTIONAL
@@ -104,5 +101,9 @@ Nightingale offers a wide range of features designed to enhance your music strea
   </li>
   <li>Start the server with: <code>npm start</code></li>
 </ol>
+
+### Building and publishing Docker Image
+`/bin/bash
+TAG=v# && /bin/bash buildAndPush.sh`
 
 <p align="right">(<a href="#top">back to top</a>)</p>

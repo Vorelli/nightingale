@@ -16,5 +16,5 @@ public/*.json
 public/index.html
 .pnpm-debug.log
 pnpm-lock.yaml
-info/
+public/info/
 bun*

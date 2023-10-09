@@ -811,10 +811,7 @@ function craftAlbumObj (tags: ICommonTagsResult, md5: string, filePath: string, 
         ),
         duration: isNaN(duration) ? 10000 : duration,
         track: tags.track.no ?? 0,
-        lyrics:
-          tags.lyrics !== undefined && tags.lyrics?.length > 0
-            ? formatLyrics(tags.lyrics).join('\n')
-            : 'No lyrics available for this song. Consider adding them with an ID3 tag editor!',
+        lyrics: formatLyrics(tags.lyrics),
         name: tags.title ?? 'No title available for this song.MD5:' + md5
       }
     ],
@@ -822,8 +819,10 @@ function craftAlbumObj (tags: ICommonTagsResult, md5: string, filePath: string, 
   }
 }
 
-function formatLyrics (lyrics: string[]): string[] {
-  return lyrics.length === 1 ? lyrics[0].split('/\r?\n/g') : lyrics
+function formatLyrics (lyrics: string[] | undefined): string {
+  return lyrics !== undefined && lyrics.length > 0
+    ? (lyrics?.length === 1 ? lyrics[0].split('/\r?\n/g').join('\n') : lyrics.join('\n'))
+    : 'No lyrics available for this song. Consider adding them with an ID3 tag editor!'
 }
 
 function getPath (app: Application, fileName: string, ext: string): string {
