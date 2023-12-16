@@ -9,7 +9,7 @@ services:
       - CERT_PATH=keyAndCert/localhost.crt
       - DATABASE_URL=database uri connection string
       - COOKIE_SECRET=generate via [openssl rand -hex 32]
-      - MUSIC_DIRECTORY=music/
+      - MUSIC_DIR=music/
     volumes:
       - /path/to/keyAndCert:/app/keyAndCert
       - /path/to/music/library:/app/music

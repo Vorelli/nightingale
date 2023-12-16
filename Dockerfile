@@ -1,33 +1,38 @@
-FROM node:18-alpine AS base
+## SERVER
+FROM node:18-alpine AS buildServer
 
 WORKDIR /app
-COPY package*.json pnpm-lock.yaml ./
+COPY package*.json tsconfig.json ./
+COPY server /app/server
+RUN npm ci
+RUN npm run build:back
+RUN npm run migrate_db
+RUN npm prune --prod
 
-FROM base AS build
-RUN npm install -g pnpm
-RUN pnpm fetch
-RUN pnpm i -r --offline
+## CLIENT
+FROM node:18-alpine AS buildClient
 
-COPY . .
-RUN pnpm build
-RUN pnpm build:back
-RUN pnpm migrate_db
-RUN pnpm prune --prod
+COPY client /app/client
+COPY public /app/public
+WORKDIR /app/client
+RUN npm ci
+RUN npm run build
+RUN npm prune --prod
 
+## ALL
 FROM node:18-alpine AS release
 RUN apk add ffmpeg
-RUN npm install -g pnpm
 WORKDIR /app
-RUN mkdir /app/public
-RUN mkdir /app/public/streaming
 
-COPY package*.json pnpm-lock.yaml ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/public ./public
-COPY --from=build /app/migrations-folder ./migrations-folder
+RUN mkdir server
+COPY package*.json ./
+RUN mkdir -p /app/public/streaming
+COPY --from=buildServer /app/server/node_modules ./server/node_modules
+COPY --from=buildServer /app/server/dist ./server/dist
+COPY --from=buildClient /app/public ./public
 
 EXPOSE 3000
 EXPOSE 4000
 
-CMD ["pnpm", "start"]
+#CMD ["bin/bash"]
+CMD ["npm", "start"]

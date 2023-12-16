@@ -88,7 +88,7 @@ Nightingale offers a wide range of features designed to enhance your music strea
     # REQUIRED
     # All specified paths should be absolute
     COOKIE_SECRET=generate via [openssl rand -hex 32]
-    MUSIC_DIRECTORY=path to your music library
+    MUSIC_DIR=path to your music library
     # OPTIONAL
     KEY_PATH=path to your privkey.pem
     CERT_PATH=path to your fullchain.pem

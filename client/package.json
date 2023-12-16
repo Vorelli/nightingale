@@ -1,0 +1,76 @@
+{
+  "name": "nightingaleClient",
+  "version": "0.1.0",
+  "description": "The front end of the nightingale application.",
+  "main": "index.tsx",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack serve",
+    "b": "webpack -w --mode production",
+    "build": "webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Vorelli/nightingale.git"
+  },
+  "keywords": [
+    "music",
+    "streaming",
+    "server"
+  ],
+  "author": "Natale Toscano",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Vorelli/nightingale/issues"
+  },
+  "homepage": "https://github.com/Vorelli/nightingale#readme",
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.19",
+    "@mui/material": "^5.14.20",
+    "@mui/x-tree-view": "^6.17.0",
+    "@react-spring/web": "^9.7.3",
+    "@reduxjs/toolkit": "^2.0.1",
+    "animejs": "^3.2.2",
+    "daisyui": "^4.4.19",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-draggable": "^4.4.6",
+    "react-material-ui-carousel": "^3.4.2",
+    "react-pdf": "^7.5.1",
+    "react-redux": "^9.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.5",
+    "@babel/plugin-transform-react-jsx": "^7.23.4",
+    "@babel/preset-env": "^7.23.5",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "@types/animejs": "^3.1.12",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.4",
+    "@types/react": "^18.2.42",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@welldone-software/why-did-you-render": "^7.0.1",
+    "autoprefixer": "^10.4.16",
+    "babel-loader": "^9.1.3",
+    "css-loader": "^6.8.1",
+    "dotenv-webpack": "^8.0.1",
+    "html-webpack-plugin": "^5.5.4",
+    "mini-css-extract-plugin": "^2.7.6",
+    "postcss": "^8.4.32",
+    "postcss-import": "^15.1.0",
+    "postcss-loader": "^7.3.3",
+    "postcss-preset-env": "^9.3.0",
+    "style-loader": "^3.3.3",
+    "tailwindcss": "^3.3.6",
+    "tailwindcss-animate": "^1.0.7",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "type": "module"
+}
